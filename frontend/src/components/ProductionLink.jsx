@@ -1,13 +1,27 @@
 function ProductionLink() {
+
   return (
+
     <div className="production-link">
-      <h3>Production URL</h3>
+
+      <h2>Production Deployment</h2>
 
       <div className="url-box">
         http://localhost:3001
       </div>
 
-      <button>Open Deployment</button>
+      <div className="button-group">
+
+        <button>
+          Open Deployment
+        </button>
+
+        <button>
+          Copy URL
+        </button>
+
+      </div>
+
     </div>
   );
 }

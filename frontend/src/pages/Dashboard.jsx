@@ -8,14 +8,20 @@ import LogsViewer from "../components/LogsViewer";
 import "../styles/dashboard.css";
 
 function Dashboard() {
+
   return (
+
     <div className="dashboard">
+
+      <div className="background-glow"></div>
 
       <Navbar />
 
-      <div className="hero-section">
+      <section className="hero-section">
 
-        <h1>DeployX</h1>
+        <h1>
+          Deploy<span>X</span>
+        </h1>
 
         <p>
           Smart DevOps Deployment Platform
@@ -23,12 +29,12 @@ function Dashboard() {
 
         <RepoForm />
 
-      </div>
+      </section>
 
-      <div className="deployment-ui">
+      <section className="deployment-ui">
 
         <DeployCard
-          project="React App"
+          project="React Frontend"
           status="Running"
         />
 
@@ -38,7 +44,7 @@ function Dashboard() {
 
         <LogsViewer />
 
-      </div>
+      </section>
 
     </div>
   );

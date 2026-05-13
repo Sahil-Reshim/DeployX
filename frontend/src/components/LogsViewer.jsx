@@ -1,14 +1,23 @@
 function LogsViewer() {
+
   return (
+
     <div className="logs-container">
-      <h3>Deployment Logs</h3>
+
+      <h2>Deployment Logs</h2>
 
       <div className="logs-box">
-        <p>Cloning repository...</p>
-        <p>Building Docker container...</p>
-        <p>Starting deployment...</p>
-        <p>Deployment successful 🚀</p>
+
+        <p>[INFO] Cloning Repository...</p>
+
+        <p>[INFO] Building Docker Container...</p>
+
+        <p>[INFO] Starting Deployment...</p>
+
+        <p>[SUCCESS] Deployment Live 🚀</p>
+
       </div>
+
     </div>
   );
 }
