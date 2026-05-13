@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from services.git_service import clone_repository
 
 app = Flask(__name__)
 CORS(app)
@@ -23,11 +24,9 @@ def deploy():
             "message": "GitHub repo URL is required"
         }), 400
 
-    return jsonify({
-        "status": "success",
-        "message": "Repo URL received successfully",
-        "repo_url": repo_url
-    })
+    result = clone_repository(repo_url)
+
+    return jsonify(result)
 
 if __name__ == "__main__":
     app.run(debug=True)
