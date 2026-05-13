@@ -18,6 +18,7 @@ DeployX automates the complete deployment lifecycle:
 - Deployment monitoring
 - Logs management
 - Infrastructure metrics visualization
+- view logs monitor
 
 The platform is built to simulate production-grade DevOps workflows while remaining developer-friendly and scalable.
 
@@ -31,6 +32,7 @@ Users can:
 - Trigger deployments instantly
 - Deploy applications automatically
 - Redeploy updated codebases
+- view result 
 
 DeployX will support multiple frameworks and project types.
 
