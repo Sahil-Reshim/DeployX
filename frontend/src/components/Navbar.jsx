@@ -1,7 +1,18 @@
 function Navbar() {
   return (
     <nav className="navbar">
-      <h2>DeployX</h2>
+
+      <div className="logo">
+        Deploy<span>X</span>
+      </div>
+
+      <ul className="nav-links">
+        <li>Dashboard</li>
+        <li>Deployments</li>
+        <li>Logs</li>
+        <li>Monitoring</li>
+      </ul>
+
     </nav>
   );
 }

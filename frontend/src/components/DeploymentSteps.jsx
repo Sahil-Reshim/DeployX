@@ -1,10 +1,27 @@
 function DeploymentSteps() {
+
   return (
+
     <div className="steps-container">
-      <div className="step completed">✓ Repository Cloned</div>
-      <div className="step completed">✓ Docker Build Complete</div>
-      <div className="step active">⚡ Container Running</div>
-      <div className="step">🌍 URL Generated</div>
+
+      <h2>Deployment Pipeline</h2>
+
+      <div className="step completed">
+        ✓ Repository Cloned
+      </div>
+
+      <div className="step completed">
+        ✓ Docker Image Built
+      </div>
+
+      <div className="step active">
+        ⚡ Container Running
+      </div>
+
+      <div className="step">
+        🌍 Production URL Generated
+      </div>
+
     </div>
   );
 }

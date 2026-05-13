@@ -1,5 +1,6 @@
 import { useState } from "react";
 import API from "../services/api";
+import Loader from "./Loader";
 
 function RepoForm() {
 
@@ -10,32 +11,29 @@ function RepoForm() {
   const handleDeploy = async () => {
 
     if (!repoUrl) {
-      setMessage("Please enter a GitHub repository URL");
+      setMessage("Enter GitHub Repository URL");
       return;
     }
 
     try {
 
       setLoading(true);
-      setMessage("Starting deployment...");
+      setMessage("");
 
       const response = await API.post("/deploy", {
         repo_url: repoUrl,
       });
 
-      console.log(response.data);
-
       setMessage(
-        response.data.message || "Deployment started successfully"
+        response.data.message ||
+        "Deployment Started Successfully 🚀"
       );
 
     } catch (error) {
 
-      console.error(error);
-
       setMessage(
         error.response?.data?.error ||
-        "Deployment failed"
+        "Deployment Failed"
       );
 
     } finally {
@@ -49,18 +47,25 @@ function RepoForm() {
 
     <div className="repo-form">
 
-      <input
-        type="text"
-        placeholder="Enter GitHub Repository URL"
-        value={repoUrl}
-        onChange={(e) => setRepoUrl(e.target.value)}
-      />
+      <div className="input-container">
 
-      <button onClick={handleDeploy} disabled={loading}>
+        <input
+          type="text"
+          placeholder="Paste GitHub Repository URL..."
+          value={repoUrl}
+          onChange={(e) => setRepoUrl(e.target.value)}
+        />
 
-        {loading ? "Deploying..." : "Deploy"}
+        <button
+          onClick={handleDeploy}
+          disabled={loading}
+        >
+          {loading ? "Deploying..." : "Deploy Now"}
+        </button>
 
-      </button>
+      </div>
+
+      {loading && <Loader />}
 
       {message && (
         <p className="deploy-message">
