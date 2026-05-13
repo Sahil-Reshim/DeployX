@@ -1,15 +1,48 @@
 import { useState } from "react";
+import API from "../services/api";
 
 function RepoForm() {
 
   const [repoUrl, setRepoUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState("");
 
-  const handleDeploy = () => {
+  const handleDeploy = async () => {
 
-    console.log(repoUrl);
+    if (!repoUrl) {
+      setMessage("Please enter a GitHub repository URL");
+      return;
+    }
 
-    alert("Deployment Started");
+    try {
 
+      setLoading(true);
+      setMessage("Starting deployment...");
+
+      const response = await API.post("/deploy", {
+        repo_url: repoUrl,
+      });
+
+      console.log(response.data);
+
+      setMessage(
+        response.data.message || "Deployment started successfully"
+      );
+
+    } catch (error) {
+
+      console.error(error);
+
+      setMessage(
+        error.response?.data?.error ||
+        "Deployment failed"
+      );
+
+    } finally {
+
+      setLoading(false);
+
+    }
   };
 
   return (
@@ -23,9 +56,17 @@ function RepoForm() {
         onChange={(e) => setRepoUrl(e.target.value)}
       />
 
-      <button onClick={handleDeploy}>
-        Deploy
+      <button onClick={handleDeploy} disabled={loading}>
+
+        {loading ? "Deploying..." : "Deploy"}
+
       </button>
+
+      {message && (
+        <p className="deploy-message">
+          {message}
+        </p>
+      )}
 
     </div>
   );
