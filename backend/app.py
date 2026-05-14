@@ -3,6 +3,7 @@ from flask_cors import CORS
 
 from services.git_service import clone_repository
 from services.docker_service import build_docker_image, run_docker_container
+from services.deployment_service import save_deployment, get_all_deployments
 
 app = Flask(__name__)
 CORS(app)
@@ -51,10 +52,26 @@ def deploy():
         docker_result["image_name"]
     )
 
+    # STEP 4 → Save Deployment Record
+    deployment = save_deployment(
+        repo_url,
+        docker_result,
+        container_result
+    )
+
     return jsonify({
         "clone": clone_result,
         "docker": docker_result,
-        "container": container_result
+        "container": container_result,
+        "deployment": deployment
+    })
+
+
+@app.route("/deployments", methods=["GET"])
+def get_deployments():
+    return jsonify({
+        "success": True,
+        "deployments": get_all_deployments()
     })
 
 
