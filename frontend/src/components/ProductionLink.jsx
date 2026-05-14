@@ -1,27 +1,54 @@
-function ProductionLink() {
+import { useState } from "react";
+import StatusBadge from "./StatusBadge";
+
+function ProductionLink({ deployment }) {
+  const [copied, setCopied] = useState(false);
+
+  const deploymentUrl = deployment?.url;
+  const deploymentStatus = deployment?.status;
+
+  const openDeployment = () => {
+    if (deploymentUrl) window.open(deploymentUrl, "_blank");
+  };
+
+  const copyUrl = async () => {
+    if (deploymentUrl) {
+      await navigator.clipboard.writeText(deploymentUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
 
   return (
-
     <div className="production-link">
-
-      <h2>Production Deployment</h2>
+      <div className="production-top">
+        <div>
+          <h2>Live Production Deployment</h2>
+          <p>Latest deployed container</p>
+        </div>
+        <StatusBadge status={deploymentStatus || "offline"} />
+      </div>
 
       <div className="url-box">
-        http://localhost:3001
+        {deploymentUrl || "No Deployment Available"}
       </div>
 
       <div className="button-group">
-
-        <button>
-          Open Deployment
+        <button
+          className="btn btn-primary"
+          onClick={openDeployment}
+          disabled={!deploymentUrl}
+        >
+          ↗ Open Deployment
         </button>
-
-        <button>
-          Copy URL
+        <button
+          className="btn btn-ghost"
+          onClick={copyUrl}
+          disabled={!deploymentUrl}
+        >
+          {copied ? "✓ Copied!" : "⎘ Copy URL"}
         </button>
-
       </div>
-
     </div>
   );
 }
