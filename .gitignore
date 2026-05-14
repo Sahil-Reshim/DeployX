@@ -1,3 +1,6 @@
+# log files
+backend/logs/
+
 # Python
 venv/
 __pycache__/
@@ -14,8 +17,6 @@ backend/deployx.db
 
 # Node Modules
 frontend/node_modules/
-
-backend/deployments/
 
 venv/
 backend/venv/
