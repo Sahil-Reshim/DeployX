@@ -1,3 +1,20 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+
+# Deployments
+backend/deployments/
+
+# Frontend Vite Cache
+frontend/.vite/
+
+# Database
+backend/deployx.db
+
+# Node Modules
+frontend/node_modules/
+
 backend/deployments/
 
 venv/
