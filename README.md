@@ -3,7 +3,7 @@
 
 DeployX is a modern full-stack DevOps platform designed to simplify application deployment, monitoring, automation, and infrastructure management. 
 
-Inspired by platforms like Vercel, Jenkins, Grafana, and Kubernetes dashboards, DeployX provides developers with an all-in-one deployment ecosystem where applications can be deployed, monitored, containerized, and managed from a single interface.
+Inspired by platforms like Vercel, Jenkins, Grafana, and Kubernetes dashboards, DeployX provides developers with an all-in-one deployment ecosystem where applications can be deployed, monitored, containerized, and managed from a single interface .
 
 ---
 
