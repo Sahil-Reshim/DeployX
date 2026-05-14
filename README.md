@@ -89,6 +89,7 @@ Users can:
 - Monitor container output
 - Debug failed deployments
 - Track build progress
+- deploy app
 
 ---
 
