@@ -1,13 +1,48 @@
+import { useEffect, useState } from "react";
+
 import Navbar from "../components/Navbar";
 import RepoForm from "../components/RepoForm";
-import DeployCard from "../components/DeployCard";
-import DeploymentSteps from "../components/DeploymentSteps";
-import ProductionLink from "../components/ProductionLink";
+import DeploymentHistory from "../components/DeploymentHistory";
 import LogsViewer from "../components/LogsViewer";
+
+import API from "../services/api";
 
 import "../styles/dashboard.css";
 
 function Dashboard() {
+
+  const [deployments, setDeployments] = useState([]);
+
+  const fetchDeployments = async () => {
+
+    try {
+
+      const response = await API.get("/deployments");
+
+      setDeployments(
+        response.data.deployments || []
+      );
+
+    } catch (error) {
+
+      console.log(error);
+
+    }
+  };
+
+  useEffect(() => {
+
+    fetchDeployments();
+
+    const interval = setInterval(() => {
+
+      fetchDeployments();
+
+    }, 5000);
+
+    return () => clearInterval(interval);
+
+  }, []);
 
   return (
 
@@ -27,20 +62,17 @@ function Dashboard() {
           Smart DevOps Deployment Platform
         </p>
 
-        <RepoForm />
+        <RepoForm
+          refreshDeployments={fetchDeployments}
+        />
 
       </section>
 
       <section className="deployment-ui">
 
-        <DeployCard
-          project="React Frontend"
-          status="Running"
+        <DeploymentHistory
+          deployments={deployments}
         />
-
-        <DeploymentSteps />
-
-        <ProductionLink />
 
         <LogsViewer />
 
