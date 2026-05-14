@@ -3,10 +3,14 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from services.git_service import clone_repository
+from services.framework_detector import detect_framework
+from services.dockerfile_generator import generate_dockerfile
+
 from services.docker_service import (
     build_docker_image,
     run_docker_container
 )
+
 from services.deployment_service import (
     save_deployment,
     get_all_deployments
@@ -17,6 +21,7 @@ app = Flask(__name__)
 CORS(app)
 
 init_db()
+
 
 @app.route("/")
 def home():
@@ -79,10 +84,59 @@ def deploy():
             }), 400
 
         # =====================================================
-        # STEP 2 → Build Docker Image
+        # STEP 2 → Detect Framework
         # =====================================================
 
-        print("\n[STEP 2] Building Docker Image...")
+        print("\n[STEP 2] Detecting Framework...")
+
+        framework_result = detect_framework(
+            clone_result["repo_path"]
+        )
+
+        print("Framework Result:", framework_result)
+
+        if not framework_result["success"]:
+
+            return jsonify({
+                "success": False,
+                "step": "framework_detection",
+                "error": framework_result.get(
+                    "message",
+                    "Framework detection failed"
+                ),
+                "details": framework_result
+            }), 400
+
+        # =====================================================
+        # STEP 3 → Generate Dockerfile If Missing
+        # =====================================================
+
+        print("\n[STEP 3] Checking / Generating Dockerfile...")
+
+        dockerfile_result = generate_dockerfile(
+            clone_result["repo_path"],
+            framework_result["framework"]
+        )
+
+        print("Dockerfile Result:", dockerfile_result)
+
+        if not dockerfile_result["success"]:
+
+            return jsonify({
+                "success": False,
+                "step": "dockerfile_generation",
+                "error": dockerfile_result.get(
+                    "message",
+                    "Dockerfile generation failed"
+                ),
+                "details": dockerfile_result
+            }), 400
+
+        # =====================================================
+        # STEP 4 → Build Docker Image
+        # =====================================================
+
+        print("\n[STEP 4] Building Docker Image...")
 
         docker_result = build_docker_image(
             clone_result["repo_path"]
@@ -103,10 +157,10 @@ def deploy():
             }), 400
 
         # =====================================================
-        # STEP 3 → Run Docker Container
+        # STEP 5 → Run Docker Container
         # =====================================================
 
-        print("\n[STEP 3] Running Docker Container...")
+        print("\n[STEP 5] Running Docker Container...")
 
         container_result = run_docker_container(
             docker_result["image_name"]
@@ -127,10 +181,10 @@ def deploy():
             }), 400
 
         # =====================================================
-        # STEP 4 → Save Deployment
+        # STEP 6 → Save Deployment
         # =====================================================
 
-        print("\n[STEP 4] Saving Deployment...")
+        print("\n[STEP 6] Saving Deployment...")
 
         deployment = save_deployment(
             repo_url,
@@ -140,28 +194,23 @@ def deploy():
 
         print("Deployment Saved:", deployment)
 
-        # =====================================================
-        # SUCCESS RESPONSE
-        # =====================================================
-
         return jsonify({
 
             "success": True,
 
-            "message":
-            "Deployment Successful 🚀",
+            "message": "Deployment Successful 🚀",
 
-            "clone":
-            clone_result,
+            "clone": clone_result,
 
-            "docker":
-            docker_result,
+            "framework": framework_result,
 
-            "container":
-            container_result,
+            "dockerfile": dockerfile_result,
 
-            "deployment":
-            deployment
+            "docker": docker_result,
+
+            "container": container_result,
+
+            "deployment": deployment
 
         })
 
