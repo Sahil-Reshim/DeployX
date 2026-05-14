@@ -36,65 +36,6 @@ CORS(app)
 init_db()
 
 
-@app.route("/cleanup/container", methods=["DELETE"])
-def cleanup_container():
-
-    try:
-        data = request.get_json()
-        container_id = data.get("container_id")
-
-        result = remove_container(container_id)
-
-        status_code = 200 if result["success"] else 400
-
-        return jsonify(result), status_code
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-
-
-@app.route("/cleanup/image", methods=["DELETE"])
-def cleanup_image():
-
-    try:
-        data = request.get_json()
-        image_name = data.get("image_name")
-
-        result = remove_image(image_name)
-
-        status_code = 200 if result["success"] else 400
-
-        return jsonify(result), status_code
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-
-
-@app.route("/cleanup/repo", methods=["DELETE"])
-def cleanup_repo():
-
-    try:
-        data = request.get_json()
-        repo_path = data.get("repo_path")
-
-        result = remove_repo_folder(repo_path)
-
-        status_code = 200 if result["success"] else 400
-
-        return jsonify(result), status_code
-
-    except Exception as e:
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-
 @app.route("/")
 def home():
     return jsonify({
@@ -108,6 +49,10 @@ def home():
 def deploy():
 
     try:
+        repo_path = None
+        image_name = None
+        container_id = None
+
         data = request.get_json()
 
         print("\n========== DEPLOY REQUEST ==========")
@@ -143,65 +88,95 @@ def deploy():
                 "details": clone_result
             }), 400
 
+        repo_path = clone_result["repo_path"]
+
         # STEP 2 → Detect Framework
         print("\n[STEP 2] Detecting Framework...")
 
-        framework_result = detect_framework(clone_result["repo_path"])
+        framework_result = detect_framework(repo_path)
         print("Framework Result:", framework_result)
 
         if not framework_result["success"]:
+            repo_cleanup_result = remove_repo_folder(repo_path)
+            
+            print("Repo Cleanup Result:", repo_cleanup_result)
+
             return jsonify({
                 "success": False,
                 "step": "framework_detection",
                 "error": framework_result.get("message", "Framework detection failed"),
-                "details": framework_result
+                "details": framework_result,
+                "cleanup": {
+                    "repo": repo_cleanup_result
+                }
             }), 400
 
         # STEP 3 → Generate Dockerfile If Missing
         print("\n[STEP 3] Checking / Generating Dockerfile...")
 
         dockerfile_result = generate_dockerfile(
-            clone_result["repo_path"],
+            repo_path,
             framework_result["framework"]
         )
 
         print("Dockerfile Result:", dockerfile_result)
 
         if not dockerfile_result["success"]:
+            repo_cleanup_result = remove_repo_folder(repo_path)
+
             return jsonify({
                 "success": False,
                 "step": "dockerfile_generation",
                 "error": dockerfile_result.get("message", "Dockerfile generation failed"),
-                "details": dockerfile_result
+                "details": dockerfile_result,
+                "cleanup": {
+                    "repo": repo_cleanup_result
+                }
             }), 400
 
         # STEP 4 → Build Docker Image
         print("\n[STEP 4] Building Docker Image...")
 
-        docker_result = build_docker_image(clone_result["repo_path"])
+        docker_result = build_docker_image(repo_path)
         print("Docker Result:", docker_result)
 
         if not docker_result["success"]:
+            repo_cleanup_result = remove_repo_folder(repo_path)
+
             return jsonify({
                 "success": False,
                 "step": "docker_build",
                 "error": docker_result.get("message", "Docker image build failed"),
-                "details": docker_result
+                "details": docker_result,
+                "cleanup": {
+                    "repo": repo_cleanup_result
+                }
             }), 400
+
+        image_name = docker_result["image_name"]
 
         # STEP 5 → Run Docker Container
         print("\n[STEP 5] Running Docker Container...")
 
-        container_result = run_docker_container(docker_result["image_name"])
+        container_result = run_docker_container(image_name)
         print("Container Result:", container_result)
 
         if not container_result["success"]:
+            image_cleanup_result = remove_image(image_name)
+            repo_cleanup_result = remove_repo_folder(repo_path)
+
             return jsonify({
                 "success": False,
                 "step": "container_runtime",
                 "error": container_result.get("message", "Container startup failed"),
-                "details": container_result
+                "details": container_result,
+                "cleanup": {
+                    "image": image_cleanup_result,
+                    "repo": repo_cleanup_result
+                }
             }), 400
+
+        container_id = container_result["container_id"]
 
         # STEP 6 → Save Deployment
         print("\n[STEP 6] Saving Deployment...")
@@ -252,9 +227,21 @@ def deploy():
         print("\n========== DEPLOY ERROR ==========")
         print(str(e))
 
+        cleanup = {}
+
+        if container_id:
+            cleanup["container"] = remove_container(container_id)
+
+        if image_name:
+            cleanup["image"] = remove_image(image_name)
+
+        if repo_path:
+            cleanup["repo"] = remove_repo_folder(repo_path)
+
         return jsonify({
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "cleanup": cleanup
         }), 500
 
 
@@ -312,6 +299,66 @@ def deployment_container_logs(deployment_id):
             "success": False,
             "error": str(e),
             "logs": []
+        }), 500
+
+
+@app.route("/cleanup/container", methods=["DELETE"])
+def cleanup_container():
+
+    try:
+        data = request.get_json()
+        container_id = data.get("container_id")
+
+        result = remove_container(container_id)
+
+        status_code = 200 if result["success"] else 400
+
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+@app.route("/cleanup/image", methods=["DELETE"])
+def cleanup_image():
+
+    try:
+        data = request.get_json()
+        image_name = data.get("image_name")
+
+        result = remove_image(image_name)
+
+        status_code = 200 if result["success"] else 400
+
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+@app.route("/cleanup/repo", methods=["DELETE"])
+def cleanup_repo():
+
+    try:
+        data = request.get_json()
+        repo_path = data.get("repo_path")
+
+        result = remove_repo_folder(repo_path)
+
+        status_code = 200 if result["success"] else 400
+
+        return jsonify(result), status_code
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "message": str(e)
         }), 500
 
 
