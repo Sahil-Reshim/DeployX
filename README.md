@@ -1,5 +1,5 @@
 # DeployX 🚀  
-### Smart DevOps Deployment Platform using Flask, React, Docker, Jenkins, and Kubernetes
+### Smart DevOps Deployment Platform using Flask, React, Docker, Jenkins, and Kubernetes.
 
 DeployX is a modern full-stack DevOps platform designed to simplify application deployment, monitoring, automation, and infrastructure management. 
 
