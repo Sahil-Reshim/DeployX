@@ -1,11 +1,10 @@
 function StatusBadge({ status }) {
+  const normalized = (status || "offline").toLowerCase();
 
   return (
-
-    <div className={`status-badge ${status}`}>
-      {status}
-    </div>
-
+    <span className={`status-badge ${normalized}`}>
+      {normalized}
+    </span>
   );
 }
 

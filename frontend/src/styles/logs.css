@@ -1,0 +1,132 @@
+.logs-container {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 20px;
+  padding: 0;
+  margin-bottom: 24px;
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+}
+
+.logs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255,255,255,0.02);
+}
+
+.logs-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logs-dots {
+  display: flex;
+  gap: 6px;
+}
+
+.logs-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.logs-dot.red { background: rgba(239, 68, 68, 0.6); }
+.logs-dot.yellow { background: rgba(251, 191, 36, 0.6); }
+.logs-dot.green { background: rgba(34, 197, 94, 0.6); }
+
+.logs-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 0.05em;
+}
+
+.logs-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  color: rgba(34, 197, 94, 0.6);
+}
+
+.logs-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #22c55e;
+  animation: pulseDot 2s infinite;
+}
+
+.logs-box {
+  padding: 20px 24px;
+  min-height: 200px;
+  max-height: 320px;
+  overflow-y: auto;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.1) transparent;
+}
+
+.logs-box::-webkit-scrollbar {
+  width: 4px;
+}
+
+.logs-box::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.1);
+  border-radius: 2px;
+}
+
+.log-line {
+  display: flex;
+  gap: 12px;
+  animation: logAppear 0.3s ease both;
+  padding: 2px 0;
+}
+
+.log-timestamp {
+  color: rgba(255,255,255,0.15);
+  flex-shrink: 0;
+  font-size: 11px;
+  padding-top: 1px;
+  min-width: 65px;
+}
+
+.log-tag {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 80px;
+}
+
+.log-tag.info { color: rgba(56, 189, 248, 0.7); }
+.log-tag.success { color: rgba(34, 197, 94, 0.7); }
+.log-tag.error { color: rgba(239, 68, 68, 0.7); }
+.log-tag.warn { color: rgba(251, 191, 36, 0.7); }
+.log-tag.system { color: rgba(165, 180, 252, 0.7); }
+.log-tag.docker { color: rgba(56, 189, 248, 0.7); }
+
+.log-message {
+  color: rgba(255,255,255,0.55);
+  flex: 1;
+  word-break: break-all;
+}
+
+.log-message.success-msg { color: rgba(34, 197, 94, 0.8); }
+.log-message.error-msg { color: rgba(239, 68, 68, 0.8); }
+
+.log-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: rgba(34, 197, 94, 0.7);
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  animation: blink 1s step-end infinite;
+}
