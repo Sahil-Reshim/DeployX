@@ -1,36 +1,40 @@
 import os
+import shutil
+import uuid
+
 from git import Repo
 
-DEPLOYMENTS_FOLDER = "deployments"
+
+BASE_DIR = "deployments"
 
 
 def clone_repository(repo_url):
 
-    repo_name = repo_url.split("/")[-1].replace(".git", "")
-
-    clone_path = os.path.join(
-        DEPLOYMENTS_FOLDER,
-        repo_name
-    )
-
-    # Check if already exists
-    if os.path.exists(clone_path):
-        return {
-            "success": False,
-            "message": "Repository already exists"
-        }
-
     try:
-        # Clone Repository
-        Repo.clone_from(repo_url, clone_path)
+
+        if not os.path.exists(BASE_DIR):
+            os.makedirs(BASE_DIR)
+
+        unique_name = str(uuid.uuid4())[:8]
+
+        repo_path = os.path.join(
+            BASE_DIR,
+            unique_name
+        )
+
+        Repo.clone_from(
+            repo_url,
+            repo_path
+        )
 
         return {
             "success": True,
-            "message": "Repository cloned successfully",
-            "repo_path": clone_path
+            "repo_path": repo_path,
+            "repo_name": unique_name
         }
 
     except Exception as e:
+
         return {
             "success": False,
             "message": str(e)
