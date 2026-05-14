@@ -1,17 +1,14 @@
-function EmptyState() {
-
+function EmptyState({ onDeploy }) {
   return (
-
     <div className="empty-state">
-
-      <h2>
-        No Deployments Yet
-      </h2>
-
-      <p>
-        Deploy your first GitHub repository to get started.
-      </p>
-
+      <span className="empty-state-icon">🚀</span>
+      <h2>No Deployments Yet</h2>
+      <p>Deploy your first GitHub repository to get started.</p>
+      {onDeploy && (
+        <button className="btn btn-primary" onClick={onDeploy}>
+          Deploy Your First App
+        </button>
+      )}
     </div>
   );
 }
