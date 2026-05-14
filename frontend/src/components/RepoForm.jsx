@@ -44,9 +44,16 @@ function RepoForm({ refreshDeployments }) {
         response.data
       );
 
+      const deploymentUrl =
+  response.data.container.url;
+
       setMessage(
-        response.data.message ||
-        "Deployment Started Successfully 🚀"
+        `Deployment Live 🚀 ${deploymentUrl}`
+      );
+
+      localStorage.setItem(
+        "deployment_url",
+        deploymentUrl
       );
 
       refreshDeployments();
