@@ -4,17 +4,17 @@ function LogsViewer() {
 
     <div className="logs-container">
 
-      <h2>Deployment Logs</h2>
+      <h2>
+        Deployment Engine
+      </h2>
 
       <div className="logs-box">
 
-        <p>[INFO] Cloning Repository...</p>
+        <p>[SYSTEM] Listening for deployment events...</p>
 
-        <p>[INFO] Building Docker Container...</p>
+        <p>[DOCKER] Runtime connected...</p>
 
-        <p>[INFO] Starting Deployment...</p>
-
-        <p>[SUCCESS] Deployment Live 🚀</p>
+        <p>[DEPLOYX] Waiting for new deployments...</p>
 
       </div>
 

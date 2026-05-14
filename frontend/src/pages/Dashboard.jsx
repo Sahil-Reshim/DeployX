@@ -1,13 +1,70 @@
+import { useEffect, useState } from "react";
+
 import Navbar from "../components/Navbar";
 import RepoForm from "../components/RepoForm";
-import DeployCard from "../components/DeployCard";
-import DeploymentSteps from "../components/DeploymentSteps";
+import DeploymentHistory from "../components/DeploymentHistory";
 import ProductionLink from "../components/ProductionLink";
 import LogsViewer from "../components/LogsViewer";
+
+import API from "../services/api";
 
 import "../styles/dashboard.css";
 
 function Dashboard() {
+
+  const [deployments, setDeployments] =
+    useState([]);
+
+  const [latestDeployment, setLatestDeployment] =
+    useState(null);
+
+  const fetchDeployments = async () => {
+
+    try {
+
+      const response =
+        await API.get("/deployments");
+
+      const deploymentData =
+        response.data.deployments || [];
+
+      setDeployments(deploymentData);
+
+      if (deploymentData.length > 0) {
+
+        const latest =
+          deploymentData[
+            deploymentData.length - 1
+          ];
+
+        setLatestDeployment(latest);
+
+        localStorage.setItem(
+          "deployment_url",
+          latest.url
+        );
+      }
+
+    } catch (error) {
+
+      console.log(error);
+    }
+  };
+
+  useEffect(() => {
+
+    fetchDeployments();
+
+    const interval = setInterval(() => {
+
+      fetchDeployments();
+
+    }, 5000);
+
+    return () =>
+      clearInterval(interval);
+
+  }, []);
 
   return (
 
@@ -27,20 +84,23 @@ function Dashboard() {
           Smart DevOps Deployment Platform
         </p>
 
-        <RepoForm />
+        <RepoForm
+          refreshDeployments={
+            fetchDeployments
+          }
+        />
 
       </section>
 
       <section className="deployment-ui">
 
-        <DeployCard
-          project="React Frontend"
-          status="Running"
+        <ProductionLink
+          deployment={latestDeployment}
         />
 
-        <DeploymentSteps />
-
-        <ProductionLink />
+        <DeploymentHistory
+          deployments={deployments}
+        />
 
         <LogsViewer />
 

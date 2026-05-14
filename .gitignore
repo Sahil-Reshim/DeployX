@@ -1,3 +1,5 @@
+backend/deployments/
+
 venv/
 backend/venv/
 
