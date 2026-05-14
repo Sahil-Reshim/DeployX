@@ -4,6 +4,7 @@ import uuid
 
 client = docker.from_env()
 
+
 def build_docker_image(repo_path):
     dockerfile_path = os.path.join(repo_path, "Dockerfile")
 
@@ -39,5 +40,35 @@ def build_docker_image(repo_path):
         return {
             "success": False,
             "message": "Docker image build failed",
+            "error": str(e)
+        }
+
+
+def run_docker_container(image_name):
+    try:
+        container = client.containers.run(
+            image=image_name,
+            detach=True,
+            ports={
+                "5000/tcp": None
+            }
+        )
+
+        container.reload()
+
+        assigned_port = container.attrs["NetworkSettings"]["Ports"]["5000/tcp"][0]["HostPort"]
+
+        return {
+            "success": True,
+            "message": "Container started successfully",
+            "container_id": container.short_id,
+            "port": assigned_port,
+            "url": f"http://localhost:{assigned_port}"
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": "Container failed to start",
             "error": str(e)
         }

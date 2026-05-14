@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 
 from services.git_service import clone_repository
-from services.docker_service import build_docker_image
+from services.docker_service import build_docker_image, run_docker_container
 
 app = Flask(__name__)
 CORS(app)
@@ -32,7 +32,6 @@ def deploy():
     # STEP 1 → Clone Repository
     clone_result = clone_repository(repo_url)
 
-    # If cloning fails
     if not clone_result["success"]:
         return jsonify(clone_result), 400
 
@@ -41,10 +40,21 @@ def deploy():
         clone_result["repo_path"]
     )
 
-    # Final Response
+    if not docker_result["success"]:
+        return jsonify({
+            "clone": clone_result,
+            "docker": docker_result
+        }), 400
+
+    # STEP 3 → Run Docker Container
+    container_result = run_docker_container(
+        docker_result["image_name"]
+    )
+
     return jsonify({
         "clone": clone_result,
-        "docker": docker_result
+        "docker": docker_result,
+        "container": container_result
     })
 
 
