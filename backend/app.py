@@ -183,6 +183,7 @@ def deploy():
 
         deployment = save_deployment(
             repo_url,
+            framework_result,
             docker_result,
             container_result
         )
