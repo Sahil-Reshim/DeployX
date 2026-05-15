@@ -256,6 +256,8 @@ DeployX/
 
 ```bash
 git clone https://github.com/tanvishinde017/DeployX.git
+
+git clone https://github.com/Sahil-Reshim/DeployX.git
 ```
 
 ---
@@ -361,7 +363,7 @@ DeployX is inspired by modern DevOps and deployment platforms:
 
 # 👨‍💻 Author
 
-### Tanavi Shinde
+### Tanavi Shinde and Sahil Reshim
 
 Building modern DevOps systems and scalable deployment platforms 🚀
 
