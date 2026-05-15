@@ -1,207 +1,588 @@
 @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
 
-/* ─── NAVBAR ─────────────────────────────────────────────────────────────── */
+/* =========================================================
+ROOT VARIABLES
+========================================================= */
+
+:root {
+
+  --nav-bg:
+    rgba(6, 6, 6, 0.72);
+
+  --nav-border:
+    rgba(255,255,255,.06);
+
+  --nav-hover:
+    rgba(255,255,255,.06);
+
+  --nav-active:
+    rgba(220,38,38,.12);
+
+  --text-primary:
+    #ffffff;
+
+  --text-secondary:
+    rgba(255,255,255,.58);
+
+  --red-primary:
+    #dc2626;
+
+  --red-soft:
+    rgba(220,38,38,.22);
+
+  --green-primary:
+    #22c55e;
+
+  --transition:
+    all .28s ease;
+}
+
+/* =========================================================
+NAVBAR
+========================================================= */
 
 .navbar {
+
   position: sticky;
+
   top: 0;
-  z-index: 200;
+
+  z-index: 500;
+
   width: 100%;
-  height: 64px;
+
+  height: 76px;
+
   display: flex;
-  justify-content: space-between;
+
   align-items: center;
-  padding: 0 48px;
-  background: rgba(6, 6, 6, 0.75);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+  justify-content: space-between;
+
+  padding:
+    0 52px;
+
+  background:
+    rgba(4,4,4,.72);
+
+  backdrop-filter:
+    blur(24px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(24px)
+    saturate(180%);
+
+  border-bottom:
+    1px solid var(--nav-border);
+
+  overflow: hidden;
 }
 
-/* Gradient accent line under navbar */
-.navbar::after {
-  content: '';
+/* TOP GLOW */
+
+.navbar::before {
+
+  content: "";
+
   position: absolute;
+
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 1px;
+
+  background:
+    rgba(255,255,255,.04);
+}
+
+/* BOTTOM SHIMMER */
+
+.navbar::after {
+
+  content: "";
+
+  position: absolute;
+
   bottom: 0;
   left: 0;
-  right: 0;
+
+  width: 100%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(220, 38, 38, 0.4) 30%,
-    rgba(220, 38, 38, 0.6) 50%,
-    rgba(220, 38, 38, 0.4) 70%,
-    transparent 100%
-  );
-  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(220,38,38,.6),
+      transparent
+    );
+
+  background-size:
+    200% 100%;
+
+  animation:
+    navbarShimmer 8s linear infinite;
 }
 
-/* ─── LOGO ─────────────────────────────────────────────────────────────── */
+/* =========================================================
+LOGO
+========================================================= */
 
 .navbar-logo {
-  font-family: 'Syne', sans-serif;
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.5px;
-  color: #fff;
-  cursor: pointer;
-  user-select: none;
+
   display: flex;
+
   align-items: center;
+
   gap: 2px;
+
   text-decoration: none;
+
+  font-family:
+    "Syne",
+    sans-serif;
+
+  font-size: 28px;
+
+  font-weight: 800;
+
+  letter-spacing: -1px;
+
+  color: white;
+
+  cursor: pointer;
+
+  position: relative;
+
+  transition:
+    transform .25s ease,
+    opacity .25s ease;
+}
+
+.navbar-logo:hover {
+
+  opacity: .92;
+
+  transform:
+    translateY(-1px);
 }
 
 .navbar-logo span {
-  color: #dc2626;
-  display: inline-block;
-  position: relative;
+
+  color:
+    var(--red-primary);
+
+  transition:
+    text-shadow .3s ease;
+}
+
+.navbar-logo:hover span {
+
+  text-shadow:
+    0 0 20px rgba(220,38,38,.65);
 }
 
 .navbar-logo sup {
-  font-size: 9px;
-  font-family: 'JetBrains Mono', monospace;
-  color: rgba(220, 38, 38, 0.6);
-  margin-left: 1px;
-  vertical-align: super;
-  font-weight: 500;
-  letter-spacing: 0.05em;
+
+  font-size: 10px;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
+  color:
+    rgba(220,38,38,.6);
+
+  margin-left: 2px;
+
+  letter-spacing: .08em;
 }
 
-/* ─── NAV LINKS ─────────────────────────────────────────────────────────── */
+/* =========================================================
+NAVIGATION LINKS
+========================================================= */
 
 .nav-links {
+
   display: flex;
-  gap: 2px;
-  list-style: none;
+
   align-items: center;
+
+  gap: 6px;
+
+  list-style: none;
 }
 
 .nav-links li {
+
   position: relative;
-  padding: 7px 14px;
+
+  padding:
+    11px 18px;
+
+  border-radius: 14px;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
+  font-size: 12px;
+
+  font-weight: 600;
+
+  letter-spacing: .04em;
+
+  color:
+    var(--text-secondary);
+
   cursor: pointer;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12.5px;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.45);
-  border-radius: 8px;
-  border: 1px solid transparent;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
-  letter-spacing: 0.03em;
-  animation: navItemIn 0.4s ease both;
-}
 
-.nav-links li:nth-child(1) { animation-delay: 0.05s; }
-.nav-links li:nth-child(2) { animation-delay: 0.10s; }
-.nav-links li:nth-child(3) { animation-delay: 0.15s; }
-.nav-links li:nth-child(4) { animation-delay: 0.20s; }
+  border:
+    1px solid transparent;
 
-.nav-links li:hover {
-  color: rgba(255, 255, 255, 0.85);
-  background: rgba(255, 255, 255, 0.05);
-}
+  transition:
+    var(--transition);
 
-.nav-links li.active {
-  color: #fff;
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.22);
-}
+  overflow: hidden;
 
-/* Active dot indicator */
-.nav-links li.active::after {
-  content: '';
-  position: absolute;
-  bottom: 3px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 14px;
-  height: 2px;
-  background: #dc2626;
-  border-radius: 2px;
-}
-
-/* ─── COMING SOON BADGE ─────────────────────────────────────────────────── */
-
-.nav-coming-soon {
-  position: relative;
-}
-
-.nav-coming-soon .coming-soon-badge {
-  position: absolute;
-  top: -7px;
-  right: -2px;
-  background: rgba(220, 38, 38, 0.15);
-  color: #dc2626;
-  font-size: 8px;
-  font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid rgba(220, 38, 38, 0.25);
-  white-space: nowrap;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  pointer-events: none;
-}
-
-/* ─── STATUS INDICATOR ──────────────────────────────────────────────────── */
-
-.navbar-status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
-  font-weight: 500;
-  color: rgba(34, 197, 94, 0.75);
-  background: rgba(34, 197, 94, 0.07);
-  border: 1px solid rgba(34, 197, 94, 0.14);
-  padding: 5px 14px;
-  border-radius: 20px;
-  letter-spacing: 0.04em;
   user-select: none;
 }
 
-.navbar-status-dot {
-  width: 6px;
-  height: 6px;
-  background: #22c55e;
-  border-radius: 50%;
-  flex-shrink: 0;
-  animation: pulseDot 2.4s ease-in-out infinite;
+/* HOVER BG */
+
+.nav-links li::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255,255,255,.04),
+      rgba(255,255,255,.02)
+    );
+
+  opacity: 0;
+
+  transition:
+    opacity .28s ease;
+
+  z-index: -1;
 }
 
-/* ─── RESPONSIVE ────────────────────────────────────────────────────────── */
+.nav-links li:hover {
 
-@media (max-width: 960px) {
-  .navbar {
-    padding: 0 24px;
+  color: white;
+
+  transform:
+    translateY(-1px);
+}
+
+.nav-links li:hover::before {
+
+  opacity: 1;
+}
+
+/* ACTIVE */
+
+.nav-links li.active {
+
+  color: white;
+
+  background:
+    rgba(220,38,38,.10);
+
+  border:
+    1px solid rgba(220,38,38,.18);
+
+  box-shadow:
+    inset 0 0 18px rgba(220,38,38,.08);
+}
+
+/* ACTIVE INDICATOR */
+
+.nav-links li.active::after {
+
+  content: "";
+
+  position: absolute;
+
+  left: 50%;
+  bottom: 6px;
+
+  transform:
+    translateX(-50%);
+
+  width: 20px;
+  height: 2px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--red-primary),
+      transparent
+    );
+
+  animation:
+    glowPulse 2.5s ease-in-out infinite;
+}
+
+/* =========================================================
+COMING SOON BADGE
+========================================================= */
+
+.nav-coming-soon {
+
+  position: relative;
+}
+
+.coming-soon-badge {
+
+  position: absolute;
+
+  top: -7px;
+  right: -6px;
+
+  padding:
+    3px 7px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(220,38,38,.12);
+
+  border:
+    1px solid rgba(220,38,38,.24);
+
+  color:
+    #f87171;
+
+  font-size: 8px;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
+  font-weight: 700;
+
+  text-transform: uppercase;
+
+  letter-spacing: .08em;
+
+  pointer-events: none;
+}
+
+/* =========================================================
+STATUS
+========================================================= */
+
+.navbar-status {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding:
+    8px 16px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(34,197,94,.08);
+
+  border:
+    1px solid rgba(34,197,94,.18);
+
+  color:
+    rgba(134,239,172,.95);
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: .04em;
+
+  transition:
+    var(--transition);
+}
+
+.navbar-status:hover {
+
+  background:
+    rgba(34,197,94,.12);
+
+  border-color:
+    rgba(34,197,94,.26);
+}
+
+/* DOT */
+
+.navbar-status-dot {
+
+  width: 7px;
+  height: 7px;
+
+  border-radius: 50%;
+
+  background:
+    var(--green-primary);
+
+  position: relative;
+
+  animation:
+    pulseDot 2s infinite;
+}
+
+.navbar-status-dot::after {
+
+  content: "";
+
+  position: absolute;
+
+  inset: -4px;
+
+  border-radius: 50%;
+
+  border:
+    1px solid rgba(34,197,94,.4);
+
+  animation:
+    ripple 2s infinite;
+}
+
+/* =========================================================
+ANIMATIONS
+========================================================= */
+
+@keyframes navbarShimmer {
+
+  0% {
+    background-position:
+      200% 0;
   }
 
-  .nav-links li {
-    padding: 7px 10px;
-    font-size: 12px;
+  100% {
+    background-position:
+      -200% 0;
+  }
+}
+
+@keyframes glowPulse {
+
+  0%,100% {
+
+    opacity: .4;
+  }
+
+  50% {
+
+    opacity: 1;
+  }
+}
+
+@keyframes pulseDot {
+
+  0%,100% {
+
+    transform: scale(1);
+  }
+
+  50% {
+
+    transform: scale(1.18);
+  }
+}
+
+@keyframes ripple {
+
+  0% {
+
+    transform: scale(.8);
+
+    opacity: .8;
+  }
+
+  100% {
+
+    transform: scale(2);
+
+    opacity: 0;
+  }
+}
+
+/* =========================================================
+RESPONSIVE
+========================================================= */
+
+@media (max-width: 980px) {
+
+  .navbar {
+
+    padding:
+      0 24px;
   }
 
   .navbar-status {
+
     display: none;
+  }
+
+  .nav-links li {
+
+    padding:
+      10px 14px;
+
+    font-size: 11px;
   }
 }
 
-@media (max-width: 680px) {
+@media (max-width: 720px) {
+
   .navbar {
+
     height: auto;
+
     flex-wrap: wrap;
-    padding: 12px 16px;
-    gap: 12px;
+
+    gap: 14px;
+
+    padding:
+      16px;
   }
 
   .nav-links {
+
     width: 100%;
+
     justify-content: center;
+
     flex-wrap: wrap;
-    gap: 4px;
+  }
+
+  .navbar-logo {
+
+    font-size: 24px;
+  }
+
+  .nav-links li {
+
+    font-size: 10px;
+
+    padding:
+      8px 12px;
   }
 }
