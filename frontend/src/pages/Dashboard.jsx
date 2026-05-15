@@ -39,17 +39,26 @@ function ComingSoon({ title }) {
 
 function Dashboard() {
 
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] =
+    useState("dashboard");
 
-  const [deployments, setDeployments] = useState([]);
+  const [deployments, setDeployments] =
+    useState([]);
 
-  const [latestDeployment, setLatestDeployment] = useState(null);
+  const [latestDeployment, setLatestDeployment] =
+    useState(null);
+
+  const [loading, setLoading] =
+    useState(false);
 
   const fetchDeployments = async () => {
 
     try {
 
-      const response = await API.get("/deployments");
+      setLoading(true);
+
+      const response =
+        await API.get("/deployments");
 
       const deploymentData =
         response.data.deployments || [];
@@ -59,13 +68,15 @@ function Dashboard() {
       if (deploymentData.length > 0) {
 
         const latest =
-          deploymentData[deploymentData.length - 1];
+          deploymentData[
+            deploymentData.length - 1
+          ];
 
         setLatestDeployment(latest);
 
         localStorage.setItem(
           "deployment_url",
-          latest.url
+          latest.url || ""
         );
       }
 
@@ -75,6 +86,10 @@ function Dashboard() {
         "Failed to fetch deployments:",
         error
       );
+
+    } finally {
+
+      setLoading(false);
 
     }
   };
@@ -103,6 +118,8 @@ function Dashboard() {
 
           <>
 
+            {/* HERO SECTION */}
+
             <section className="hero-section">
 
               <div className="hero-eyebrow">
@@ -118,20 +135,33 @@ function Dashboard() {
               </h1>
 
               <p className="hero-subtitle">
-                Smart DevOps Deployment Platform
+
+                Automated GitHub Deployments,
+                Docker Runtime,
+                Real-Time Logs &
+                Smart DevOps Monitoring
+
               </p>
 
               <RepoForm
-                refreshDeployments={fetchDeployments}
+                refreshDeployments={
+                  fetchDeployments
+                }
               />
 
             </section>
+
+            {/* MAIN DASHBOARD */}
 
             <section className="deployment-ui">
 
               <div className="dashboard-grid">
 
+                {/* LEFT SIDE */}
+
                 <div className="grid-left">
+
+                  {/* PRODUCTION */}
 
                   <div className="section-block">
 
@@ -140,10 +170,14 @@ function Dashboard() {
                     </p>
 
                     <ProductionLink
-                      deployment={latestDeployment}
+                      deployment={
+                        latestDeployment
+                      }
                     />
 
                   </div>
+
+                  {/* PIPELINE */}
 
                   <div className="section-block">
 
@@ -152,22 +186,32 @@ function Dashboard() {
                     </p>
 
                     <DeploymentPipeline
-                      status={latestDeployment?.status}
+                      status={
+                        latestDeployment?.status
+                      }
                     />
 
                   </div>
 
                 </div>
 
+                {/* RIGHT SIDE */}
+
                 <div className="grid-right">
+
+                  {/* LIVE LOGS */}
 
                   <div className="section-block">
 
                     <p className="section-title">
-                      Deployment Logs
+                      Live Deployment Logs
                     </p>
 
-                    <LogsViewer />
+                    <LogsViewer
+                      deploymentId={
+                        latestDeployment?.id
+                      }
+                    />
 
                   </div>
 
@@ -175,11 +219,24 @@ function Dashboard() {
 
               </div>
 
+              {/* HISTORY */}
+
               <div className="history-section">
 
-                <p className="section-title">
-                  Deployment History
-                </p>
+                <div className="section-header">
+
+                  <h1>
+                    Deployment History
+                  </h1>
+
+                  <div className="count-badge">
+
+                    {deployments.length}
+                    {" "}Deployments
+
+                  </div>
+
+                </div>
 
                 <DeploymentHistory
                   deployments={deployments}
@@ -197,11 +254,27 @@ function Dashboard() {
 
         return (
 
-          <section className="deployment-ui page-spacing">
+          <section
+            className="
+              deployment-ui
+              page-spacing
+            "
+          >
 
-            <p className="section-title">
-              All Deployments
-            </p>
+            <div className="section-header">
+
+              <h1>
+                All Deployments
+              </h1>
+
+              <div className="count-badge">
+
+                {deployments.length}
+                {" "}Deployments
+
+              </div>
+
+            </div>
 
             <DeploymentHistory
               deployments={deployments}
@@ -215,13 +288,26 @@ function Dashboard() {
 
         return (
 
-          <section className="deployment-ui page-spacing">
+          <section
+            className="
+              deployment-ui
+              page-spacing
+            "
+          >
 
-            <p className="section-title">
-              Deployment Engine Logs
-            </p>
+            <div className="section-header">
 
-            <LogsViewer />
+              <h1>
+                Deployment Engine Logs
+              </h1>
+
+            </div>
+
+            <LogsViewer
+              deploymentId={
+                latestDeployment?.id
+              }
+            />
 
           </section>
 
@@ -230,10 +316,15 @@ function Dashboard() {
       case "monitoring":
 
         return (
-          <ComingSoon title="Monitoring" />
+
+          <ComingSoon
+            title="Monitoring"
+          />
+
         );
 
       default:
+
         return null;
     }
   };
@@ -242,26 +333,67 @@ function Dashboard() {
 
     <div className="dashboard">
 
-      {/* Animated Background */}
+      {/* ANIMATED BACKGROUND */}
 
       <div className="bg-container">
 
-        <div className="bg-orb bg-orb-1"></div>
+        <div className="
+          bg-orb
+          bg-orb-1
+        "></div>
 
-        <div className="bg-orb bg-orb-2"></div>
+        <div className="
+          bg-orb
+          bg-orb-2
+        "></div>
 
-        <div className="bg-orb bg-orb-3"></div>
+        <div className="
+          bg-orb
+          bg-orb-3
+        "></div>
 
         <div className="bg-grid"></div>
 
       </div>
+
+      {/* NAVBAR */}
 
       <Navbar
         activePage={activePage}
         setActivePage={setActivePage}
       />
 
-      {renderPage()}
+      {/* PAGE CONTENT */}
+
+      {loading ? (
+
+        <div className="loader-container">
+
+          <div className="loader-ring">
+
+            <div className="
+              loader-ring-outer
+            "></div>
+
+            <div className="
+              loader-ring-inner
+            "></div>
+
+          </div>
+
+          <p className="loader-text">
+
+            Loading Deployments...
+
+          </p>
+
+        </div>
+
+      ) : (
+
+        renderPage()
+
+      )}
 
     </div>
 

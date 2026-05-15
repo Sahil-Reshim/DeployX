@@ -1,30 +1,44 @@
 import DeploymentItem from "./DeploymentItem";
-import EmptyState from "./EmptyState";
 
 function DeploymentHistory({ deployments }) {
-  const running = deployments.filter((d) => d.status === "running").length;
+
+  if (!deployments.length) {
+
+    return (
+      <div className="empty-state">
+
+        <span className="empty-state-icon">
+          🚀
+        </span>
+
+        <h2>No Deployments Yet</h2>
+
+        <p>
+          Deploy your first repository to begin.
+        </p>
+
+      </div>
+    );
+  }
 
   return (
-    <div className="history-section">
-      <div className="section-header">
-        <h1>Live Deployments</h1>
-        <span className="count-badge">{running} Running</span>
-      </div>
 
-      {deployments.length === 0 ? (
-        <EmptyState />
-      ) : (
-        <div className="deployment-grid">
-          {deployments.map((deployment, i) => (
-            <DeploymentItem
-              key={deployment.id || i}
-              deployment={deployment}
-              index={i}
-            />
-          ))}
-        </div>
-      )}
+    <div className="deployment-grid">
+
+      {deployments
+        .slice()
+        .reverse()
+        .map((deployment) => (
+
+          <DeploymentItem
+            key={deployment.id}
+            deployment={deployment}
+          />
+
+      ))}
+
     </div>
+
   );
 }
 
