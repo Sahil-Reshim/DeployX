@@ -56,7 +56,7 @@ def run_docker_container(image_name):
             }
         )
 
-        time.sleep(2)
+        time.sleep(5)
 
         container.reload()
 

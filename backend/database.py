@@ -17,6 +17,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS deployments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         repo_url TEXT,
+        framework TEXT,
         image_name TEXT,
         image_id TEXT,
         container_id TEXT,
