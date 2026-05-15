@@ -130,3 +130,15 @@
   vertical-align: text-bottom;
   animation: blink 1s step-end infinite;
 }
+
+.logs-section-title {
+  margin: 20px 0 10px;
+  color: #38bdf8;
+  font-size: 12px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.1em;
+}
+
+.logs-section-title.runtime {
+  color: #22c55e;
+}
