@@ -11,7 +11,7 @@ Built with Flask, React, Docker, Jenkins, and Kubernetes
 
 # 🌌 Overview
 
-DeployX is a modern full-stack DevOps platform designed to simplify application deployment, infrastructure automation, monitoring, and container orchestration.
+DeployX is a modern full-stack DevOps platform designed to simplify application deployment, infrastructure automation, monitoring, and container orchestration .
 
 Inspired by platforms like **Vercel**, **Jenkins**, **Grafana**, and **Kubernetes Dashboard**, DeployX provides developers with an all-in-one deployment ecosystem where applications can be:
 
