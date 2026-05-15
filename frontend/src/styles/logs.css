@@ -1,48 +1,72 @@
+/* ─── LOGS CONTAINER ─────────────────────────────────────────────────────── */
+
 .logs-container {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
-  padding: 0;
-  margin-bottom: 24px;
-  backdrop-filter: blur(16px);
+  border-radius: 16px;
   overflow: hidden;
+  position: relative;
 }
+
+/* Subtle scanline animation — pure ambience */
+.logs-container::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(255, 255, 255, 0.012),
+    transparent
+  );
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── LOGS HEADER ────────────────────────────────────────────────────────── */
 
 .logs-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255,255,255,0.02);
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+  background: rgba(255, 255, 255, 0.018);
+  position: sticky;
+  top: 0;
+  z-index: 3;
 }
 
 .logs-header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
 }
 
+/* macOS-style window dots */
 .logs-dots {
   display: flex;
-  gap: 6px;
+  gap: 5px;
 }
 
 .logs-dot {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
 }
 
-.logs-dot.red { background: rgba(239, 68, 68, 0.6); }
-.logs-dot.yellow { background: rgba(251, 191, 36, 0.6); }
-.logs-dot.green { background: rgba(34, 197, 94, 0.6); }
+.logs-dot.red    { background: rgba(239, 68, 68, 0.55); }
+.logs-dot.yellow { background: rgba(251, 191, 36, 0.55); }
+.logs-dot.green  { background: rgba(34, 197, 94, 0.55); }
 
 .logs-title {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 12px;
-  color: rgba(255,255,255,0.3);
-  letter-spacing: 0.05em;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.28);
+  letter-spacing: 0.06em;
 }
 
 .logs-status {
@@ -50,83 +74,197 @@
   align-items: center;
   gap: 6px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 11px;
+  font-size: 10.5px;
   color: rgba(34, 197, 94, 0.6);
+  letter-spacing: 0.04em;
 }
 
 .logs-status-dot {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
   border-radius: 50%;
   background: #22c55e;
-  animation: pulseDot 2s infinite;
+  flex-shrink: 0;
+  animation: pulseDot 2.4s ease-in-out infinite;
 }
 
+/* ─── LOG BOX ────────────────────────────────────────────────────────────── */
+
 .logs-box {
-  padding: 20px 24px;
-  min-height: 200px;
-  max-height: 320px;
+  padding: 18px 22px;
+  min-height: 180px;
+  max-height: 300px;
   overflow-y: auto;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 13px;
-  line-height: 1.8;
+  font-size: 12.5px;
+  line-height: 1.85;
+  position: relative;
+  z-index: 1;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255,255,255,0.1) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 .logs-box::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
+}
+
+.logs-box::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .logs-box::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.08);
   border-radius: 2px;
 }
 
+.logs-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── LOG LINES ──────────────────────────────────────────────────────────── */
+
 .log-line {
   display: flex;
-  gap: 12px;
-  animation: logAppear 0.3s ease both;
-  padding: 2px 0;
+  gap: 10px;
+  align-items: baseline;
+  padding: 1px 0;
+  animation: logAppear 0.25s ease both;
+  border-radius: 3px;
+  transition: background 0.15s;
+}
+
+.log-line:hover {
+  background: rgba(255, 255, 255, 0.025);
+  margin: 0 -6px;
+  padding: 1px 6px;
 }
 
 .log-timestamp {
-  color: rgba(255,255,255,0.15);
+  color: rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 10.5px;
   padding-top: 1px;
-  min-width: 65px;
+  min-width: 60px;
+  letter-spacing: 0.02em;
 }
 
 .log-tag {
   flex-shrink: 0;
-  font-size: 11px;
+  font-size: 10.5px;
   font-weight: 700;
-  min-width: 80px;
+  min-width: 72px;
+  letter-spacing: 0.06em;
 }
 
-.log-tag.info { color: rgba(56, 189, 248, 0.7); }
-.log-tag.success { color: rgba(34, 197, 94, 0.7); }
-.log-tag.error { color: rgba(239, 68, 68, 0.7); }
-.log-tag.warn { color: rgba(251, 191, 36, 0.7); }
-.log-tag.system { color: rgba(165, 180, 252, 0.7); }
-.log-tag.docker { color: rgba(56, 189, 248, 0.7); }
+.log-tag.info    { color: rgba(56, 189, 248, 0.65); }
+.log-tag.success { color: rgba(34, 197, 94, 0.65); }
+.log-tag.error   { color: rgba(239, 68, 68, 0.7); }
+.log-tag.warn    { color: rgba(251, 191, 36, 0.65); }
+.log-tag.system  { color: rgba(165, 180, 252, 0.6); }
+.log-tag.docker  { color: rgba(56, 189, 248, 0.55); }
 
 .log-message {
-  color: rgba(255,255,255,0.55);
+  color: rgba(255, 255, 255, 0.48);
   flex: 1;
-  word-break: break-all;
+  word-break: break-word;
+  line-height: 1.6;
 }
 
-.log-message.success-msg { color: rgba(34, 197, 94, 0.8); }
-.log-message.error-msg { color: rgba(239, 68, 68, 0.8); }
+.log-message.success-msg { color: rgba(34, 197, 94, 0.75); }
+.log-message.error-msg   { color: rgba(239, 68, 68, 0.75); }
+.log-message.warn-msg    { color: rgba(251, 191, 36, 0.7); }
 
+/* Blinking cursor at end of logs */
 .log-cursor {
   display: inline-block;
-  width: 8px;
-  height: 14px;
-  background: rgba(34, 197, 94, 0.7);
+  width: 7px;
+  height: 13px;
+  background: rgba(34, 197, 94, 0.65);
   margin-left: 3px;
   vertical-align: text-bottom;
-  animation: blink 1s step-end infinite;
+  border-radius: 1px;
+  animation: blink 1.1s step-end infinite;
+}
+
+/* ─── SECTION DIVIDERS INSIDE LOG ────────────────────────────────────────── */
+
+.logs-section-title {
+  margin: 18px 0 8px;
+  color: #38bdf8;
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.7;
+}
+
+.logs-section-title::before {
+  content: '//';
+  opacity: 0.4;
+}
+
+.logs-section-title.runtime {
+  color: #22c55e;
+}
+
+/* ─── EMPTY LOGS ─────────────────────────────────────────────────────────── */
+
+.logs-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  gap: 10px;
+}
+
+.logs-empty p {
+  color: rgba(255, 255, 255, 0.18);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+/* ─── LOG FOOTER BAR ─────────────────────────────────────────────────────── */
+
+.logs-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.logs-footer-stat {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.18);
+  letter-spacing: 0.04em;
+}
+
+.logs-footer-stat strong {
+  color: rgba(255, 255, 255, 0.38);
+  font-weight: 500;
+}
+
+.logs-clear-btn {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10.5px;
+  color: rgba(255, 255, 255, 0.25);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 5px;
+  letter-spacing: 0.04em;
+  transition: color 0.2s, background 0.2s;
+}
+
+.logs-clear-btn:hover {
+  color: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.05);
 }

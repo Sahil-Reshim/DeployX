@@ -1,90 +1,112 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import API from "../services/api";
 
-const INITIAL_LOGS = [
-  { time: "00:00:01", tag: "system", msg: "DeployX engine initialized" },
-  { time: "00:00:02", tag: "docker", msg: "Docker runtime connected" },
-  { time: "00:00:03", tag: "info",   msg: "Listening for deployment events..." },
-  { time: "00:00:04", tag: "info",   msg: "Waiting for new deployments..." },
-];
+function LogsViewer({ deploymentId }) {
+  const [buildLogs, setBuildLogs] = useState([]);
+  const [runtimeLogs, setRuntimeLogs] = useState([]);
 
-const STREAM_LOGS = [
-  { tag: "info",    msg: "Cloning repository..." },
-  { tag: "info",    msg: "Detecting framework..." },
-  { tag: "docker",  msg: "Building Docker image..." },
-  { tag: "docker",  msg: "Installing dependencies..." },
-  { tag: "info",    msg: "Running build command..." },
-  { tag: "docker",  msg: "Container created successfully" },
-  { tag: "success", msg: "Deployment live 🚀" },
-];
+  const fetchLogs = async () => {
+    if (!deploymentId) return;
 
-let streamIndex = 0;
+    try {
+      const buildRes = await API.get(
+        `/deployments/${deploymentId}/logs`
+      );
 
-function pad(n) {
-  return String(n).padStart(2, "0");
-}
+      const runtimeRes = await API.get(
+        `/deployments/${deploymentId}/container-logs`
+      );
 
-function nowTime() {
-  const d = new Date();
-  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-}
+      setBuildLogs(buildRes.data.logs || []);
+      setRuntimeLogs(runtimeRes.data.logs || []);
 
-function LogsViewer() {
-  const [logs, setLogs] = useState(INITIAL_LOGS);
-  const boxRef = useRef(null);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const entry = STREAM_LOGS[streamIndex % STREAM_LOGS.length];
-      streamIndex++;
-      setLogs((prev) => [
-        ...prev,
-        { time: nowTime(), tag: entry.tag, msg: entry.msg },
-      ]);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    if (boxRef.current) {
-      boxRef.current.scrollTop = boxRef.current.scrollHeight;
+    } catch (error) {
+      console.error("Failed to fetch logs", error);
     }
-  }, [logs]);
+  };
+
+  useEffect(() => {
+    fetchLogs();
+
+    const interval = setInterval(fetchLogs, 3000);
+
+    return () => clearInterval(interval);
+
+  }, [deploymentId]);
 
   return (
     <div className="logs-container">
+
       <div className="logs-header">
+
         <div className="logs-header-left">
+
           <div className="logs-dots">
             <span className="logs-dot red"></span>
             <span className="logs-dot yellow"></span>
             <span className="logs-dot green"></span>
           </div>
-          <span className="logs-title">deployx — deployment-engine</span>
+
+          <p className="logs-title">
+            deployment-engine.logs
+          </p>
+
         </div>
+
         <div className="logs-status">
           <span className="logs-status-dot"></span>
-          live
+          LIVE
         </div>
+
       </div>
 
-      <div className="logs-box" ref={boxRef}>
-        {logs.map((line, i) => (
-          <div className="log-line" key={i}>
-            <span className="log-timestamp">{line.time}</span>
-            <span className={`log-tag ${line.tag}`}>[{line.tag.toUpperCase()}]</span>
-            <span className={`log-message ${line.tag === "success" ? "success-msg" : line.tag === "error" ? "error-msg" : ""}`}>
-              {line.msg}
+      <div className="logs-box">
+
+        {buildLogs.length === 0 &&
+        runtimeLogs.length === 0 ? (
+          <div className="log-line">
+            <span className="log-message">
+              Waiting for deployment logs...
             </span>
           </div>
-        ))}
-        <div className="log-line">
-          <span className="log-timestamp">{nowTime()}</span>
-          <span className="log-tag system">[SYSTEM]</span>
-          <span className="log-message">
-            <span className="log-cursor"></span>
-          </span>
-        </div>
+        ) : (
+          <>
+            <div className="logs-section-title">
+              BUILD LOGS
+            </div>
+
+            {buildLogs.map((log, index) => (
+              <div className="log-line" key={index}>
+                <span className="log-tag info">
+                  BUILD
+                </span>
+
+                <span className="log-message">
+                  {log}
+                </span>
+              </div>
+            ))}
+
+            <div className="logs-section-title runtime">
+              CONTAINER LOGS
+            </div>
+
+            {runtimeLogs.map((log, index) => (
+              <div className="log-line" key={index}>
+                <span className="log-tag success">
+                  RUNTIME
+                </span>
+
+                <span className="log-message">
+                  {log}
+                </span>
+              </div>
+            ))}
+          </>
+        )}
+
       </div>
+
     </div>
   );
 }

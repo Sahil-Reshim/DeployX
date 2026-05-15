@@ -1,55 +1,66 @@
-import { useState } from "react";
-import StatusBadge from "./StatusBadge";
-
 function ProductionLink({ deployment }) {
-  const [copied, setCopied] = useState(false);
 
-  const deploymentUrl = deployment?.url;
-  const deploymentStatus = deployment?.status;
+  if (!deployment) {
 
-  const openDeployment = () => {
-    if (deploymentUrl) window.open(deploymentUrl, "_blank");
-  };
+    return (
+      <div className="production-link">
 
-  const copyUrl = async () => {
-    if (deploymentUrl) {
-      await navigator.clipboard.writeText(deploymentUrl);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+        <div className="production-top">
+
+          <div>
+
+            <h2>No Active Deployment</h2>
+
+            <p>
+              Deploy repository to generate URL
+            </p>
+
+          </div>
+
+        </div>
+
+      </div>
+    );
+  }
 
   return (
+
     <div className="production-link">
+
       <div className="production-top">
+
         <div>
-          <h2>Live Production Deployment</h2>
-          <p>Latest deployed container</p>
+
+          <h2>Production Deployment</h2>
+
+          <p>
+            Live deployment URL
+          </p>
+
         </div>
-        <StatusBadge status={deploymentStatus || "offline"} />
+
       </div>
 
       <div className="url-box">
-        {deploymentUrl || "No Deployment Available"}
+        {deployment.url}
       </div>
 
       <div className="button-group">
-        <button
-          className="btn btn-primary"
-          onClick={openDeployment}
-          disabled={!deploymentUrl}
+
+        <a
+          href={deployment.url}
+          target="_blank"
+          rel="noreferrer"
         >
-          ↗ Open Deployment
-        </button>
-        <button
-          className="btn btn-ghost"
-          onClick={copyUrl}
-          disabled={!deploymentUrl}
-        >
-          {copied ? "✓ Copied!" : "⎘ Copy URL"}
-        </button>
+          <button className="btn btn-primary">
+            Open Deployment
+          </button>
+        </a>
+
       </div>
+
     </div>
+
   );
 }
 
