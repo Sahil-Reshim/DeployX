@@ -1302,3 +1302,16 @@ REPO FORM
       0 0 40px rgba(220,38,38,.7);
   }
 }
+
+html {
+  scroll-behavior: auto !important;
+  overflow-anchor: none;
+}
+
+body {
+  overflow-anchor: none;
+}
+
+.dashboard {
+  overflow-anchor: none;
+}

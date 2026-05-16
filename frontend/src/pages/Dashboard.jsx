@@ -121,6 +121,18 @@ function Dashboard() {
   }, []);
 
   /* ─────────────────────────────────────────────
+   SCROLL FIX
+───────────────────────────────────────────── */
+
+  useEffect(() => {
+    if (!initialLoading) {
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+      }, 100);
+    }
+  }, [initialLoading, activePage]);
+
+  /* ─────────────────────────────────────────────
      DEPLOYMENT PROGRESS
   ───────────────────────────────────────────── */
 
