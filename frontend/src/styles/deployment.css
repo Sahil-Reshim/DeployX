@@ -637,3 +637,388 @@
     padding: 22px 20px;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   ACTIVE DEPLOYMENT LIVE CARD
+───────────────────────────────────────────────────────────── */
+
+.active-deployment-card {
+  position: relative;
+  overflow: hidden;
+
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(220, 38, 38, 0.12);
+
+  border-radius: 22px;
+  padding: 28px;
+
+  margin-bottom: 26px;
+
+  backdrop-filter: blur(24px);
+
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255,255,255,0.03);
+
+  animation: cardReveal 0.45s ease both;
+}
+
+/* top red line */
+.active-deployment-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(220, 38, 38, 0.7),
+    transparent
+  );
+
+  background-size: 200% 100%;
+
+  animation: shimmer 5s linear infinite;
+}
+
+/* glow orb */
+.active-deployment-card::after {
+  content: '';
+
+  position: absolute;
+
+  width: 240px;
+  height: 240px;
+
+  right: -100px;
+  bottom: -100px;
+
+  background: radial-gradient(
+    circle,
+    rgba(220, 38, 38, 0.08),
+    transparent 70%
+  );
+
+  pointer-events: none;
+}
+
+.active-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+
+  margin-bottom: 24px;
+}
+
+.active-label {
+  color: rgba(255,255,255,0.38);
+
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+
+  margin-bottom: 6px;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.active-top h2 {
+  font-family: 'Syne', sans-serif;
+
+  font-size: 26px;
+  font-weight: 700;
+
+  color: white;
+
+  letter-spacing: -0.5px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   LIVE PROGRESS BAR
+───────────────────────────────────────────────────────────── */
+
+.progress-wrapper {
+  margin-top: 10px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 12px;
+
+  color: rgba(255,255,255,0.62);
+
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 14px;
+
+  background: rgba(255,255,255,0.04);
+
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  border: 1px solid rgba(255,255,255,0.04);
+
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+
+  position: relative;
+
+  transition: width 0.45s ease;
+}
+
+/* animated shimmer */
+.progress-fill::after {
+  content: '';
+
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.35),
+    transparent
+  );
+
+  transform: translateX(-100%);
+
+  animation: progressShimmer 2.2s linear infinite;
+}
+
+/* status colors */
+
+.progress-fill.success {
+  background: linear-gradient(
+    90deg,
+    #22c55e,
+    #4ade80
+  );
+}
+
+.progress-fill.failed {
+  background: linear-gradient(
+    90deg,
+    #ef4444,
+    #f87171
+  );
+}
+
+.progress-fill.building,
+.progress-fill.deploying,
+.progress-fill.cloning,
+.progress-fill.queued,
+.progress-fill.running {
+  background: linear-gradient(
+    90deg,
+    #dc2626,
+    #ef4444
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MINI  PIPELINE
+───────────────────────────────────────────────────────────── */
+
+.pipeline-mini {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+  margin-top: 24px;
+
+  width: 100%;
+
+  position: relative;
+}
+
+/* line between steps */
+.pipeline-mini::before {
+  content: '';
+
+  position: absolute;
+
+  top: 17px;
+  left: 40px;
+  right: 40px;
+
+  height: 2px;
+
+  background: rgba(255,255,255,0.06);
+
+  z-index: 0;
+}
+
+.pipeline-mini .pipeline-step {
+  position: relative;
+  z-index: 2;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 8px;
+
+  min-width: 70px;
+}
+
+/* circle node */
+.pipeline-mini .pipeline-step::before {
+  content: '';
+
+  width: 16px;
+  height: 16px;
+
+  border-radius: 50%;
+
+  background: rgba(255,255,255,0.08);
+
+  border: 2px solid rgba(255,255,255,0.12);
+
+  transition: all 0.3s ease;
+}
+
+/* label */
+.pipeline-mini .pipeline-step {
+  color: rgba(255,255,255,0.35);
+
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+/* ACTIVE STEP */
+
+.pipeline-mini .pipeline-step.active {
+  color: #fff;
+}
+
+/* glowing active node */
+
+.pipeline-mini .pipeline-step.active::before {
+  background: #ef4444;
+
+  border-color: #ef4444;
+
+  box-shadow:
+    0 0 12px rgba(239, 68, 68, 0.8),
+    0 0 24px rgba(239, 68, 68, 0.45),
+    0 0 40px rgba(239, 68, 68, 0.2);
+
+  animation: pulseGlow 1.8s infinite;
+}
+
+/* completed connector glow */
+
+.pipeline-mini .pipeline-step.active:not(:last-child)::after {
+  content: '';
+
+  position: absolute;
+
+  top: 7px;
+  left: 50%;
+
+  width: 120px;
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    rgba(239,68,68,0.9),
+    rgba(239,68,68,0.15)
+  );
+
+  z-index: -1;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SMALLER ACTIVE DEPLOYMENT CARD
+───────────────────────────────────────────────────────────── */
+
+.active-deployment-card {
+  padding: 22px !important;
+  border-radius: 18px !important;
+  margin-bottom: 18px !important;
+}
+
+.active-top h2 {
+  font-size: 21px !important;
+}
+
+.progress-bar {
+  height: 10px !important;
+}
+
+.pipeline-mini {
+  margin-top: 18px !important;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────────────────────────── */
+
+@keyframes pulseGlow {
+
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 0 12px rgba(239, 68, 68, 0.7),
+      0 0 24px rgba(239, 68, 68, 0.3);
+  }
+
+  50% {
+    transform: scale(1.18);
+    box-shadow:
+      0 0 18px rgba(239, 68, 68, 1),
+      0 0 34px rgba(239, 68, 68, 0.5);
+  }
+
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 12px rgba(239, 68, 68, 0.7),
+      0 0 24px rgba(239, 68, 68, 0.3);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE
+───────────────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  .pipeline-mini {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .pipeline-mini::before {
+    left: 30px;
+    right: 30px;
+  }
+
+  .pipeline-mini .pipeline-step {
+    min-width: 60px;
+    font-size: 9px;
+  }
+
+  .pipeline-mini .pipeline-step.active:not(:last-child)::after {
+    width: 80px;
+  }
+}
