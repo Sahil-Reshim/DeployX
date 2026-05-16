@@ -54,13 +54,18 @@ function LogsViewer({ deploymentId }) {
 
   }, [deploymentId]);
 
+  // Auto-scroll to bottom when logs update
+
   useEffect(() => {
 
     if (autoScroll) {
 
-      logsEndRef.current?.scrollIntoView({
-        behavior: "smooth"
-      });
+      const logsBox =
+        logsEndRef.current?.parentElement;
+
+      if (logsBox) {
+        logsBox.scrollTop = logsBox.scrollHeight;
+      }
 
     }
 

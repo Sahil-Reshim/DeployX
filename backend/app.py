@@ -1,6 +1,7 @@
 from database import init_db
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from services.cleanup_service import remove_repo_folder
 
 from services.git_service import clone_repository
 from services.framework_detector import detect_framework
@@ -81,10 +82,24 @@ def deploy():
         print("Clone Result:", clone_result)
 
         if not clone_result["success"]:
+
+            repo_path = clone_result.get("repo_path")
+
+            if repo_path:
+                remove_repo_folder(repo_path)
+
             return jsonify({
                 "success": False,
+                "status": "failed",
                 "step": "clone_repository",
-                "error": clone_result.get("message", "Repository cloning failed"),
+                "error": clone_result.get(
+                    "error",
+                    "Repository cloning failed"
+                ),
+                "error_type": clone_result.get(
+                    "error_type",
+                    "CLONE_ERROR"
+                ),
                 "details": clone_result
             }), 400
 
@@ -103,6 +118,7 @@ def deploy():
 
             return jsonify({
                 "success": False,
+                "status": "failed",
                 "step": "framework_detection",
                 "error": framework_result.get("message", "Framework detection failed"),
                 "details": framework_result,
