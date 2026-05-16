@@ -6,19 +6,19 @@ function DeploymentPipeline({ status }) {
 
     return [
       {
-        icon: "✓",
+        icon: "📂",
         label: "Repository Cloned",
         sublabel: "Source code fetched",
         state: allDone || building ? "step-done" : "step-pending",
       },
       {
-        icon: "✓",
+        icon: "🔍",
         label: "Framework Detected",
         sublabel: "Auto-detected from source",
         state: allDone || building ? "step-done" : "step-pending",
       },
       {
-        icon: "✓",
+        icon: "🐳",
         label: "Docker Image Built",
         sublabel: "Image layers cached",
         state: allDone ? "step-done" : building ? "step-active" : "step-pending",

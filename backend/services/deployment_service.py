@@ -12,13 +12,19 @@ def save_deployment(
     conn = get_db_connection()
     cursor = conn.cursor()
 
-    status = "running" if container_result.get("success") else "failed"
+    status = (
+        "live"
+        if container_result.get("success")
+        else "failed"
+    )
 
     created_at = datetime.now().strftime(
         "%Y-%m-%d %H:%M:%S"
     )
 
-    framework = framework_result.get("framework")
+    framework = framework_result.get(
+        "framework"
+    )
 
     cursor.execute("""
     INSERT INTO deployments (
@@ -60,6 +66,7 @@ def save_deployment(
         "container_id": container_result.get("container_id"),
         "port": container_result.get("port"),
         "url": container_result.get("url"),
+        "local_url": container_result.get("local_url"),
         "status": status,
         "created_at": created_at
     }
