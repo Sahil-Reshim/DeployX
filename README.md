@@ -1,6 +1,6 @@
 # DeployX 🚀
 
-TEST =https://github.com/vitejs/vite.git
+TEST = https://github.com/vitejs/vite.git
 
 <div align="center">
 
