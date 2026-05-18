@@ -4,8 +4,8 @@ TEST = https://github.com/vitejs/vite.git
 
 <div align="center">
 
-### Smart DevOps Deployment Platform .
-Built with Flask, React, Docker, Jenkins, and Kubernetes .
+### Smart DevOps Deployment Platform.
+Built with Flask, React, Docker, Jenkins, and Kubernetes.
 
 </div>
 
