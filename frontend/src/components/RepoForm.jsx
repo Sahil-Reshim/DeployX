@@ -176,7 +176,7 @@ function RepoForm({
           ) : (
 
             <>
-              🚀 Deploy Repository
+              Deploy Repository
             </>
 
           )}

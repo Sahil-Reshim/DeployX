@@ -11,22 +11,27 @@ def get_db_connection():
 
 def init_db():
     conn = get_db_connection()
+
     cursor = conn.cursor()
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS deployments (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         repo_url TEXT,
+        repo_name TEXT,
         framework TEXT,
         image_name TEXT,
         image_id TEXT,
         container_id TEXT,
         port TEXT,
         url TEXT,
+        local_url TEXT,
         status TEXT,
+        current_step TEXT,
         created_at TEXT
     )
     """)
 
     conn.commit()
+
     conn.close()

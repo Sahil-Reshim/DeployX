@@ -16,9 +16,13 @@ import "../styles/logs.css";
 import "../styles/animations.css";
 
 function ComingSoon({ title }) {
+
   return (
+
     <div className="coming-soon-page">
+
       <div className="coming-soon-card">
+
         <span className="coming-soon-badge-large">
           Coming Soon
         </span>
@@ -28,8 +32,11 @@ function ComingSoon({ title }) {
         <p>
           This feature is under active development.
         </p>
+
       </div>
+
     </div>
+
   );
 }
 
@@ -47,6 +54,9 @@ function Dashboard() {
   const [initialLoading, setInitialLoading] =
     useState(true);
 
+  const [error, setError] =
+    useState("");
+
   const hasFetched = useRef(false);
 
   /* ─────────────────────────────────────────────
@@ -56,37 +66,72 @@ function Dashboard() {
   const fetchDeployments = async (
     showLoader = false
   ) => {
+
     try {
 
       const response = await API.get(
         "/deployments"
       );
 
+      // Backend can return:
+      // response.data
+      // OR response.data.deployments
+
       const deploymentData =
-        response.data.deployments || [];
+        Array.isArray(response.data)
+          ? response.data
+          : response.data.deployments || [];
 
-      setDeployments(deploymentData);
+      // Sort newest first
 
-      if (deploymentData.length > 0) {
+      const sortedDeployments =
+        deploymentData.sort(
+          (a, b) =>
+            new Date(
+              b.created_at || 0
+            ) -
+            new Date(
+              a.created_at || 0
+            )
+        );
+
+      setDeployments(sortedDeployments);
+
+      // Latest deployment
+
+      if (
+        sortedDeployments.length > 0
+      ) {
 
         const latest =
-          deploymentData[
-            deploymentData.length - 1
-          ];
+          sortedDeployments[0];
 
         setLatestDeployment(latest);
+
+        // Persist deployment URL
 
         localStorage.setItem(
           "deployment_url",
           latest.url || ""
         );
+
+      } else {
+
+        setLatestDeployment(null);
+
       }
+
+      setError("");
 
     } catch (error) {
 
       console.error(
         "Failed to fetch deployments:",
         error
+      );
+
+      setError(
+        "Failed to load deployments"
       );
 
     } finally {
@@ -121,15 +166,20 @@ function Dashboard() {
   }, []);
 
   /* ─────────────────────────────────────────────
-   SCROLL FIX
-───────────────────────────────────────────── */
+     SCROLL FIX
+  ───────────────────────────────────────────── */
 
   useEffect(() => {
+
     if (!initialLoading) {
+
       setTimeout(() => {
+
         window.scrollTo(0, 0);
+
       }, 100);
     }
+
   }, [initialLoading, activePage]);
 
   /* ─────────────────────────────────────────────
@@ -138,7 +188,8 @@ function Dashboard() {
 
   const getProgress = () => {
 
-    if (!latestDeployment) return 0;
+    if (!latestDeployment)
+      return 0;
 
     const status =
       latestDeployment?.status?.toLowerCase();
@@ -147,10 +198,10 @@ function Dashboard() {
 
       case "queued":
       case "pending":
-        return 15;
+        return 10;
 
       case "cloning":
-        return 30;
+        return 25;
 
       case "installing":
         return 45;
@@ -159,9 +210,9 @@ function Dashboard() {
         return 65;
 
       case "deploying":
-      case "running":
-        return 90;
+        return 85;
 
+      case "running":
       case "success":
       case "completed":
       case "live":
@@ -172,8 +223,22 @@ function Dashboard() {
         return 100;
 
       default:
-        return 20;
+        return 15;
     }
+  };
+
+  /* ─────────────────────────────────────────────
+     STEP STATUS
+  ───────────────────────────────────────────── */
+
+  const isStepActive = (
+    requiredProgress
+  ) => {
+
+    return (
+      getProgress() >=
+      requiredProgress
+    );
   };
 
   /* ─────────────────────────────────────────────
@@ -190,11 +255,17 @@ function Dashboard() {
 
         return (
           <>
+
+            {/* HERO */}
+
             <section className="hero-section">
 
               <div className="hero-eyebrow">
+
                 <span className="hero-eyebrow-dot"></span>
+
                 Smart DevOps Platform
+
               </div>
 
               <h1>
@@ -202,10 +273,12 @@ function Dashboard() {
               </h1>
 
               <p className="hero-subtitle">
+
                 Automated GitHub Deployments,
                 Docker Runtime,
                 Real-Time Logs &
                 Smart DevOps Monitoring
+
               </p>
 
               <RepoForm
@@ -215,6 +288,8 @@ function Dashboard() {
               />
 
             </section>
+
+            {/* MAIN UI */}
 
             <section className="deployment-ui">
 
@@ -233,21 +308,29 @@ function Dashboard() {
                       </p>
 
                       <h2>
-                        {latestDeployment.repo ||
-                          latestDeployment.repoName ||
-                          "GitHub Repository"}
+
+                        {latestDeployment.repo_url
+                          ? latestDeployment.repo_url
+                              .replace(".git", "")
+                              .split("/")
+                              .slice(-2)
+                              .join("/")
+                          : "GitHub Repository"}
+
                       </h2>
 
                     </div>
 
                     <div
                       className={`status-pill ${
-                        latestDeployment?.status?.toLowerCase()
+                        latestDeployment?.status?.toLowerCase() ||
+                        "offline"
                       }`}
                     >
-                      {
-                        latestDeployment?.status
-                      }
+
+                      {latestDeployment?.status ||
+                        "offline"}
+
                     </div>
 
                   </div>
@@ -290,7 +373,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 15
+                        isStepActive(10)
                           ? "active"
                           : ""
                       }`}
@@ -300,7 +383,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 30
+                        isStepActive(25)
                           ? "active"
                           : ""
                       }`}
@@ -310,7 +393,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 45
+                        isStepActive(45)
                           ? "active"
                           : ""
                       }`}
@@ -320,7 +403,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 65
+                        isStepActive(65)
                           ? "active"
                           : ""
                       }`}
@@ -330,7 +413,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 90
+                        isStepActive(85)
                           ? "active"
                           : ""
                       }`}
@@ -340,7 +423,7 @@ function Dashboard() {
 
                     <div
                       className={`pipeline-step ${
-                        getProgress() >= 100
+                        isStepActive(100)
                           ? "active"
                           : ""
                       }`}
@@ -354,9 +437,11 @@ function Dashboard() {
 
               )}
 
-              {/* DASHBOARD GRID */}
+              {/* GRID */}
 
               <div className="dashboard-grid">
+
+                {/* LEFT */}
 
                 <div className="grid-left">
 
@@ -367,7 +452,9 @@ function Dashboard() {
                     </p>
 
                     <ProductionLink
-                      deployment={latestDeployment}
+                      deployment={
+                        latestDeployment
+                      }
                     />
 
                   </div>
@@ -387,6 +474,8 @@ function Dashboard() {
                   </div>
 
                 </div>
+
+                {/* RIGHT */}
 
                 <div className="grid-right">
 
@@ -419,9 +508,11 @@ function Dashboard() {
                   </h1>
 
                   <div className="count-badge">
+
                     {deployments.length}
                     {" "}
                     Deployments
+
                   </div>
 
                 </div>
@@ -433,6 +524,7 @@ function Dashboard() {
               </div>
 
             </section>
+
           </>
         );
 
@@ -441,16 +533,21 @@ function Dashboard() {
       case "deployments":
 
         return (
+
           <section className="deployment-ui page-spacing">
 
             <div className="section-header">
 
-              <h1>All Deployments</h1>
+              <h1>
+                All Deployments
+              </h1>
 
               <div className="count-badge">
+
                 {deployments.length}
                 {" "}
                 Deployments
+
               </div>
 
             </div>
@@ -460,6 +557,7 @@ function Dashboard() {
             />
 
           </section>
+
         );
 
       /* ───────────────── LOGS ───────────────── */
@@ -467,19 +565,25 @@ function Dashboard() {
       case "logs":
 
         return (
+
           <section className="deployment-ui page-spacing">
 
             <div className="section-header">
+
               <h1>
                 Deployment Engine Logs
               </h1>
+
             </div>
 
             <LogsViewer
-              deploymentId={latestDeployment?.id}
+              deploymentId={
+                latestDeployment?.id
+              }
             />
 
           </section>
+
         );
 
       /* ───────────────── MONITORING ─────────── */
@@ -487,7 +591,9 @@ function Dashboard() {
       case "monitoring":
 
         return (
-          <ComingSoon title="Monitoring" />
+          <ComingSoon
+            title="Monitoring"
+          />
         );
 
       default:
@@ -503,6 +609,8 @@ function Dashboard() {
 
     <div className="dashboard">
 
+      {/* BACKGROUND */}
+
       <div className="bg-container">
 
         <div className="bg-orb bg-orb-1"></div>
@@ -515,10 +623,28 @@ function Dashboard() {
 
       </div>
 
+      {/* NAVBAR */}
+
       <Navbar
         activePage={activePage}
         setActivePage={setActivePage}
       />
+
+      {/* ERROR */}
+
+      {error && !initialLoading && (
+
+        <div className="dashboard-error">
+
+          <span>⚠</span>
+
+          <p>{error}</p>
+
+        </div>
+
+      )}
+
+      {/* LOADING */}
 
       {initialLoading ? (
 
@@ -545,6 +671,7 @@ function Dashboard() {
       )}
 
     </div>
+
   );
 }
 
