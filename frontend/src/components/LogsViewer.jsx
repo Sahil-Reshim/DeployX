@@ -8,33 +8,81 @@ import API from "../services/api";
 
 function LogsViewer({ deploymentId }) {
 
-  const [logs, setLogs] = useState([]);
+  const [buildLogs, setBuildLogs] =
+    useState([]);
+
+  const [containerLogs, setContainerLogs] =
+    useState([]);
 
   const [loading, setLoading] =
     useState(true);
 
+  const [error, setError] =
+    useState("");
+
   const [autoScroll, setAutoScroll] =
     useState(true);
 
-  const logsEndRef = useRef(null);
+  const logsBoxRef = useRef(null);
+
+  const isNearBottom = () => {
+
+    const container =
+      logsBoxRef.current;
+
+    if (!container) return true;
+
+    return (
+      container.scrollHeight -
+        container.scrollTop -
+        container.clientHeight <
+      120
+    );
+  };
 
   const fetchLogs = async () => {
 
-    if (!deploymentId) return;
+    if (!deploymentId) {
+      setLoading(false);
+      return;
+    }
 
     try {
 
-      const response = await API.get(
-        `/deployments/${deploymentId}/logs`
+      const [
+        buildResponse,
+        runtimeResponse
+      ] = await Promise.all([
+
+        API.get(
+          `/deployments/${deploymentId}/logs`
+        ),
+
+        API.get(
+          `/deployments/${deploymentId}/container-logs`
+        )
+
+      ]);
+
+      setBuildLogs(
+        buildResponse.data.logs || []
       );
 
-      setLogs(response.data.logs || []);
+      setContainerLogs(
+        runtimeResponse.data.logs || []
+      );
 
-      setLoading(false);
+      setError("");
 
-    } catch (error) {
+    } catch (err) {
 
-      console.error(error);
+      console.error(err);
+
+      setError(
+        "Failed to load deployment logs."
+      );
+
+    } finally {
 
       setLoading(false);
 
@@ -43,6 +91,8 @@ function LogsViewer({ deploymentId }) {
 
   useEffect(() => {
 
+    setLoading(true);
+
     fetchLogs();
 
     const interval = setInterval(
@@ -50,30 +100,39 @@ function LogsViewer({ deploymentId }) {
       3000
     );
 
-    return () => clearInterval(interval);
+    return () =>
+      clearInterval(interval);
 
   }, [deploymentId]);
 
-  // Auto-scroll to bottom when logs update
-
   useEffect(() => {
 
-    if (autoScroll) {
+    if (
+      autoScroll &&
+      isNearBottom()
+    ) {
 
-      const logsBox =
-        logsEndRef.current?.parentElement;
+      const container =
+        logsBoxRef.current;
 
-      if (logsBox) {
-        logsBox.scrollTop = logsBox.scrollHeight;
+      if (container) {
+
+        container.scrollTop =
+          container.scrollHeight;
+
       }
-
     }
 
-  }, [logs, autoScroll]);
+  }, [
+    buildLogs,
+    containerLogs,
+    autoScroll
+  ]);
 
   const getLogType = (log) => {
 
-    const lower = log.toLowerCase();
+    const lower =
+      log.toLowerCase();
 
     if (
       lower.includes("error") ||
@@ -84,7 +143,8 @@ function LogsViewer({ deploymentId }) {
 
     if (
       lower.includes("success") ||
-      lower.includes("running")
+      lower.includes("running") ||
+      lower.includes("started")
     ) {
       return "success";
     }
@@ -97,6 +157,39 @@ function LogsViewer({ deploymentId }) {
 
     return "info";
   };
+
+  const allLogs = [
+
+    ...buildLogs.map(log => ({
+      type: "BUILD",
+      message: log
+    })),
+
+    ...containerLogs.map(log => ({
+      type: "RUNTIME",
+      message: log
+    }))
+
+  ];
+
+  if (!deploymentId) {
+
+    return (
+
+      <div className="logs-container">
+
+        <div className="logs-empty">
+
+          <p>
+            No deployment selected.
+          </p>
+
+        </div>
+
+      </div>
+
+    );
+  }
 
   if (loading) {
 
@@ -148,6 +241,7 @@ function LogsViewer({ deploymentId }) {
           <span className="logs-status-dot"></span>
 
           LIVE STREAM
+
         </div>
 
       </div>
@@ -157,7 +251,9 @@ function LogsViewer({ deploymentId }) {
         <button
           className="logs-tool-btn"
           onClick={() =>
-            setAutoScroll(!autoScroll)
+            setAutoScroll(
+              !autoScroll
+            )
           }
         >
           {autoScroll
@@ -165,62 +261,86 @@ function LogsViewer({ deploymentId }) {
             : "Auto Scroll OFF"}
         </button>
 
+        <button
+          className="logs-tool-btn"
+          onClick={fetchLogs}
+        >
+          Refresh Logs
+        </button>
+
         <div className="logs-count">
-          {logs.length} logs
+          {allLogs.length} logs
         </div>
 
       </div>
 
-      <div className="logs-box">
+      <div
+        className="logs-box"
+        ref={logsBoxRef}
+      >
 
-        {logs.length === 0 ? (
+        {error ? (
+
+          <div className="logs-empty">
+
+            <p>{error}</p>
+
+          </div>
+
+        ) : allLogs.length === 0 ? (
 
           <div className="logs-empty">
 
             <p>
-              No logs available.
+              No logs available yet.
             </p>
 
           </div>
 
         ) : (
 
-          logs.map((log, index) => (
+          allLogs.map(
+            (log, index) => (
 
-            <div
-              className={`log-line ${getLogType(
-                log
-              )}`}
-              key={index}
-            >
-
-              <span className="log-number">
-                {String(
-                  index + 1
-                ).padStart(3, "0")}
-              </span>
-
-              <span
-                className={`log-tag ${getLogType(
-                  log
+              <div
+                className={`log-line ${getLogType(
+                  log.message
                 )}`}
+                key={index}
               >
-                {getLogType(log)}
-              </span>
 
-              <span className="log-message">
-                {log}
-              </span>
+                <span className="log-number">
 
-            </div>
+                  {String(
+                    index + 1
+                  ).padStart(3, "0")}
 
-          ))
+                </span>
+
+                <span
+                  className={`log-tag ${getLogType(
+                    log.message
+                  )}`}
+                >
+
+                  {log.type}
+
+                </span>
+
+                <span className="log-message">
+
+                  {log.message}
+
+                </span>
+
+              </div>
+
+            )
+          )
 
         )}
 
         <div className="terminal-cursor"></div>
-
-        <div ref={logsEndRef}></div>
 
       </div>
 
