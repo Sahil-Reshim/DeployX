@@ -70,6 +70,66 @@ def save_deployment(
         "status": status,
         "created_at": created_at
     }
+    
+def create_pending_deployment(repo_url):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    created_at = datetime.now().strftime(
+        "%Y-%m-%d %H:%M:%S"
+    )
+
+    cursor.execute("""
+    INSERT INTO deployments (
+        repo_url,
+        framework,
+        image_name,
+        image_id,
+        container_id,
+        port,
+        url,
+        status,
+        created_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        repo_url,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        "queued",
+        created_at
+    ))
+
+    conn.commit()
+
+    deployment_id = cursor.lastrowid
+
+    conn.close()
+
+    return deployment_id
+
+
+def update_deployment_status(deployment_id, status):
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        UPDATE deployments
+        SET status = ?
+        WHERE id = ?
+    """, (
+        status,
+        deployment_id
+    ))
+
+    conn.commit()
+    conn.close()
 
 
 def get_all_deployments():
@@ -87,3 +147,5 @@ def get_all_deployments():
         dict(deployment)
         for deployment in deployments
     ]
+    
+

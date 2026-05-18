@@ -21,7 +21,9 @@ from services.docker_service import (
 
 from services.deployment_service import (
     save_deployment,
-    get_all_deployments
+    get_all_deployments,
+    create_pending_deployment,
+    update_deployment_status
 )
 
 from services.cleanup_service import (
@@ -66,6 +68,15 @@ def deploy():
             }), 400
 
         repo_url = data.get("repo_url")
+        
+        deployment_id = create_pending_deployment(
+            repo_url
+        )
+
+        update_deployment_status(
+            deployment_id,
+            "queued"
+        )
 
         if not repo_url:
             return jsonify({
@@ -75,10 +86,18 @@ def deploy():
 
         # STEP 1 → Clone Repository
         print("\n[STEP 1] Cloning Repository...")
+        update_deployment_status(
+            deployment_id,
+            "cloning"
+        )
         clone_result = clone_repository(repo_url)
         print("Clone Result:", clone_result)
 
         if not clone_result["success"]:
+            update_deployment_status(
+                deployment_id,
+                "failed"
+            )
             repo_path = clone_result.get("repo_path")
             if repo_path:
                 remove_repo_folder(repo_path)
@@ -95,10 +114,18 @@ def deploy():
 
         # STEP 2 → Detect Framework
         print("\n[STEP 2] Detecting Framework...")
+        update_deployment_status(
+            deployment_id,
+            "detecting"
+        )
         framework_result = detect_framework(repo_path)
         print("Framework Result:", framework_result)
 
         if not framework_result["success"]:
+            update_deployment_status(
+                deployment_id,
+                "failed"
+            )
             repo_cleanup_result = remove_repo_folder(repo_path)
             return jsonify({
                 "success": False,
@@ -111,6 +138,10 @@ def deploy():
 
         # STEP 3 → Generate Dockerfile
         print("\n[STEP 3] Checking / Generating Dockerfile...")
+        update_deployment_status(
+            deployment_id,
+            "dockerfile_generating"
+        )
         dockerfile_result = generate_dockerfile(
             repo_path,
             framework_result["framework"]
@@ -118,6 +149,10 @@ def deploy():
         print("Dockerfile Result:", dockerfile_result)
 
         if not dockerfile_result["success"]:
+            update_deployment_status(
+                deployment_id,
+                "failed"
+            )
             repo_cleanup_result = remove_repo_folder(repo_path)
             return jsonify({
                 "success": False,
@@ -129,10 +164,18 @@ def deploy():
 
         # STEP 4 → Build Docker Image
         print("\n[STEP 4] Building Docker Image...")
+        update_deployment_status(
+            deployment_id,
+            "building"
+        )
         docker_result = build_docker_image(repo_path)
         print("Docker Result:", docker_result)
 
         if not docker_result["success"]:
+            update_deployment_status(
+                deployment_id,
+                "failed"
+            )
             repo_cleanup_result = remove_repo_folder(repo_path)
             return jsonify({
                 "success": False,
@@ -147,10 +190,18 @@ def deploy():
         # STEP 5 → Run Docker Container
         # Pass repo_path so port detection reads the Dockerfile
         print("\n[STEP 5] Running Docker Container...")
+        update_deployment_status(
+            deployment_id,
+            "deploying"
+        )
         container_result = run_docker_container(image_name, repo_path=repo_path)
         print("Container Result:", container_result)
 
         if not container_result["success"]:
+            update_deployment_status(
+                deployment_id,
+                "failed"
+            )            
             image_cleanup_result = remove_image(image_name)
             repo_cleanup_result = remove_repo_folder(repo_path)
             return jsonify({
@@ -165,6 +216,10 @@ def deploy():
             }), 400
 
         container_id = container_result["container_id"]
+        update_deployment_status(
+            deployment_id,
+            "running"
+        )
 
         # STEP 6 → Save Deployment
         print("\n[STEP 6] Saving Deployment...")
@@ -204,6 +259,10 @@ def deploy():
         })
 
     except Exception as e:
+        update_deployment_status(
+            deployment_id,
+            "failed"
+        )
         print("\n========== DEPLOY ERROR ==========")
         print(str(e))
 
