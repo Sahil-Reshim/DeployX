@@ -185,3 +185,21 @@ def get_all_deployments():
         dict(deployment)
         for deployment in deployments
     ]
+    
+def get_deployment_by_id(deployment_id):
+
+    conn = get_db_connection()
+
+    deployment = conn.execute("""
+        SELECT * FROM deployments
+        WHERE id = ?
+    """, (
+        deployment_id,
+    )).fetchone()
+
+    conn.close()
+
+    if deployment:
+        return dict(deployment)
+
+    return None
