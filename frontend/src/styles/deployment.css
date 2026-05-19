@@ -473,130 +473,6 @@
   letter-spacing: 0.02em;
 }
 
-/* ─── PIPELINE ───────────────────────────────────────────────────────────── */
-
-.pipeline-section {
-  background: rgba(255, 255, 255, 0.024);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 18px;
-  padding: 26px 30px;
-  backdrop-filter: blur(20px);
-  position: relative;
-  overflow: hidden;
-}
-
-.pipeline-section::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.065),
-    transparent
-  );
-}
-
-.pipeline-section h2 {
-  font-family: 'Syne', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-  margin-bottom: 24px;
-  letter-spacing: -0.2px;
-}
-
-.pipeline-steps {
-  display: flex;
-  flex-direction: column;
-}
-
-.pipeline-step {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 11px 0;
-  position: relative;
-  animation: pipelineStep 0.4s ease both;
-}
-
-/* Vertical connector */
-.pipeline-step:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  left: 14px;
-  top: 42px;
-  width: 2px;
-  height: 13px;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 1px;
-}
-
-.pipeline-step.step-done:not(:last-child)::after {
-  background: rgba(34, 197, 94, 0.3);
-}
-
-.pipeline-step.step-active:not(:last-child)::after {
-  background: rgba(56, 189, 248, 0.3);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-.pipeline-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  flex-shrink: 0;
-  border: 1.5px solid;
-  transition: all 0.3s;
-}
-
-.pipeline-step.step-done .pipeline-icon {
-  background: rgba(34, 197, 94, 0.1);
-  border-color: rgba(34, 197, 94, 0.35);
-  color: #22c55e;
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.2);
-}
-
-.pipeline-step.step-active .pipeline-icon {
-  background: rgba(56, 189, 248, 0.1);
-  border-color: rgba(56, 189, 248, 0.35);
-  color: #38bdf8;
-  animation: pulse 1.5s ease-in-out infinite;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.2);
-}
-
-.pipeline-step.step-pending .pipeline-icon {
-  background: rgba(255, 255, 255, 0.025);
-  border-color: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.16);
-}
-
-.pipeline-label {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12.5px;
-  font-weight: 500;
-  letter-spacing: 0.02em;
-}
-
-.pipeline-step.step-done   .pipeline-label { color: #22c55e; }
-.pipeline-step.step-active .pipeline-label { color: #38bdf8; }
-.pipeline-step.step-pending .pipeline-label { color: rgba(255,255,255,0.2); }
-
-.pipeline-sublabel {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 10.5px;
-  margin-top: 2px;
-}
-
-.pipeline-step.step-done    .pipeline-sublabel { color: rgba(34, 197, 94, 0.42); }
-.pipeline-step.step-active  .pipeline-sublabel { color: rgba(56, 189, 248, 0.42); }
-.pipeline-step.step-pending .pipeline-sublabel { color: rgba(255, 255, 255, 0.14); }
-
 /* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 960px) {
@@ -1020,5 +896,818 @@
 
   .pipeline-mini .pipeline-step.active:not(:last-child)::after {
     width: 80px;
+  }
+}
+
+/* ─────────────────────────────────────────────
+   PIPELINE SECTION
+───────────────────────────────────────────── */
+
+.pipeline-section {
+
+  background: rgba(255,255,255,0.03);
+
+  border: 1px solid rgba(255,255,255,0.06);
+
+  border-radius: 26px;
+
+  padding: 28px;
+
+  backdrop-filter: blur(20px);
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+/* top border glow */
+
+.pipeline-section::before {
+
+  content: '';
+
+  position: absolute;
+
+  top: 0;
+  left: 0;
+  right: 0;
+
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255,255,255,0.12),
+    transparent
+  );
+}
+
+/* ─────────────────────────────────────────────
+   HEADER
+───────────────────────────────────────────── */
+
+.pipeline-header {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 26px;
+
+  gap: 20px;
+}
+
+.pipeline-mini-label {
+
+  color: rgba(255,255,255,0.32);
+
+  font-size: 10px;
+
+  letter-spacing: 0.18em;
+
+  font-family: 'JetBrains Mono', monospace;
+
+  margin-bottom: 6px;
+}
+
+.pipeline-header h2 {
+
+  color: white;
+
+  font-size: 24px;
+
+  font-family: 'Syne', sans-serif;
+
+  font-weight: 700;
+
+  letter-spacing: -0.5px;
+}
+
+/* ─────────────────────────────────────────────
+   STATUS PILL
+───────────────────────────────────────────── */
+
+.pipeline-status {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+
+  font-family: 'JetBrains Mono', monospace;
+
+  text-transform: uppercase;
+
+  border: 1px solid rgba(255,255,255,0.08);
+
+  background: rgba(255,255,255,0.04);
+
+  color: rgba(255,255,255,0.7);
+}
+
+.pipeline-status-dot {
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: rgba(255,255,255,0.3);
+}
+
+/* idle */
+
+.pipeline-status.idle {
+
+  background: rgba(255,255,255,0.03);
+
+  border-color: rgba(255,255,255,0.06);
+
+  color: rgba(255,255,255,0.45);
+}
+
+.pipeline-status.idle .pipeline-status-dot {
+
+  background: rgba(255,255,255,0.22);
+
+  box-shadow: none;
+}
+
+/* active */
+
+.pipeline-status.cloning,
+.pipeline-status.building,
+.pipeline-status.deploying,
+.pipeline-status.running {
+
+  color: #38bdf8;
+
+  border-color: rgba(56,189,248,0.2);
+
+  background: rgba(56,189,248,0.08);
+}
+
+.pipeline-status.cloning .pipeline-status-dot,
+.pipeline-status.building .pipeline-status-dot,
+.pipeline-status.deploying .pipeline-status-dot,
+.pipeline-status.running .pipeline-status-dot {
+
+  background: #38bdf8;
+
+  box-shadow:
+    0 0 10px rgba(56,189,248,0.8);
+}
+
+/* success */
+
+.pipeline-status.success,
+.pipeline-status.live {
+
+  color: #22c55e;
+
+  border-color: rgba(34,197,94,0.2);
+
+  background: rgba(34,197,94,0.08);
+}
+
+.pipeline-status.success .pipeline-status-dot,
+.pipeline-status.live .pipeline-status-dot {
+
+  background: #22c55e;
+
+  box-shadow:
+    0 0 12px rgba(34,197,94,0.8);
+}
+
+/* failed */
+
+.pipeline-status.failed {
+
+  color: #ef4444;
+
+  border-color: rgba(239,68,68,0.2);
+
+  background: rgba(239,68,68,0.08);
+}
+
+.pipeline-status.failed .pipeline-status-dot {
+
+  background: #ef4444;
+
+  box-shadow:
+    0 0 12px rgba(239,68,68,0.8);
+}
+
+/* ─────────────────────────────────────────────
+   STEPS
+───────────────────────────────────────────── */
+
+.pipeline-steps {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 14px;
+}
+
+/* ─────────────────────────────────────────────
+   STEP CARD
+───────────────────────────────────────────── */
+
+.pipeline-step {
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 18px;
+
+  border-radius: 18px;
+
+  background: rgba(255,255,255,0.025);
+
+  border: 1px solid rgba(255,255,255,0.05);
+
+  overflow: hidden;
+
+  transition:
+    transform 0.3s ease,
+    border-color 0.3s ease,
+    background 0.3s ease,
+    opacity 0.3s ease;
+
+  animation: stepReveal 0.45s ease both;
+}
+
+.pipeline-step:hover {
+
+  transform: translateY(-2px);
+}
+
+/* glow layer */
+
+.pipeline-step-glow {
+
+  position: absolute;
+
+  inset: 0;
+
+  opacity: 0;
+
+  transition: opacity 0.35s ease;
+
+  pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────
+   PENDING
+───────────────────────────────────────────── */
+
+.pipeline-step.step-pending {
+
+  opacity: 0.45;
+}
+
+.pipeline-step.step-pending .pipeline-icon {
+
+  background: rgba(255,255,255,0.03);
+
+  border: 1px solid rgba(255,255,255,0.06);
+
+  color: rgba(255,255,255,0.2);
+
+  box-shadow: none;
+}
+
+.pipeline-step.step-pending .pipeline-label {
+
+  color: rgba(255,255,255,0.24);
+}
+
+.pipeline-step.step-pending .pipeline-sublabel {
+
+  color: rgba(255,255,255,0.14);
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVE
+───────────────────────────────────────────── */
+
+.pipeline-step.step-active {
+
+  border-color: rgba(56,189,248,0.22);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(56,189,248,0.12),
+      rgba(255,255,255,0.02)
+    );
+
+  box-shadow:
+    0 0 28px rgba(56,189,248,0.12);
+}
+
+.pipeline-step.step-active .pipeline-step-glow {
+
+  opacity: 1;
+
+  background:
+    radial-gradient(
+      circle at left,
+      rgba(56,189,248,0.22),
+      transparent 72%
+    );
+}
+
+.pipeline-step.step-active .pipeline-icon {
+
+  background: rgba(56,189,248,0.12);
+
+  border: 1px solid rgba(56,189,248,0.35);
+
+  color: #38bdf8;
+
+  box-shadow:
+    0 0 20px rgba(56,189,248,0.45);
+
+  animation: pulseGlow 1.8s infinite;
+}
+
+.pipeline-step.step-active .pipeline-label {
+
+  color: #38bdf8;
+}
+
+.pipeline-step.step-active .pipeline-sublabel {
+
+  color: rgba(56,189,248,0.55);
+}
+
+/* ─────────────────────────────────────────────
+   DONE
+───────────────────────────────────────────── */
+
+.pipeline-step.step-done {
+
+  border-color: rgba(34,197,94,0.18);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(34,197,94,0.08),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.step-done .pipeline-step-glow {
+
+  opacity: 1;
+
+  background:
+    radial-gradient(
+      circle at left,
+      rgba(34,197,94,0.16),
+      transparent 70%
+    );
+}
+
+.pipeline-step.step-done .pipeline-icon {
+
+  background: rgba(34,197,94,0.12);
+
+  border: 1px solid rgba(34,197,94,0.32);
+
+  color: #22c55e;
+
+  box-shadow:
+    0 0 18px rgba(34,197,94,0.25);
+}
+
+.pipeline-step.step-done .pipeline-label {
+
+  color: #22c55e;
+}
+
+.pipeline-step.step-done .pipeline-sublabel {
+
+  color: rgba(34,197,94,0.5);
+}
+
+/* ─────────────────────────────────────────────
+   FAILED
+───────────────────────────────────────────── */
+
+.pipeline-step.step-failed {
+
+  border-color: rgba(239,68,68,0.22);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(239,68,68,0.10),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.step-failed .pipeline-step-glow {
+
+  opacity: 1;
+
+  background:
+    radial-gradient(
+      circle at left,
+      rgba(239,68,68,0.18),
+      transparent 72%
+    );
+}
+
+.pipeline-step.step-failed .pipeline-icon {
+
+  background: rgba(239,68,68,0.12);
+
+  border: 1px solid rgba(239,68,68,0.32);
+
+  color: #ef4444;
+
+  box-shadow:
+    0 0 18px rgba(239,68,68,0.28);
+}
+
+.pipeline-step.step-failed .pipeline-label {
+
+  color: #ef4444;
+}
+
+.pipeline-step.step-failed .pipeline-sublabel {
+
+  color: rgba(239,68,68,0.5);
+}
+
+/* ─────────────────────────────────────────────
+   ICON
+───────────────────────────────────────────── */
+
+.pipeline-icon {
+
+  width: 48px;
+  height: 48px;
+
+  border-radius: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 20px;
+
+  flex-shrink: 0;
+
+  transition: all 0.35s ease;
+}
+
+.pipeline-content {
+
+  flex: 1;
+}
+
+.pipeline-label {
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  font-family: 'JetBrains Mono', monospace;
+
+  transition: color 0.3s ease;
+}
+
+.pipeline-sublabel {
+
+  font-size: 11px;
+
+  margin-top: 4px;
+
+  font-family: 'JetBrains Mono', monospace;
+
+  transition: color 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────
+   ANIMATIONS
+───────────────────────────────────────────── */
+
+@keyframes pulseGlow {
+
+  0% {
+
+    transform: scale(1);
+
+    box-shadow:
+      0 0 16px rgba(56,189,248,0.35);
+  }
+
+  50% {
+
+    transform: scale(1.08);
+
+    box-shadow:
+      0 0 26px rgba(56,189,248,0.65);
+  }
+
+  100% {
+
+    transform: scale(1);
+
+    box-shadow:
+      0 0 16px rgba(56,189,248,0.35);
+  }
+}
+
+@keyframes stepReveal {
+
+  from {
+
+    opacity: 0;
+
+    transform: translateY(12px);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform: translateY(0);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   MOBILE
+───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  .pipeline-section {
+
+    padding: 22px;
+  }
+
+  .pipeline-header {
+
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .pipeline-step {
+
+    padding: 16px;
+  }
+
+  .pipeline-icon {
+
+    width: 42px;
+    height: 42px;
+
+    font-size: 18px;
+  }
+
+  .pipeline-header h2 {
+
+    font-size: 20px;
+  }
+}
+
+
+/* ─────────────────────────────────────────────
+   EMPTY PIPELINE
+───────────────────────────────────────────── */
+
+.pipeline-empty {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 70px 20px;
+
+  border-radius: 22px;
+
+  background:
+    rgba(255,255,255,0.02);
+
+  border:
+    1px dashed rgba(255,255,255,0.08);
+
+  animation:
+    fadeIn 0.4s ease;
+}
+
+.pipeline-empty-icon {
+
+  font-size: 52px;
+
+  margin-bottom: 18px;
+
+  opacity: 0.6;
+
+  animation:
+    float 3s ease-in-out infinite;
+}
+
+.pipeline-empty h3 {
+
+  color: white;
+
+  font-size: 20px;
+
+  font-family: 'Syne', sans-serif;
+
+  margin-bottom: 10px;
+}
+
+.pipeline-empty p {
+
+  color:
+    rgba(255,255,255,0.35);
+
+  font-size: 12px;
+
+  font-family:
+    'JetBrains Mono', monospace;
+
+  max-width: 400px;
+
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────────
+   STEP ENTRY ANIMATION
+───────────────────────────────────────────── */
+
+.pipeline-step {
+
+  animation:
+    pipelineReveal 0.45s ease both;
+}
+
+@keyframes pipelineReveal {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(20px)
+      scale(0.96);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVE STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.active {
+
+  border-color:
+    rgba(56,189,248,0.22);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(56,189,248,0.10),
+      rgba(255,255,255,0.02)
+    );
+
+  box-shadow:
+    0 0 24px rgba(56,189,248,0.14);
+}
+
+.pipeline-step.active .pipeline-icon {
+
+  background:
+    rgba(56,189,248,0.12);
+
+  color: #38bdf8;
+
+  border:
+    1px solid rgba(56,189,248,0.32);
+
+  box-shadow:
+    0 0 18px rgba(56,189,248,0.45);
+
+  animation:
+    pulseGlow 1.8s infinite;
+}
+
+/* ─────────────────────────────────────────────
+   DONE STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.done {
+
+  border-color:
+    rgba(34,197,94,0.18);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(34,197,94,0.08),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.done .pipeline-icon {
+
+  background:
+    rgba(34,197,94,0.12);
+
+  color: #22c55e;
+
+  border:
+    1px solid rgba(34,197,94,0.28);
+
+  box-shadow:
+    0 0 18px rgba(34,197,94,0.28);
+}
+
+/* ─────────────────────────────────────────────
+   FAILED STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.failed {
+
+  border-color:
+    rgba(239,68,68,0.24);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(239,68,68,0.10),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.failed .pipeline-icon {
+
+  background:
+    rgba(239,68,68,0.12);
+
+  color: #ef4444;
+
+  border:
+    1px solid rgba(239,68,68,0.32);
+
+  box-shadow:
+    0 0 18px rgba(239,68,68,0.28);
+}
+
+/* ─────────────────────────────────────────────
+   FLOAT ANIMATION
+───────────────────────────────────────────── */
+
+@keyframes float {
+
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
   }
 }
