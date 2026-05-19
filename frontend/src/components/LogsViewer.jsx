@@ -1,18 +1,27 @@
 import {
   useEffect,
-  useState,
-  useRef
+  useMemo,
+  useRef,
+  useState
 } from "react";
 
 import API from "../services/api";
 
-function LogsViewer({ deploymentId }) {
+function LogsViewer({
+  deploymentId
+}) {
+
+  /*
+    STATE
+  */
 
   const [buildLogs, setBuildLogs] =
     useState([]);
 
-  const [containerLogs, setContainerLogs] =
-    useState([]);
+  const [
+    containerLogs,
+    setContainerLogs
+  ] = useState([]);
 
   const [loading, setLoading] =
     useState(true);
@@ -23,30 +32,118 @@ function LogsViewer({ deploymentId }) {
   const [autoScroll, setAutoScroll] =
     useState(true);
 
-  const logsBoxRef = useRef(null);
+  const [connected, setConnected] =
+    useState(false);
 
-  /* ─────────────────────────────────────────────
-     AUTO SCROLL
-  ───────────────────────────────────────────── */
+  const logsRef = useRef(null);
 
-  const isNearBottom = () => {
+  const pollingRef = useRef(null);
+
+  /*
+    AUTO SCROLL
+  */
+
+  const scrollToBottom = () => {
 
     const container =
-      logsBoxRef.current;
+      logsRef.current;
 
-    if (!container) return true;
+    if (!container) return;
 
-    return (
-      container.scrollHeight -
-        container.scrollTop -
-        container.clientHeight <
-      120
-    );
+    container.scrollTop =
+      container.scrollHeight;
   };
 
-  /* ─────────────────────────────────────────────
-     FETCH LOGS
-  ───────────────────────────────────────────── */
+  const shouldAutoScroll =
+    () => {
+
+      const container =
+        logsRef.current;
+
+      if (!container)
+        return true;
+
+      return (
+        container.scrollHeight -
+          container.scrollTop -
+          container.clientHeight <
+        140
+      );
+    };
+
+  /*
+    FORMAT TIME
+  */
+
+  const getTime = () => {
+
+    return new Date()
+      .toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+  };
+
+  /*
+    LOG TYPE
+  */
+
+  const getLogType = (
+    log = ""
+  ) => {
+
+    const lower =
+      log.toLowerCase();
+
+    if (
+      lower.includes("error") ||
+      lower.includes("failed") ||
+      lower.includes("exception")
+    ) {
+      return "error";
+    }
+
+    if (
+      lower.includes("warning") ||
+      lower.includes("warn")
+    ) {
+      return "warn";
+    }
+
+    if (
+      lower.includes("success") ||
+      lower.includes("running") ||
+      lower.includes("started") ||
+      lower.includes("listening")
+    ) {
+      return "success";
+    }
+
+    return "info";
+  };
+
+  /*
+    DEDUPLICATE
+  */
+
+  const deduplicateLogs = (
+    logs
+  ) => {
+
+    return [
+      ...new Map(
+        logs.map((log) => [
+          log.message,
+          log,
+        ])
+      ).values(),
+    ];
+  };
+
+  /*
+    FETCH LOGS
+  */
 
   const fetchLogs = async () => {
 
@@ -59,7 +156,7 @@ function LogsViewer({ deploymentId }) {
 
     try {
 
-      setLoading(true);
+      setConnected(true);
 
       let buildData = [];
       let runtimeData = [];
@@ -76,26 +173,33 @@ function LogsViewer({ deploymentId }) {
           );
 
         buildData =
-          buildResponse.data.logs || [];
+          (
+            buildResponse.data
+              ?.logs || []
+          ).map((log) => ({
+            type: "BUILD",
+            message: log,
+            timestamp:
+              getTime(),
+          }));
 
       } catch (error) {
 
-        /*
-          Backend now returns 404
-          while logs are generating
-        */
-
         if (
-          error.response?.status === 404
+          error.response
+            ?.status === 404
         ) {
 
           buildData = [
-            "Build logs not ready yet..."
+            {
+              type: "BUILD",
+              message:
+                "Waiting for build logs...",
+              timestamp:
+                getTime(),
+            },
           ];
 
-        } else {
-
-          throw error;
         }
       }
 
@@ -111,39 +215,52 @@ function LogsViewer({ deploymentId }) {
           );
 
         runtimeData =
-          runtimeResponse.data.logs || [];
+          (
+            runtimeResponse.data
+              ?.logs || []
+          ).map((log) => ({
+            type: "RUNTIME",
+            message: log,
+            timestamp:
+              getTime(),
+          }));
 
       } catch (error) {
 
         if (
-          error.response?.status === 404
+          error.response
+            ?.status === 404
         ) {
 
           runtimeData = [
-            "Container logs not ready yet..."
+            {
+              type: "RUNTIME",
+              message:
+                "Container runtime not started yet...",
+              timestamp:
+                getTime(),
+            },
           ];
 
-        } else {
-
-          throw error;
         }
       }
 
       setBuildLogs(buildData);
 
-      setContainerLogs(runtimeData);
+      setContainerLogs(
+        runtimeData
+      );
 
       setError("");
 
-    } catch (err) {
+    } catch (error) {
 
-      console.error(
-        "Failed to fetch logs:",
-        err
-      );
+      console.error(error);
+
+      setConnected(false);
 
       setError(
-        "Failed to load deployment logs."
+        "Unable to connect to deployment runtime."
       );
 
     } finally {
@@ -153,119 +270,102 @@ function LogsViewer({ deploymentId }) {
     }
   };
 
-  /* ─────────────────────────────────────────────
-     POLLING
-  ───────────────────────────────────────────── */
+  /*
+    POLLING
+  */
 
   useEffect(() => {
 
-    if (!deploymentId) return;
+    if (!deploymentId)
+      return;
 
     fetchLogs();
 
-    const interval = setInterval(
-      fetchLogs,
-      3000
-    );
+    pollingRef.current =
+      setInterval(() => {
 
-    return () =>
-      clearInterval(interval);
+        fetchLogs();
+
+      }, 2500);
+
+    return () => {
+
+      if (
+        pollingRef.current
+      ) {
+
+        clearInterval(
+          pollingRef.current
+        );
+
+      }
+    };
 
   }, [deploymentId]);
 
-  /* ─────────────────────────────────────────────
-     AUTO SCROLL EFFECT
-  ───────────────────────────────────────────── */
+  /*
+    MERGED LOGS
+  */
+
+  const mergedLogs =
+    useMemo(() => {
+
+      return deduplicateLogs([
+        ...buildLogs,
+        ...containerLogs,
+      ]);
+
+    }, [
+      buildLogs,
+      containerLogs,
+    ]);
+
+  /*
+    AUTO SCROLL EFFECT
+  */
 
   useEffect(() => {
 
     if (
       autoScroll &&
-      isNearBottom()
+      shouldAutoScroll()
     ) {
 
-      const container =
-        logsBoxRef.current;
+      scrollToBottom();
 
-      if (container) {
-
-        container.scrollTop =
-          container.scrollHeight;
-
-      }
     }
 
   }, [
-    buildLogs,
-    containerLogs,
-    autoScroll
+    mergedLogs,
+    autoScroll,
   ]);
 
-  /* ─────────────────────────────────────────────
-     LOG COLORS
-  ───────────────────────────────────────────── */
-
-  const getLogType = (log) => {
-
-    const lower =
-      log.toLowerCase();
-
-    if (
-      lower.includes("error") ||
-      lower.includes("failed")
-    ) {
-      return "error";
-    }
-
-    if (
-      lower.includes("success") ||
-      lower.includes("running") ||
-      lower.includes("started")
-    ) {
-      return "success";
-    }
-
-    if (
-      lower.includes("warning")
-    ) {
-      return "warn";
-    }
-
-    return "info";
-  };
-
-  /* ─────────────────────────────────────────────
-     MERGED LOGS
-  ───────────────────────────────────────────── */
-
-  const allLogs = [
-
-    ...buildLogs.map(log => ({
-      type: "BUILD",
-      message: log
-    })),
-
-    ...containerLogs.map(log => ({
-      type: "RUNTIME",
-      message: log
-    }))
-
-  ];
-
-  /* ─────────────────────────────────────────────
-     EMPTY STATE
-  ───────────────────────────────────────────── */
+  /*
+    EMPTY STATE
+  */
 
   if (!deploymentId) {
 
     return (
 
-      <div className="logs-container">
+      <div className="logs-container empty">
 
-        <div className="logs-empty">
+        <div className="logs-empty-state">
+
+          <div className="empty-terminal-icon">
+
+            ⚡
+
+          </div>
+
+          <h3>
+            Runtime Logs Unavailable
+          </h3>
 
           <p>
-            No deployment selected.
+            Deploy a repository to
+            start live terminal
+            streaming.
           </p>
 
         </div>
@@ -275,147 +375,186 @@ function LogsViewer({ deploymentId }) {
     );
   }
 
-  /* ─────────────────────────────────────────────
-     LOADING
-  ───────────────────────────────────────────── */
-
-  if (loading && allLogs.length === 0) {
-
-    return (
-
-      <div className="logs-container">
-
-        <div className="logs-loading">
-
-          <div className="terminal-loader"></div>
-
-          <p>
-            Connecting to deployment logs...
-          </p>
-
-        </div>
-
-      </div>
-
-    );
-  }
-
-  /* ─────────────────────────────────────────────
-     MAIN UI
-  ───────────────────────────────────────────── */
+  /*
+    MAIN UI
+  */
 
   return (
 
     <div className="logs-container">
 
+      {/* TOP BAR */}
+
       <div className="logs-header">
 
         <div className="logs-header-left">
 
-          <div className="logs-dots">
+          <div className="terminal-controls">
 
-            <span className="logs-dot red"></span>
+            <span className="control red"></span>
 
-            <span className="logs-dot yellow"></span>
+            <span className="control yellow"></span>
 
-            <span className="logs-dot green"></span>
+            <span className="control green"></span>
 
           </div>
 
-          <span className="logs-title">
-            deployx-runtime
-          </span>
+          <div className="logs-runtime-info">
+
+            <span className="runtime-title">
+
+              deployx-runtime
+
+            </span>
+
+            <span className="runtime-subtitle">
+
+              live deployment logs
+
+            </span>
+
+          </div>
 
         </div>
 
-        <div className="logs-status">
+        <div className="logs-header-right">
 
-          <span className="logs-status-dot"></span>
+          <div
+            className={`runtime-status ${
+              connected
+                ? "online"
+                : "offline"
+            }`}
+          >
 
-          LIVE STREAM
+            <span className="runtime-pulse"></span>
+
+            {connected
+              ? "CONNECTED"
+              : "OFFLINE"}
+
+          </div>
 
         </div>
 
       </div>
 
+      {/* TOOLBAR */}
+
       <div className="logs-toolbar">
 
         <button
-          className="logs-tool-btn"
+          className={`logs-toolbar-btn ${
+            autoScroll
+              ? "active"
+              : ""
+          }`}
           onClick={() =>
             setAutoScroll(
               !autoScroll
             )
           }
         >
+
           {autoScroll
             ? "Auto Scroll ON"
             : "Auto Scroll OFF"}
+
         </button>
 
         <button
-          className="logs-tool-btn"
+          className="logs-toolbar-btn"
           onClick={fetchLogs}
         >
-          Refresh Logs
+
+          Refresh
+
         </button>
 
-        <div className="logs-count">
-          {allLogs.length} logs
+        <div className="logs-counter">
+
+          {mergedLogs.length}
+          {" "}entries
+
         </div>
 
       </div>
 
+      {/* TERMINAL */}
+
       <div
         className="logs-box"
-        ref={logsBoxRef}
+        ref={logsRef}
       >
 
-        {error ? (
+        {loading &&
+        mergedLogs.length ===
+          0 ? (
 
-          <div className="logs-empty">
+          <div className="terminal-loading">
 
-            <p>{error}</p>
+            <div className="terminal-loader"></div>
+
+            <p>
+              Connecting to runtime...
+            </p>
 
           </div>
 
-        ) : allLogs.length === 0 ? (
+        ) : error ? (
 
-          <div className="logs-empty">
+          <div className="terminal-error">
 
-            <p>
-              Logs not ready yet...
-            </p>
+            {error}
+
+          </div>
+
+        ) : mergedLogs.length ===
+          0 ? (
+
+          <div className="terminal-empty">
+
+            Waiting for logs...
 
           </div>
 
         ) : (
 
-          allLogs.map(
-            (log, index) => (
+          mergedLogs.map(
+            (
+              log,
+              index
+            ) => (
 
               <div
+                key={`${log.message}-${index}`}
                 className={`log-line ${getLogType(
                   log.message
                 )}`}
-                key={index}
               >
 
-                <span className="log-number">
+                <span className="log-time">
 
-                  {String(
-                    index + 1
-                  ).padStart(3, "0")}
+                  {log.timestamp}
 
                 </span>
 
                 <span
-                  className={`log-tag ${getLogType(
-                    log.message
-                  )}`}
+                  className={`log-badge ${log.type.toLowerCase()}`}
                 >
 
                   {log.type}
+
+                </span>
+
+                <span className="log-index">
+
+                  {String(
+                    index + 1
+                  ).padStart(
+                    3,
+                    "0"
+                  )}
 
                 </span>
 

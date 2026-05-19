@@ -1,119 +1,202 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import StatusBadge from "./StatusBadge";
 
-function DeploymentItem({ deployment }) {
+function DeploymentItem({
+  deployment
+}) {
 
   const [copied, setCopied] =
     useState(false);
+
+  /*
+    NORMALIZED DATA
+  */
 
   const deployUrl =
     deployment?.url || "";
 
   const deploymentStatus =
-    deployment?.status?.toLowerCase() ||
-    "offline";
+    (
+      deployment?.status ||
+      "offline"
+    ).toLowerCase();
 
-  const isLive =
-    deploymentStatus === "running" ||
-    deploymentStatus === "success" ||
-    deploymentStatus === "live";
+  const framework =
+    deployment?.framework ||
+    "Unknown Framework";
 
-  const copyUrl = async () => {
+  const isLive = [
 
-    if (!deployUrl) return;
+    "running",
 
-    try {
+    "success",
 
-      await navigator.clipboard.writeText(
-        deployUrl
+    "live",
+
+    "completed",
+
+  ].includes(
+    deploymentStatus
+  );
+
+  /*
+    REPOSITORY NAME
+  */
+
+  const repositoryName =
+    useMemo(() => {
+
+      if (!deployment?.repo_url) {
+
+        return "Unknown Repository";
+
+      }
+
+      return deployment.repo_url
+        .replace(".git", "")
+        .split("/")
+        .slice(-2)
+        .join("/");
+
+    }, [deployment]);
+
+  /*
+    TIME AGO
+  */
+
+  const getTimeAgo = (
+    date
+  ) => {
+
+    if (!date)
+      return "Unknown";
+
+    const seconds =
+      Math.floor(
+        (
+          new Date() -
+          new Date(date)
+        ) / 1000
       );
-
-      setCopied(true);
-
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-
-    } catch (error) {
-
-      console.error(
-        "Failed to copy URL:",
-        error
-      );
-
-    }
-  };
-
-  const openDeployment = () => {
-
-    if (!deployUrl) return;
-
-    window.open(
-      deployUrl,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
-
-  const getTimeAgo = (date) => {
-
-    if (!date) return "Unknown";
-
-    const seconds = Math.floor(
-      (new Date() - new Date(date)) / 1000
-    );
 
     const intervals = [
+
       {
         label: "d",
-        seconds: 86400
+        value: 86400,
       },
+
       {
         label: "h",
-        seconds: 3600
+        value: 3600,
       },
+
       {
         label: "m",
-        seconds: 60
-      }
+        value: 60,
+      },
+
     ];
 
     for (const interval of intervals) {
 
-      const count = Math.floor(
-        seconds / interval.seconds
-      );
+      const count =
+        Math.floor(
+          seconds /
+            interval.value
+        );
 
       if (count >= 1) {
+
         return `${count}${interval.label} ago`;
+
       }
     }
 
     return "just now";
   };
 
-  const getRepoName = () => {
+  /*
+    COPY URL
+  */
 
-    if (!deployment?.repo_url)
-      return "Unknown Repository";
+  const copyUrl =
+    async () => {
 
-    return deployment.repo_url
-      .replace(".git", "")
-      .split("/")
-      .slice(-2)
-      .join("/");
-  };
+      if (!deployUrl)
+        return;
+
+      try {
+
+        await navigator.clipboard.writeText(
+          deployUrl
+        );
+
+        setCopied(true);
+
+        setTimeout(() => {
+
+          setCopied(false);
+
+        }, 2000);
+
+      } catch (error) {
+
+        console.error(
+          "Copy failed:",
+          error
+        );
+
+      }
+    };
+
+  /*
+    OPEN DEPLOYMENT
+  */
+
+  const openDeployment =
+    () => {
+
+      if (!deployUrl)
+        return;
+
+      window.open(
+        deployUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    };
+
+  /*
+    STATUS LABEL
+  */
+
+  const readableStatus =
+    deploymentStatus.replaceAll(
+      "_",
+      " "
+    );
 
   return (
 
-    <div className="deployment-item">
+    <div
+      className={`deployment-item ${deploymentStatus}`}
+    >
+
+      {/* BACKGROUND FX */}
+
+      <div className="deployment-bg-grid"></div>
+
+      <div className="deployment-glow"></div>
 
       <div className="deployment-shine"></div>
 
+      {/* HEADER */}
+
       <div className="deployment-top">
 
-        <div>
+        <div className="deployment-left">
 
           <div className="deployment-app-row">
 
@@ -126,109 +209,179 @@ function DeploymentItem({ deployment }) {
             ></div>
 
             <h2>
-              {deployment.framework ||
-                "Unknown Framework"}
+              {framework}
             </h2>
 
           </div>
 
           <p className="repo-url">
+
             {deployment.repo_url ||
-              "No repository"}
+              "Repository URL unavailable"}
+
           </p>
 
         </div>
 
         <StatusBadge
-          status={deploymentStatus}
+          status={
+            deploymentStatus
+          }
         />
 
       </div>
 
+      {/* URL PREVIEW */}
+
+      <div className="deployment-live-preview">
+
+        <div className="deployment-live-header">
+
+          <span className="deployment-live-label">
+
+            Production Endpoint
+
+          </span>
+
+          <span
+            className={`deployment-live-status ${
+              isLive
+                ? "online"
+                : "offline"
+            }`}
+          >
+
+            {isLive
+              ? "LIVE"
+              : readableStatus}
+
+          </span>
+
+        </div>
+
+        <div
+          className={`deployment-live-box ${
+            !deployUrl
+              ? "empty"
+              : ""
+          }`}
+        >
+
+          {deployUrl || (
+            <span>
+
+              Deployment URL will appear
+              after successful runtime startup.
+
+            </span>
+          )}
+
+        </div>
+
+      </div>
+
+      {/* META GRID */}
+
       <div className="deployment-details">
 
-        <div>
+        <div className="deployment-detail-card">
 
-          <span>Repository</span>
-
-          <p>{getRepoName()}</p>
-
-        </div>
-
-        <div>
-
-          <span>Framework</span>
+          <span>
+            Repository
+          </span>
 
           <p>
-            {deployment.framework ||
-              "Unknown"}
+            {repositoryName}
           </p>
 
         </div>
 
-        <div>
+        <div className="deployment-detail-card">
 
-          <span>Port</span>
+          <span>
+            Framework
+          </span>
 
           <p>
-            {deployment.port || "N/A"}
+            {framework}
           </p>
 
         </div>
 
-        <div>
+        <div className="deployment-detail-card">
 
-          <span>Status</span>
+          <span>
+            Port
+          </span>
 
-          <p>{deploymentStatus}</p>
+          <p>
+
+            {deployment.port ||
+              "Pending"}
+
+          </p>
 
         </div>
 
-        <div>
+        <div className="deployment-detail-card">
 
-          <span>Created</span>
+          <span>
+            Status
+          </span>
+
+          <p className={deploymentStatus}>
+
+            {readableStatus}
+
+          </p>
+
+        </div>
+
+        <div className="deployment-detail-card">
+
+          <span>
+            Created
+          </span>
 
           <p>
+
             {getTimeAgo(
               deployment.created_at
             )}
+
+          </p>
+
+        </div>
+
+        <div className="deployment-detail-card">
+
+          <span>
+            Deployment ID
+          </span>
+
+          <p>
+
+            #{deployment.id || "N/A"}
+
           </p>
 
         </div>
 
       </div>
 
+      {/* FOOTER */}
+
       <div className="deployment-footer">
 
-        <div className="live-url">
+        <div className="deployment-runtime-info">
 
-          {deployUrl ? (
+          <div className="runtime-dot"></div>
 
-            <>
-              <span
-                className={`url-live-badge ${
-                  isLive
-                    ? "online"
-                    : "offline"
-                }`}
-              >
+          <span>
 
-                {isLive
-                  ? "LIVE"
-                  : deploymentStatus.toUpperCase()}
+            Real-time deployment monitoring active
 
-              </span>
-
-              {deployUrl}
-            </>
-
-          ) : (
-
-            <span>
-              Deployment URL not available
-            </span>
-
-          )}
+          </span>
 
         </div>
 
@@ -242,17 +395,19 @@ function DeploymentItem({ deployment }) {
 
             {copied
               ? "Copied!"
-              : "Copy"}
+              : "Copy URL"}
 
           </button>
 
           <button
             className="btn btn-primary"
-            onClick={openDeployment}
+            onClick={
+              openDeployment
+            }
             disabled={!deployUrl}
           >
 
-            Open
+            Open Deployment
 
           </button>
 
@@ -260,18 +415,35 @@ function DeploymentItem({ deployment }) {
 
       </div>
 
-      {deploymentStatus === "failed" && (
+      {/* FAILED STATE */}
+
+      {deploymentStatus ===
+        "failed" && (
 
         <div className="deployment-error">
 
-          <span>⚠</span>
+          <div className="deployment-error-icon">
 
-          <p>
+            ⚠
 
-            {deployment.error ||
-              "Deployment failed. Check logs for more details."}
+          </div>
 
-          </p>
+          <div>
+
+            <strong>
+
+              Deployment Failed
+
+            </strong>
+
+            <p>
+
+              {deployment.error ||
+                "Runtime container failed during deployment pipeline execution."}
+
+            </p>
+
+          </div>
 
         </div>
 
