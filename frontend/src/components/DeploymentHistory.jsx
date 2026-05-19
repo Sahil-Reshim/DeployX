@@ -1,31 +1,158 @@
+import { useMemo } from "react";
+
 import DeploymentItem from "./DeploymentItem";
 
 function DeploymentHistory({
   deployments = [],
   loading = false,
+  onDeleteDeployment,
+  onClearHistory,
 }) {
 
   /*
-    LOADING
+    SORT DEPLOYMENTS
+  */
+
+  const sortedDeployments =
+    useMemo(() => {
+
+      return deployments
+        .slice()
+        .sort((a, b) => {
+
+          return (
+            new Date(
+              b.created_at || 0
+            ).getTime() -
+            new Date(
+              a.created_at || 0
+            ).getTime()
+          );
+
+        });
+
+    }, [deployments]);
+
+  /*
+    STATS
+  */
+
+  const totalDeployments =
+    sortedDeployments.length;
+
+  const successfulDeployments =
+    sortedDeployments.filter(
+      (deployment) => {
+
+        const status =
+          (
+            deployment.status ||
+            ""
+          ).toLowerCase();
+
+        return [
+
+          "running",
+
+          "success",
+
+          "live",
+
+          "completed",
+
+        ].includes(status);
+
+      }
+    ).length;
+
+  const failedDeployments =
+    sortedDeployments.filter(
+      (deployment) => {
+
+        return (
+          deployment.status
+            ?.toLowerCase() ===
+          "failed"
+        );
+
+      }
+    ).length;
+
+  const activeDeployments =
+    sortedDeployments.filter(
+      (deployment) => {
+
+        return [
+
+          "queued",
+
+          "cloning",
+
+          "detecting",
+
+          "dockerfile_generating",
+
+          "building",
+
+          "deploying",
+
+        ].includes(
+          deployment.status?.toLowerCase()
+        );
+
+      }
+    ).length;
+
+  /*
+    DELETE ALL
+  */
+
+  const handleClearHistory = () => {
+
+    const confirmed =
+      window.confirm(
+        "Delete all deployment history?"
+      );
+
+    if (
+      confirmed &&
+      onClearHistory
+    ) {
+
+      onClearHistory();
+
+    }
+  };
+
+  /*
+    LOADING STATE
   */
 
   if (loading) {
 
     return (
 
-      <div className="empty-state">
+      <div className="deployment-history">
 
-        <span className="empty-state-icon">
-          ⏳
-        </span>
+        <div className="history-loading">
 
-        <h2>
-          Loading Deployments
-        </h2>
+          <div className="history-loading-glow"></div>
 
-        <p>
-          Fetching real deployment data from backend...
-        </p>
+          <div className="history-loader"></div>
+
+          <h2>
+            Loading Deployments
+          </h2>
+
+          <p>
+
+            Fetching live deployment
+            infrastructure data from
+            backend runtime engine...
+
+          </p>
+
+        </div>
 
       </div>
 
@@ -33,7 +160,7 @@ function DeploymentHistory({
   }
 
   /*
-    EMPTY
+    EMPTY STATE
   */
 
   if (
@@ -43,19 +170,33 @@ function DeploymentHistory({
 
     return (
 
-      <div className="empty-state">
+      <div className="deployment-history">
 
-        <span className="empty-state-icon">
-          🚀
-        </span>
+        <div className="history-empty">
 
-        <h2>
-          No Deployments Yet
-        </h2>
+          <div className="history-empty-grid"></div>
 
-        <p>
-          Deploy your first repository to begin.
-        </p>
+          <div className="history-empty-glow"></div>
+
+          <div className="history-empty-icon">
+
+            🚀
+
+          </div>
+
+          <h2>
+            No Deployments Yet
+          </h2>
+
+          <p>
+
+            Start your first deployment
+            to launch real-time CI/CD
+            infrastructure with DeployX.
+
+          </p>
+
+        </div>
 
       </div>
 
@@ -63,39 +204,185 @@ function DeploymentHistory({
   }
 
   /*
-    SORT LATEST FIRST
+    MAIN UI
   */
-
-  const sortedDeployments =
-    deployments
-      .slice()
-      .sort((a, b) => {
-
-        return (
-          new Date(
-            b.created_at || 0
-          ).getTime() -
-          new Date(
-            a.created_at || 0
-          ).getTime()
-        );
-
-      });
 
   return (
 
-    <div className="deployment-grid">
+    <div className="deployment-history">
 
-      {sortedDeployments.map(
-        (deployment) => (
+      {/* HEADER */}
 
-          <DeploymentItem
-            key={deployment.id}
-            deployment={deployment}
-          />
+      <div className="deployment-history-header">
 
-        )
-      )}
+        <div className="deployment-history-left">
+
+          <div className="history-mini-badge">
+
+            DEPLOYX RUNTIME
+
+          </div>
+
+          <h2>
+            Deployment History
+          </h2>
+
+          <p>
+
+            Monitor and manage your
+            production deployments
+            in real-time.
+
+          </p>
+
+        </div>
+
+        <div className="deployment-history-right">
+
+          <div className="history-stat-card">
+
+            <span className="stat-label">
+
+              Total
+
+            </span>
+
+            <strong className="stat-value">
+
+              {totalDeployments}
+
+            </strong>
+
+          </div>
+
+          <div className="history-stat-card success">
+
+            <span className="stat-label">
+
+              Live
+
+            </span>
+
+            <strong className="stat-value">
+
+              {successfulDeployments}
+
+            </strong>
+
+          </div>
+
+          <div className="history-stat-card active">
+
+            <span className="stat-label">
+
+              Active
+
+            </span>
+
+            <strong className="stat-value">
+
+              {activeDeployments}
+
+            </strong>
+
+          </div>
+
+          <div className="history-stat-card failed">
+
+            <span className="stat-label">
+
+              Failed
+
+            </span>
+
+            <strong className="stat-value">
+
+              {failedDeployments}
+
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* ACTION BAR */}
+
+      <div className="history-actions">
+
+        <div className="history-actions-left">
+
+          <div className="history-live-indicator">
+
+            <span className="history-live-dot"></span>
+
+            Live Deployment Sync
+
+          </div>
+
+        </div>
+
+        <div className="history-actions-right">
+
+          <button
+            className="history-action-btn ghost"
+          >
+
+            Refresh
+
+          </button>
+
+          <button
+            className="history-action-btn danger"
+            onClick={handleClearHistory}
+          >
+
+            Delete History
+
+          </button>
+
+        </div>
+
+      </div>
+
+      {/* GRID */}
+
+      <div className="deployment-grid">
+
+        {sortedDeployments.map(
+          (
+            deployment,
+            index
+          ) => (
+
+            <div
+              key={
+                deployment.id ||
+                index
+              }
+              className="deployment-grid-item"
+              style={{
+                animationDelay:
+                  `${index * 0.06}s`,
+              }}
+            >
+
+              <DeploymentItem
+                deployment={
+                  deployment
+                }
+                onDelete={
+                  onDeleteDeployment
+                }
+              />
+
+            </div>
+
+          )
+        )}
+
+      </div>
 
     </div>
 
