@@ -5,7 +5,9 @@ function DeploymentHistory({
   loading = false,
 }) {
 
-  // Loading state
+  /*
+    LOADING
+  */
 
   if (loading) {
 
@@ -17,7 +19,9 @@ function DeploymentHistory({
           ⏳
         </span>
 
-        <h2>Loading Deployments</h2>
+        <h2>
+          Loading Deployments
+        </h2>
 
         <p>
           Fetching real deployment data from backend...
@@ -28,9 +32,14 @@ function DeploymentHistory({
     );
   }
 
-  // Empty state
+  /*
+    EMPTY
+  */
 
-  if (!deployments || deployments.length === 0) {
+  if (
+    !deployments ||
+    deployments.length === 0
+  ) {
 
     return (
 
@@ -40,7 +49,9 @@ function DeploymentHistory({
           🚀
         </span>
 
-        <h2>No Deployments Yet</h2>
+        <h2>
+          No Deployments Yet
+        </h2>
 
         <p>
           Deploy your first repository to begin.
@@ -51,68 +62,40 @@ function DeploymentHistory({
     );
   }
 
-  // Sort latest first using backend created_at
+  /*
+    SORT LATEST FIRST
+  */
 
-  const sortedDeployments = deployments
-    .slice()
-    .sort((a, b) => {
+  const sortedDeployments =
+    deployments
+      .slice()
+      .sort((a, b) => {
 
-      const first =
-        new Date(
-          b.created_at || 0
-        ).getTime();
+        return (
+          new Date(
+            b.created_at || 0
+          ).getTime() -
+          new Date(
+            a.created_at || 0
+          ).getTime()
+        );
 
-      const second =
-        new Date(
-          a.created_at || 0
-        ).getTime();
-
-      return first - second;
-
-    });
+      });
 
   return (
 
-    <div className="history-section">
+    <div className="deployment-grid">
 
-      {/* SECTION HEADER */}
+      {sortedDeployments.map(
+        (deployment) => (
 
-      <div className="section-header">
+          <DeploymentItem
+            key={deployment.id}
+            deployment={deployment}
+          />
 
-        <h1>
-          Deployment History
-        </h1>
-
-        <div className="count-badge">
-
-          {sortedDeployments.length}
-          {" "}
-          Deployments
-
-        </div>
-
-      </div>
-
-      {/* DEPLOYMENT GRID */}
-
-      <div className="deployment-grid">
-
-        {sortedDeployments.map(
-          (deployment) => (
-
-            <DeploymentItem
-              key={
-                deployment.id
-              }
-              deployment={
-                deployment
-              }
-            />
-
-          )
-        )}
-
-      </div>
+        )
+      )}
 
     </div>
 

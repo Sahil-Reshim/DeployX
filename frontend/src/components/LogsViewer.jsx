@@ -25,6 +25,10 @@ function LogsViewer({ deploymentId }) {
 
   const logsBoxRef = useRef(null);
 
+  /* ─────────────────────────────────────────────
+     AUTO SCROLL
+  ───────────────────────────────────────────── */
+
   const isNearBottom = () => {
 
     const container =
@@ -40,43 +44,103 @@ function LogsViewer({ deploymentId }) {
     );
   };
 
+  /* ─────────────────────────────────────────────
+     FETCH LOGS
+  ───────────────────────────────────────────── */
+
   const fetchLogs = async () => {
 
     if (!deploymentId) {
+
       setLoading(false);
+
       return;
     }
 
     try {
 
-      const [
-        buildResponse,
-        runtimeResponse
-      ] = await Promise.all([
+      setLoading(true);
 
-        API.get(
-          `/deployments/${deploymentId}/logs`
-        ),
+      let buildData = [];
+      let runtimeData = [];
 
-        API.get(
-          `/deployments/${deploymentId}/container-logs`
-        )
+      /*
+        BUILD LOGS
+      */
 
-      ]);
+      try {
 
-      setBuildLogs(
-        buildResponse.data.logs || []
-      );
+        const buildResponse =
+          await API.get(
+            `/deployments/${deploymentId}/logs`
+          );
 
-      setContainerLogs(
-        runtimeResponse.data.logs || []
-      );
+        buildData =
+          buildResponse.data.logs || [];
+
+      } catch (error) {
+
+        /*
+          Backend now returns 404
+          while logs are generating
+        */
+
+        if (
+          error.response?.status === 404
+        ) {
+
+          buildData = [
+            "Build logs not ready yet..."
+          ];
+
+        } else {
+
+          throw error;
+        }
+      }
+
+      /*
+        CONTAINER LOGS
+      */
+
+      try {
+
+        const runtimeResponse =
+          await API.get(
+            `/deployments/${deploymentId}/container-logs`
+          );
+
+        runtimeData =
+          runtimeResponse.data.logs || [];
+
+      } catch (error) {
+
+        if (
+          error.response?.status === 404
+        ) {
+
+          runtimeData = [
+            "Container logs not ready yet..."
+          ];
+
+        } else {
+
+          throw error;
+        }
+      }
+
+      setBuildLogs(buildData);
+
+      setContainerLogs(runtimeData);
 
       setError("");
 
     } catch (err) {
 
-      console.error(err);
+      console.error(
+        "Failed to fetch logs:",
+        err
+      );
 
       setError(
         "Failed to load deployment logs."
@@ -89,9 +153,13 @@ function LogsViewer({ deploymentId }) {
     }
   };
 
+  /* ─────────────────────────────────────────────
+     POLLING
+  ───────────────────────────────────────────── */
+
   useEffect(() => {
 
-    setLoading(true);
+    if (!deploymentId) return;
 
     fetchLogs();
 
@@ -104,6 +172,10 @@ function LogsViewer({ deploymentId }) {
       clearInterval(interval);
 
   }, [deploymentId]);
+
+  /* ─────────────────────────────────────────────
+     AUTO SCROLL EFFECT
+  ───────────────────────────────────────────── */
 
   useEffect(() => {
 
@@ -128,6 +200,10 @@ function LogsViewer({ deploymentId }) {
     containerLogs,
     autoScroll
   ]);
+
+  /* ─────────────────────────────────────────────
+     LOG COLORS
+  ───────────────────────────────────────────── */
 
   const getLogType = (log) => {
 
@@ -158,6 +234,10 @@ function LogsViewer({ deploymentId }) {
     return "info";
   };
 
+  /* ─────────────────────────────────────────────
+     MERGED LOGS
+  ───────────────────────────────────────────── */
+
   const allLogs = [
 
     ...buildLogs.map(log => ({
@@ -171,6 +251,10 @@ function LogsViewer({ deploymentId }) {
     }))
 
   ];
+
+  /* ─────────────────────────────────────────────
+     EMPTY STATE
+  ───────────────────────────────────────────── */
 
   if (!deploymentId) {
 
@@ -191,7 +275,11 @@ function LogsViewer({ deploymentId }) {
     );
   }
 
-  if (loading) {
+  /* ─────────────────────────────────────────────
+     LOADING
+  ───────────────────────────────────────────── */
+
+  if (loading && allLogs.length === 0) {
 
     return (
 
@@ -211,6 +299,10 @@ function LogsViewer({ deploymentId }) {
 
     );
   }
+
+  /* ─────────────────────────────────────────────
+     MAIN UI
+  ───────────────────────────────────────────── */
 
   return (
 
@@ -292,7 +384,7 @@ function LogsViewer({ deploymentId }) {
           <div className="logs-empty">
 
             <p>
-              No logs available yet.
+              Logs not ready yet...
             </p>
 
           </div>
