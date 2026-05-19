@@ -4,7 +4,8 @@ import API from "../services/api";
 import Loader from "./Loader";
 
 function RepoForm({
-  refreshDeployments
+  refreshDeployments,
+  setActiveDeployment
 }) {
 
   const [repoUrl, setRepoUrl] =
@@ -18,6 +19,80 @@ function RepoForm({
       text: "",
       type: ""
     });
+
+  const pollDeploymentStatus = async (
+    deploymentId
+  ) => {
+
+    const interval =
+      setInterval(async () => {
+
+        try {
+
+          const response =
+            await API.get(
+              `/deployments/${deploymentId}/status`
+            );
+
+          const deployment =
+            response.data;
+
+          const currentStatus =
+            deployment.status;
+
+          // update dashboard active deployment
+          setActiveDeployment(
+            deployment
+          );
+
+          // refresh deployment history
+          await refreshDeployments();
+
+          // running success
+          if (
+            currentStatus === "running"
+          ) {
+
+            setMessage({
+              text:
+                `Deployment Live 🚀 ${deployment.url}`,
+              type: "success"
+            });
+
+            clearInterval(interval);
+
+            setLoading(false);
+
+          }
+
+          // failed state
+          if (
+            currentStatus === "failed"
+          ) {
+
+            setMessage({
+              text:
+                "Deployment Failed",
+              type: "error"
+            });
+
+            clearInterval(interval);
+
+            setLoading(false);
+
+          }
+
+        } catch (error) {
+
+          console.error(
+            "Polling error:",
+            error
+          );
+
+        }
+
+      }, 2000);
+  };
 
   const handleDeploy = async (e) => {
 
@@ -40,7 +115,7 @@ function RepoForm({
 
       setMessage({
         text:
-          "Starting deployment...",
+          "Deployment queued...",
         type: "info"
       });
 
@@ -49,21 +124,42 @@ function RepoForm({
           repo_url: repoUrl.trim()
         });
 
-      const deploymentUrl =
-        response.data?.container?.url ||
-        response.data?.url;
+      const deploymentId =
+        response.data?.deployment_id;
+
+      if (!deploymentId) {
+
+        throw new Error(
+          "Deployment ID missing"
+        );
+
+      }
+
+      // initial active deployment
+      setActiveDeployment({
+        deployment_id:
+          deploymentId,
+        repo_url:
+          repoUrl.trim(),
+        status: "queued"
+      });
 
       setMessage({
         text:
-          `Deployment Live 🚀 ${deploymentUrl}`,
-        type: "success"
+          "Deployment started successfully",
+        type: "info"
       });
 
-      await refreshDeployments();
+      // start real-time polling
+      pollDeploymentStatus(
+        deploymentId
+      );
 
       setRepoUrl("");
 
     } catch (error) {
+
+      setLoading(false);
 
       if (error.response) {
 
@@ -84,10 +180,6 @@ function RepoForm({
         });
 
       }
-
-    } finally {
-
-      setLoading(false);
 
     }
   };
@@ -169,7 +261,7 @@ function RepoForm({
 
               <span className="deploy-btn-spinner"></span>
 
-              Deploying...
+              Deployment In Progress...
 
             </>
 

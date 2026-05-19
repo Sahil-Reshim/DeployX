@@ -2,111 +2,171 @@ import React from "react";
 
 function DeploymentPipeline({ status }) {
 
-  /*
-    IMPORTANT:
-    - null / undefined / "" => NO ACTIVE STEP
-    - deployment starts ONLY after backend sends status
-  */
-
   const normalizedStatus =
     (status || "").toLowerCase();
 
+  /*
+    NEW BACKEND FLOW
+
+    queued
+    cloning
+    detecting
+    dockerfile_generating
+    building
+    deploying
+    running
+    failed
+  */
+
   const steps = [
+    {
+      key: "queued",
+      icon: "⏳",
+      label: "Deployment Queued",
+      sublabel:
+        "Deployment request received",
+    },
+
     {
       key: "cloning",
       icon: "📂",
       label: "Repository Cloned",
-      sublabel: "Fetching source from GitHub",
+      sublabel:
+        "Fetching source from GitHub",
     },
+
+    {
+      key: "detecting",
+      icon: "🧠",
+      label: "Framework Detection",
+      sublabel:
+        "Analyzing project structure",
+    },
+
+    {
+      key: "dockerfile_generating",
+      icon: "📝",
+      label: "Dockerfile Generated",
+      sublabel:
+        "Preparing container configuration",
+    },
+
     {
       key: "building",
-      icon: "🧠",
-      label: "Framework Detected",
-      sublabel: "Analyzing project structure",
-    },
-    {
-      key: "deploying",
       icon: "🐳",
       label: "Docker Build",
-      sublabel: "Building deployment image",
+      sublabel:
+        "Building deployment image",
     },
+
+    {
+      key: "deploying",
+      icon: "⚡",
+      label: "Container Deployment",
+      sublabel:
+        "Starting runtime environment",
+    },
+
     {
       key: "running",
-      icon: "⚡",
-      label: "Container Started",
-      sublabel: "Starting runtime environment",
-    },
-    {
-      key: "live",
       icon: "🌍",
       label: "Deployment Live",
-      sublabel: "Production URL generated",
+      sublabel:
+        "Production URL generated",
     },
   ];
 
   /*
-    FLOW:
-    cloning -> building -> deploying -> running -> live
+    STATUS ORDER
   */
 
   const statusOrder = {
-    cloning: 0,
-    building: 1,
-    deploying: 2,
-    running: 3,
-    success: 4,
-    live: 4,
+
+    queued: 0,
+
+    cloning: 1,
+
+    detecting: 2,
+
+    dockerfile_generating: 3,
+
+    building: 4,
+
+    deploying: 5,
+
+    running: 6,
+
     failed: -1,
   };
 
   /*
-    BEFORE DEPLOY CLICK:
-    currentStep = -999
-    => ALL PENDING / OFF
+    CURRENT STEP
   */
 
   const currentStep =
-    normalizedStatus
-      ? (statusOrder[normalizedStatus] ?? -999)
+    normalizedStatus in statusOrder
+      ? statusOrder[normalizedStatus]
       : -999;
+
+  /*
+    FAILED STEP INDEX
+  */
+
+  const failedStepIndex =
+    currentStep === -1
+      ? 4
+      : currentStep;
+
+  /*
+    STEP STATE
+  */
 
   const getStepState = (index) => {
 
     /*
-      INITIAL STATE
-      Everything OFF
+      INITIAL
     */
 
     if (!normalizedStatus) {
+
       return "step-pending";
+
     }
 
     /*
-      FAILED STATE
-    */
-
-    if (normalizedStatus === "failed") {
-
-      if (index < currentStep) {
-        return "step-done";
-      }
-
-      if (index === currentStep) {
-        return "step-failed";
-      }
-
-      return "step-pending";
-    }
-
-    /*
-      SUCCESS / LIVE
+      FAILED
     */
 
     if (
-      normalizedStatus === "success" ||
-      normalizedStatus === "live"
+      normalizedStatus === "failed"
     ) {
+
+      if (index < failedStepIndex) {
+
+        return "step-done";
+
+      }
+
+      if (index === failedStepIndex) {
+
+        return "step-failed";
+
+      }
+
+      return "step-pending";
+
+    }
+
+    /*
+      RUNNING = EVERYTHING DONE
+    */
+
+    if (
+      normalizedStatus === "running"
+    ) {
+
       return "step-done";
+
     }
 
     /*
@@ -114,11 +174,15 @@ function DeploymentPipeline({ status }) {
     */
 
     if (index < currentStep) {
+
       return "step-done";
+
     }
 
     if (index === currentStep) {
+
       return "step-active";
+
     }
 
     return "step-pending";
@@ -133,7 +197,9 @@ function DeploymentPipeline({ status }) {
         <div>
 
           <p className="pipeline-mini-label">
+
             LIVE DEPLOYMENT FLOW
+
           </p>
 
           <h2>
@@ -152,7 +218,10 @@ function DeploymentPipeline({ status }) {
 
           {
             normalizedStatus
-              ? normalizedStatus
+              ? normalizedStatus.replaceAll(
+                  "_",
+                  " "
+                )
               : "idle"
           }
 
