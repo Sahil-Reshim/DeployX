@@ -5,20 +5,8 @@ function DeploymentPipeline({ status }) {
   const normalizedStatus =
     (status || "").toLowerCase();
 
-  /*
-    NEW BACKEND FLOW
-
-    queued
-    cloning
-    detecting
-    dockerfile_generating
-    building
-    deploying
-    running
-    failed
-  */
-
   const steps = [
+
     {
       key: "queued",
       icon: "⏳",
@@ -76,10 +64,6 @@ function DeploymentPipeline({ status }) {
     },
   ];
 
-  /*
-    STATUS ORDER
-  */
-
   const statusOrder = {
 
     queued: 0,
@@ -96,96 +80,44 @@ function DeploymentPipeline({ status }) {
 
     running: 6,
 
-    failed: -1,
+    failed: 4,
   };
-
-  /*
-    CURRENT STEP
-  */
 
   const currentStep =
     normalizedStatus in statusOrder
       ? statusOrder[normalizedStatus]
-      : -999;
-
-  /*
-    FAILED STEP INDEX
-  */
-
-  const failedStepIndex =
-    currentStep === -1
-      ? 4
-      : currentStep;
-
-  /*
-    STEP STATE
-  */
+      : -1;
 
   const getStepState = (index) => {
 
-    /*
-      INITIAL
-    */
-
     if (!normalizedStatus) {
-
-      return "step-pending";
-
+      return "hidden";
     }
-
-    /*
-      FAILED
-    */
 
     if (
       normalizedStatus === "failed"
     ) {
 
-      if (index < failedStepIndex) {
-
-        return "step-done";
-
+      if (index < currentStep) {
+        return "done";
       }
 
-      if (index === failedStepIndex) {
-
-        return "step-failed";
-
+      if (index === currentStep) {
+        return "failed";
       }
 
-      return "step-pending";
-
+      return "hidden";
     }
-
-    /*
-      RUNNING = EVERYTHING DONE
-    */
-
-    if (
-      normalizedStatus === "running"
-    ) {
-
-      return "step-done";
-
-    }
-
-    /*
-      NORMAL FLOW
-    */
 
     if (index < currentStep) {
-
-      return "step-done";
-
+      return "done";
     }
 
     if (index === currentStep) {
-
-      return "step-active";
-
+      return "active";
     }
 
-    return "step-pending";
+    return "hidden";
   };
 
   return (
@@ -197,9 +129,7 @@ function DeploymentPipeline({ status }) {
         <div>
 
           <p className="pipeline-mini-label">
-
             LIVE DEPLOYMENT FLOW
-
           </p>
 
           <h2>
@@ -222,48 +152,88 @@ function DeploymentPipeline({ status }) {
                   "_",
                   " "
                 )
-              : "idle"
+              : "waiting"
           }
 
         </div>
 
       </div>
 
-      <div className="pipeline-steps">
+      {/* INITIAL EMPTY BOX */}
 
-        {steps.map((step, i) => (
+      {!normalizedStatus && (
 
-          <div
-            key={step.key}
-            className={`pipeline-step ${getStepState(i)}`}
-            style={{
-              animationDelay: `${i * 0.08}s`
-            }}
-          >
+        <div className="pipeline-empty">
 
-            <div className="pipeline-step-glow"></div>
-
-            <div className="pipeline-icon">
-              {step.icon}
-            </div>
-
-            <div className="pipeline-content">
-
-              <div className="pipeline-label">
-                {step.label}
-              </div>
-
-              <div className="pipeline-sublabel">
-                {step.sublabel}
-              </div>
-
-            </div>
-
+          <div className="pipeline-empty-icon">
+            🚀
           </div>
 
-        ))}
+          <h3>
+            Waiting For Deployment
+          </h3>
 
-      </div>
+          <p>
+            Start deploying a GitHub repository
+            to begin the pipeline flow.
+          </p>
+
+        </div>
+
+      )}
+
+      {/* PIPELINE STEPS */}
+
+      {normalizedStatus && (
+
+        <div className="pipeline-steps">
+
+          {steps.map((step, index) => {
+
+            const state =
+              getStepState(index);
+
+            if (state === "hidden") {
+              return null;
+            }
+
+            return (
+
+              <div
+                key={step.key}
+                className={`pipeline-step ${state}`}
+                style={{
+                  animationDelay: `${index * 0.08}s`
+                }}
+              >
+
+                <div className="pipeline-step-glow"></div>
+
+                <div className="pipeline-icon">
+                  {step.icon}
+                </div>
+
+                <div className="pipeline-content">
+
+                  <div className="pipeline-label">
+                    {step.label}
+                  </div>
+
+                  <div className="pipeline-sublabel">
+                    {step.sublabel}
+                  </div>
+
+                </div>
+
+              </div>
+
+            );
+
+          })}
+
+        </div>
+
+      )}
 
     </div>
 

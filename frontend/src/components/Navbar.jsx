@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 function Navbar({
   activePage,
@@ -7,6 +7,10 @@ function Navbar({
 
   const [mobileOpen, setMobileOpen] =
     useState(false);
+
+  /* ─────────────────────────────────────────────
+     NAVIGATION ITEMS
+  ───────────────────────────────────────────── */
 
   const navItems = [
 
@@ -36,27 +40,45 @@ function Navbar({
   /* ─────────────────────────────────────────────
      HANDLE NAVIGATION
      IMPORTANT:
-     Prevent unnecessary rerender/poll reset
+     Only changes page UI.
+     Deployment polling continues in Dashboard.
   ───────────────────────────────────────────── */
 
-  const handleNavigation = (
-    pageKey
-  ) => {
+  const handleNavigation =
+    useCallback((pageKey) => {
 
-    // Prevent state update
-    // if already on same page
+      // Prevent unnecessary rerender
 
-    if (activePage === pageKey) {
+      if (activePage === pageKey) {
+
+        setMobileOpen(false);
+
+        return;
+
+      }
+
+      // Change page only
+
+      setActivePage(pageKey);
+
+      // Close mobile menu
 
       setMobileOpen(false);
 
-      return;
+    }, [
+      activePage,
+      setActivePage
+    ]);
 
-    }
+  /* ─────────────────────────────────────────────
+     MOBILE TOGGLE
+  ───────────────────────────────────────────── */
 
-    setActivePage(pageKey);
+  const toggleMobileMenu = () => {
 
-    setMobileOpen(false);
+    setMobileOpen(
+      (prev) => !prev
+    );
 
   };
 
@@ -64,110 +86,143 @@ function Navbar({
 
     <nav className="navbar">
 
-      {/* LOGO */}
+      {/* LEFT */}
 
-      <div
-        className="navbar-logo"
-        onClick={() =>
-          handleNavigation(
-            "dashboard"
-          )
-        }
-      >
+      <div className="navbar-left">
 
-        Deploy<span>X</span>
+        {/* LOGO */}
+
+        <div
+          className="navbar-logo"
+          onClick={() =>
+            handleNavigation(
+              "dashboard"
+            )
+          }
+        >
+
+          <span className="logo-text">
+
+            Deploy<span>X</span>
+
+          </span>
+
+        </div>
 
       </div>
 
-      {/* NAV LINKS */}
+      {/* CENTER */}
 
-      <ul
-        className={`nav-links ${
+      <div
+        className={`navbar-center ${
           mobileOpen
             ? "mobile-open"
             : ""
         }`}
       >
 
-        {navItems.map((item) => (
+        <ul className="nav-links">
 
-          <li
-            key={item.key}
-            className={`
+          {navItems.map((item) => {
 
-              ${
-                activePage === item.key
-                  ? "active"
-                  : ""
-              }
+            const isActive =
+              activePage === item.key;
 
-              ${
-                item.comingSoon
-                  ? "nav-coming-soon"
-                  : ""
-              }
+            return (
 
-            `}
-            onClick={() =>
-              handleNavigation(
-                item.key
-              )
-            }
-          >
+              <li
+                key={item.key}
+                className={`nav-item
 
-            <span>
-              {item.label}
-            </span>
+                  ${
+                    isActive
+                      ? "active"
+                      : ""
+                  }
 
-            {item.comingSoon && (
+                  ${
+                    item.comingSoon
+                      ? "nav-coming-soon"
+                      : ""
+                  }
 
-              <span className="coming-soon-badge">
+                `}
+                onClick={() =>
+                  handleNavigation(
+                    item.key
+                  )
+                }
+              >
 
-                SOON
+                <span className="nav-label">
 
-              </span>
+                  {item.label}
 
-            )}
+                </span>
 
-          </li>
+                {item.comingSoon && (
 
-        ))}
+                  <span className="coming-soon-badge">
 
-      </ul>
+                    SOON
 
-      {/* STATUS */}
+                  </span>
 
-      <div className="navbar-status">
+                )}
 
-        <span className="navbar-status-dot"></span>
+                {isActive && (
 
-        All Systems Operational
+                  <div className="nav-active-glow"></div>
+
+                )}
+
+              </li>
+
+            );
+
+          })}
+
+        </ul>
 
       </div>
 
-      {/* MOBILE MENU */}
+      {/* RIGHT */}
 
-      <button
-        className={`navbar-hamburger ${
-          mobileOpen
-            ? "active"
-            : ""
-        }`}
-        onClick={() =>
-          setMobileOpen(
-            (prev) => !prev
-          )
-        }
-        aria-label="Toggle menu"
-      >
+      <div className="navbar-right">
 
-        <span></span>
+        {/* STATUS */}
 
-        <span></span>
+        <div className="navbar-status">
 
-        <span></span>
+          <span className="navbar-status-dot"></span>
 
-      </button>
+          <span>
+            All Systems Operational
+          </span>
+
+        </div>
+
+        {/* MOBILE MENU */}
+
+        <button
+          className={`navbar-hamburger ${
+            mobileOpen
+              ? "active"
+              : ""
+          }`}
+          onClick={toggleMobileMenu}
+          aria-label="Toggle navigation"
+        >
+
+          <span></span>
+
+          <span></span>
+
+          <span></span>
+
+        </button>
+
+      </div>
 
     </nav>
 
