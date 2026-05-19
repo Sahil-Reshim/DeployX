@@ -1,48 +1,36 @@
 import { useState } from "react";
 
-function ProductionLink({ deployment }) {
+function ProductionLink({
+  deployment
+}) {
 
   const [copied, setCopied] =
     useState(false);
-
-  /*
-    NO DEPLOYMENT
-  */
 
   if (!deployment) {
 
     return (
 
-      <div className="production-link no-deployment">
+      <div className="production-link empty">
 
-        <div className="production-glow"></div>
+        <div className="production-grid"></div>
 
-        <div className="live-status-row">
-
-          <div className="live-pulse offline"></div>
-
-          <span className="live-status-text">
-            OFFLINE
-          </span>
-
-        </div>
+        <div className="live-indicator offline"></div>
 
         <h2>
           No Active Deployment
         </h2>
 
         <p>
-          Deploy a repository to generate a live production URL.
+          Deploy a repository to
+          generate a live production
+          URL.
         </p>
 
       </div>
 
     );
   }
-
-  /*
-    BACKEND ASYNC FLOW
-  */
 
   const deploymentStatus =
     (
@@ -53,17 +41,15 @@ function ProductionLink({ deployment }) {
   const deploymentUrl =
     deployment.url || "";
 
-  /*
-    LIVE ONLY WHEN RUNNING
-  */
-
   const isRunning =
     deploymentStatus ===
-    "running";
+      "running" ||
+    deploymentStatus ===
+      "success";
 
-  /*
-    PROGRESS STATES
-  */
+  const isFailed =
+    deploymentStatus ===
+    "failed";
 
   const isDeploying = [
 
@@ -82,10 +68,6 @@ function ProductionLink({ deployment }) {
   ].includes(
     deploymentStatus
   );
-
-  /*
-    COPY URL
-  */
 
   const copyUrl = async () => {
 
@@ -107,52 +89,23 @@ function ProductionLink({ deployment }) {
 
     } catch (error) {
 
-      console.error(
-        "Failed to copy URL",
-        error
-      );
+      console.error(error);
 
     }
   };
 
-  /*
-    OPEN URL
-  */
+  const openDeployment =
+    () => {
 
-  const openDeployment = () => {
+      if (!deploymentUrl)
+        return;
 
-    if (!deploymentUrl) return;
-
-    window.open(
-      deploymentUrl,
-      "_blank",
-      "noopener,noreferrer"
-    );
-  };
-
-  /*
-    FORMAT REPO NAME
-  */
-
-  const repoName =
-    deployment.repo_url
-      ? deployment.repo_url
-          .replace(".git", "")
-          .split("/")
-          .slice(-2)
-          .join("/")
-      : "N/A";
-
-  /*
-    FORMAT TIME
-  */
-
-  const createdAt =
-    deployment.created_at
-      ? new Date(
-          deployment.created_at
-        ).toLocaleString()
-      : "N/A";
+      window.open(
+        deploymentUrl,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    };
 
   return (
 
@@ -160,9 +113,7 @@ function ProductionLink({ deployment }) {
 
       <div className="production-glow"></div>
 
-      {/* HEADER */}
-
-      <div className="production-top">
+      <div className="production-header">
 
         <div>
 
@@ -174,18 +125,16 @@ function ProductionLink({ deployment }) {
                   ? "online"
                   : "offline"
               }`}
-            />
+            ></div>
 
-            <span className="live-status-text">
+            <span>
 
               {isRunning
                 ? "LIVE"
-                : deploymentStatus
-                    .replaceAll(
-                      "_",
-                      " "
-                    )
-                    .toUpperCase()}
+                : deploymentStatus.replaceAll(
+                    "_",
+                    " "
+                  )}
 
             </span>
 
@@ -195,62 +144,38 @@ function ProductionLink({ deployment }) {
             Production Deployment
           </h2>
 
-          <p>
-            Real deployment state from backend
-          </p>
-
         </div>
 
         <div
           className={`status-chip ${deploymentStatus}`}
         >
 
-          {deploymentStatus.replaceAll(
-            "_",
-            " "
-          )}
+          {deploymentStatus}
 
         </div>
 
       </div>
-
-      {/* URL */}
 
       <div className="live-url-wrapper">
 
-        <div className="url-label">
+        <span className="url-label">
           Production URL
+        </span>
+
+        <div
+          className={`url-box ${
+            !deploymentUrl
+              ? "empty-url"
+              : ""
+          }`}
+        >
+
+          {deploymentUrl ||
+            "Waiting for deployment URL..."}
+
         </div>
 
-        {isRunning &&
-        deploymentUrl ? (
-
-          <div className="url-box">
-
-            <span className="url-content">
-              {deploymentUrl}
-            </span>
-
-          </div>
-
-        ) : (
-
-          <div className="url-box empty-url">
-
-            {deploymentStatus ===
-            "failed"
-
-              ? "Deployment failed"
-
-              : "URL will be generated after deployment completes"}
-
-          </div>
-
-        )}
-
       </div>
-
-      {/* DEPLOYMENT META */}
 
       <div className="deployment-meta-grid">
 
@@ -262,16 +187,24 @@ function ProductionLink({ deployment }) {
 
           <strong>
             {deployment.framework ||
-              "Detecting..."}
+              "Detecting"}
           </strong>
 
         </div>
 
         <div className="meta-card">
 
-          <span>
-            Port
-          </span>
+          <span>Status</span>
+
+          <strong>
+            {deploymentStatus}
+          </strong>
+
+        </div>
+
+        <div className="meta-card">
+
+          <span>Port</span>
 
           <strong>
             {deployment.port ||
@@ -280,69 +213,14 @@ function ProductionLink({ deployment }) {
 
         </div>
 
-        <div className="meta-card">
-
-          <span>
-            Status
-          </span>
-
-          <strong>
-
-            {deploymentStatus.replaceAll(
-              "_",
-              " "
-            )}
-
-          </strong>
-
-        </div>
-
-        <div className="meta-card">
-
-          <span>
-            Repository
-          </span>
-
-          <strong className="repo-name">
-            {repoName}
-          </strong>
-
-        </div>
-
-        <div className="meta-card">
-
-          <span>
-            Created
-          </span>
-
-          <strong>
-            {createdAt}
-          </strong>
-
-        </div>
-
-        <div className="meta-card">
-
-          <span>
-            Deployment ID
-          </span>
-
-          <strong>
-            #{deployment.id || "N/A"}
-          </strong>
-
-        </div>
-
       </div>
-
-      {/* ACTIONS */}
 
       <div className="button-group">
 
         <button
-          className="btn btn-ghost"
+          className="btn btn-secondary"
           onClick={copyUrl}
-          disabled={!isRunning || !deploymentUrl}
+          disabled={!deploymentUrl}
         >
 
           {copied
@@ -354,61 +232,41 @@ function ProductionLink({ deployment }) {
         <button
           className="btn btn-primary"
           onClick={openDeployment}
-          disabled={!isRunning || !deploymentUrl}
+          disabled={!deploymentUrl}
         >
 
-          Open Deployment
+          Open App
 
         </button>
 
       </div>
 
-      {/* FAILED */}
+      {isDeploying && (
 
-      {deploymentStatus ===
-        "failed" && (
+        <div className="deployment-progress">
 
-        <div className="deployment-error">
+          <div className="progress-bar">
 
-          <span>⚠</span>
+            <div className="progress-fill"></div>
 
-          <p>
-
-            {deployment.error ||
-              "Deployment failed. Check logs for details."}
-
-          </p>
+          </div>
 
         </div>
 
       )}
 
-      {/* BUILDING */}
+      {isFailed && (
 
-      {isDeploying && (
+        <div className="deployment-error">
 
-        <div className="deployment-progress">
-
-          <div className="progress-label">
-
-            Deployment in progress...
-
-          </div>
-
-          <div className="progress-bar">
-
-            <div
-              className={`progress-fill ${deploymentStatus}`}
-            ></div>
-
-          </div>
+          {deployment.error ||
+            "Deployment failed"}
 
         </div>
 
       )}
 
     </div>
-
   );
 }
 
