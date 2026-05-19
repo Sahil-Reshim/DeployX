@@ -1493,3 +1493,221 @@
     font-size: 20px;
   }
 }
+
+
+/* ─────────────────────────────────────────────
+   EMPTY PIPELINE
+───────────────────────────────────────────── */
+
+.pipeline-empty {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  padding: 70px 20px;
+
+  border-radius: 22px;
+
+  background:
+    rgba(255,255,255,0.02);
+
+  border:
+    1px dashed rgba(255,255,255,0.08);
+
+  animation:
+    fadeIn 0.4s ease;
+}
+
+.pipeline-empty-icon {
+
+  font-size: 52px;
+
+  margin-bottom: 18px;
+
+  opacity: 0.6;
+
+  animation:
+    float 3s ease-in-out infinite;
+}
+
+.pipeline-empty h3 {
+
+  color: white;
+
+  font-size: 20px;
+
+  font-family: 'Syne', sans-serif;
+
+  margin-bottom: 10px;
+}
+
+.pipeline-empty p {
+
+  color:
+    rgba(255,255,255,0.35);
+
+  font-size: 12px;
+
+  font-family:
+    'JetBrains Mono', monospace;
+
+  max-width: 400px;
+
+  line-height: 1.7;
+}
+
+/* ─────────────────────────────────────────────
+   STEP ENTRY ANIMATION
+───────────────────────────────────────────── */
+
+.pipeline-step {
+
+  animation:
+    pipelineReveal 0.45s ease both;
+}
+
+@keyframes pipelineReveal {
+
+  from {
+
+    opacity: 0;
+
+    transform:
+      translateY(20px)
+      scale(0.96);
+  }
+
+  to {
+
+    opacity: 1;
+
+    transform:
+      translateY(0)
+      scale(1);
+  }
+}
+
+/* ─────────────────────────────────────────────
+   ACTIVE STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.active {
+
+  border-color:
+    rgba(56,189,248,0.22);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(56,189,248,0.10),
+      rgba(255,255,255,0.02)
+    );
+
+  box-shadow:
+    0 0 24px rgba(56,189,248,0.14);
+}
+
+.pipeline-step.active .pipeline-icon {
+
+  background:
+    rgba(56,189,248,0.12);
+
+  color: #38bdf8;
+
+  border:
+    1px solid rgba(56,189,248,0.32);
+
+  box-shadow:
+    0 0 18px rgba(56,189,248,0.45);
+
+  animation:
+    pulseGlow 1.8s infinite;
+}
+
+/* ─────────────────────────────────────────────
+   DONE STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.done {
+
+  border-color:
+    rgba(34,197,94,0.18);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(34,197,94,0.08),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.done .pipeline-icon {
+
+  background:
+    rgba(34,197,94,0.12);
+
+  color: #22c55e;
+
+  border:
+    1px solid rgba(34,197,94,0.28);
+
+  box-shadow:
+    0 0 18px rgba(34,197,94,0.28);
+}
+
+/* ─────────────────────────────────────────────
+   FAILED STEP
+───────────────────────────────────────────── */
+
+.pipeline-step.failed {
+
+  border-color:
+    rgba(239,68,68,0.24);
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(239,68,68,0.10),
+      rgba(255,255,255,0.02)
+    );
+}
+
+.pipeline-step.failed .pipeline-icon {
+
+  background:
+    rgba(239,68,68,0.12);
+
+  color: #ef4444;
+
+  border:
+    1px solid rgba(239,68,68,0.32);
+
+  box-shadow:
+    0 0 18px rgba(239,68,68,0.28);
+}
+
+/* ─────────────────────────────────────────────
+   FLOAT ANIMATION
+───────────────────────────────────────────── */
+
+@keyframes float {
+
+  0% {
+    transform: translateY(0px);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+
+  100% {
+    transform: translateY(0px);
+  }
+}
