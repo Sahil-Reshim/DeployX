@@ -7,7 +7,14 @@ function DeploymentPipeline({ status }) {
   */
 
   const normalizedStatus =
-    (status || "").toLowerCase();
+    status?.toLowerCase()?.trim() || "";
+
+  /*
+    WAITING STATE
+  */
+
+  const isWaiting =
+    !normalizedStatus;
 
   /*
     PIPELINE STEPS
@@ -18,57 +25,50 @@ function DeploymentPipeline({ status }) {
     {
       key: "queued",
       icon: "⏳",
-      label: "Deployment Queued",
-      sublabel:
-        "Deployment request received",
+      label: "Queued",
+      sublabel: "Request received",
     },
 
     {
       key: "cloning",
       icon: "📂",
-      label: "Repository Cloned",
-      sublabel:
-        "Fetching repository from GitHub",
+      label: "Clone",
+      sublabel: "Fetching repository",
     },
 
     {
       key: "detecting",
       icon: "🧠",
-      label: "Framework Detection",
-      sublabel:
-        "Analyzing application structure",
+      label: "Detect",
+      sublabel: "Checking framework",
     },
 
     {
       key: "dockerfile_generating",
       icon: "📝",
-      label: "Dockerfile Generation",
-      sublabel:
-        "Preparing container environment",
+      label: "Docker",
+      sublabel: "Generating config",
     },
 
     {
       key: "building",
       icon: "🐳",
-      label: "Docker Image Build",
-      sublabel:
-        "Building deployment container",
+      label: "Build",
+      sublabel: "Building image",
     },
 
     {
       key: "deploying",
       icon: "⚡",
-      label: "Container Deployment",
-      sublabel:
-        "Starting production runtime",
+      label: "Deploy",
+      sublabel: "Starting runtime",
     },
 
     {
       key: "running",
       icon: "🌍",
-      label: "Deployment Live",
-      sublabel:
-        "Production URL generated successfully",
+      label: "Live",
+      sublabel: "Deployment online",
     },
   ];
 
@@ -79,23 +79,15 @@ function DeploymentPipeline({ status }) {
   const statusOrder = {
 
     queued: 0,
-
     cloning: 1,
-
     detecting: 2,
-
     dockerfile_generating: 3,
-
     building: 4,
-
     deploying: 5,
-
     running: 6,
 
     success: 6,
-
     live: 6,
-
     completed: 6,
 
     failed: 4,
@@ -111,29 +103,12 @@ function DeploymentPipeline({ status }) {
       : -1;
 
   /*
-    STEP STATES
+    STEP STATE
   */
 
-  const getStepState = (
-    index
-  ) => {
+  const getStepState = (index) => {
 
-    /*
-      NO STATUS
-    */
-
-    if (!normalizedStatus) {
-      return "idle";
-    }
-
-    /*
-      FAILED STATE
-    */
-
-    if (
-      normalizedStatus ===
-      "failed"
-    ) {
+    if (normalizedStatus === "failed") {
 
       if (index < currentStep) {
         return "done";
@@ -143,30 +118,18 @@ function DeploymentPipeline({ status }) {
         return "failed";
       }
 
-      return "idle";
+      return "pending";
     }
-
-    /*
-      COMPLETED
-    */
 
     if (index < currentStep) {
       return "done";
     }
 
-    /*
-      ACTIVE
-    */
-
     if (index === currentStep) {
       return "active";
     }
 
-    /*
-      FUTURE STEP
-    */
-
-    return "idle";
+    return "pending";
   };
 
   /*
@@ -175,19 +138,12 @@ function DeploymentPipeline({ status }) {
 
   const statusLabel =
     normalizedStatus
-      ? normalizedStatus.replaceAll(
-          "_",
-          " "
-        )
+      ? normalizedStatus.replaceAll("_", " ")
       : "waiting";
 
   return (
 
     <div className="pipeline-section">
-
-      {/* BACKGROUND GLOW */}
-
-      <div className="pipeline-background-glow"></div>
 
       {/* HEADER */}
 
@@ -196,7 +152,7 @@ function DeploymentPipeline({ status }) {
         <div className="pipeline-header-left">
 
           <p className="pipeline-mini-label">
-            LIVE DEPLOYMENT FLOW
+            DEPLOYX FLOW
           </p>
 
           <h2>
@@ -204,11 +160,7 @@ function DeploymentPipeline({ status }) {
           </h2>
 
           <p className="pipeline-description">
-
-            Real-time CI/CD deployment
-            visualization powered by
-            DeployX runtime engine.
-
+            Real-time deployment monitoring.
           </p>
 
         </div>
@@ -221,40 +173,31 @@ function DeploymentPipeline({ status }) {
 
           <span className="pipeline-status-dot"></span>
 
-          <span className="pipeline-status-text">
-
+          <span>
             {statusLabel}
-
           </span>
 
         </div>
 
       </div>
 
-      {/* EMPTY STATE */}
+      {/* WAITING STATE */}
 
-      {!normalizedStatus && (
+      {isWaiting && (
 
         <div className="pipeline-empty">
 
-          <div className="pipeline-empty-glow"></div>
-
           <div className="pipeline-empty-icon">
-
             🚀
-
           </div>
 
           <h3>
-            Waiting For Deployment
+            Waiting For Deploy
           </h3>
 
           <p>
-
-            Deploy a GitHub repository
-            to start the real-time
+            Click deploy to start the
             deployment pipeline.
-
           </p>
 
         </div>
@@ -263,54 +206,34 @@ function DeploymentPipeline({ status }) {
 
       {/* PIPELINE */}
 
-      {normalizedStatus && (
+      {!isWaiting && (
 
-        <div className="pipeline-steps">
+        <>
+          <div className="pipeline-steps">
 
-          {steps.map(
-            (step, index) => {
+            {steps.map((step, index) => {
 
               const state =
                 getStepState(index);
-
-              const isLast =
-                index ===
-                steps.length - 1;
 
               return (
 
                 <div
                   key={step.key}
-                  className={`pipeline-step ${state}`}
+                  className={`pipeline-step step-${state}`}
                   style={{
                     animationDelay:
-                      `${index * 0.08}s`,
+                      `${index * 0.06}s`,
                   }}
                 >
-
-                  {/* CONNECTION LINE */}
-
-                  {!isLast && (
-
-                    <div
-                      className={`pipeline-line ${state}`}
-                    ></div>
-
-                  )}
-
-                  {/* STEP GLOW */}
 
                   <div className="pipeline-step-glow"></div>
 
                   {/* ICON */}
 
-                  <div
-                    className={`pipeline-icon ${state}`}
-                  >
+                  <div className="pipeline-icon">
 
-                    <span>
-                      {step.icon}
-                    </span>
+                    {step.icon}
 
                   </div>
 
@@ -319,79 +242,65 @@ function DeploymentPipeline({ status }) {
                   <div className="pipeline-content">
 
                     <div className="pipeline-label">
-
                       {step.label}
-
                     </div>
 
                     <div className="pipeline-sublabel">
-
                       {step.sublabel}
-
                     </div>
 
                   </div>
 
-                  {/* ACTIVE PULSE */}
+                  {/* ACTIVE DOT */}
 
-                  {state ===
-                    "active" && (
+                  {state === "active" && (
 
-                    <div className="pipeline-active-pulse"></div>
+                    <div className="pipeline-active-dot"></div>
 
                   )}
 
                 </div>
 
               );
-            }
-          )}
+            })}
 
-        </div>
+          </div>
 
-      )}
+          {/* FOOTER */}
 
-      {/* FOOTER */}
+          <div className="pipeline-footer">
 
-      {normalizedStatus && (
+            {normalizedStatus === "running" ||
+            normalizedStatus === "success" ||
+            normalizedStatus === "live" ? (
 
-        <div className="pipeline-footer">
+              <div className="pipeline-success-message">
 
-          {normalizedStatus ===
-            "running" ||
-          normalizedStatus ===
-            "success" ||
-          normalizedStatus ===
-            "live" ? (
+                Deployment completed successfully.
 
-            <div className="pipeline-success-message">
+              </div>
 
-              Deployment completed successfully.
+            ) : normalizedStatus === "failed" ? (
 
-            </div>
+              <div className="pipeline-failed-message">
 
-          ) : normalizedStatus ===
-            "failed" ? (
+                Deployment failed during build.
 
-            <div className="pipeline-failed-message">
+              </div>
 
-              Deployment failed during
-              build process.
+            ) : (
 
-            </div>
+              <div className="pipeline-progress-message">
 
-          ) : (
+                Deployment is running...
 
-            <div className="pipeline-progress-message">
+              </div>
 
-              Deployment pipeline is
-              currently executing...
+            )}
 
-            </div>
+          </div>
 
-          )}
-
-        </div>
+        </>
 
       )}
 

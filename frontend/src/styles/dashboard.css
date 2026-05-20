@@ -1317,118 +1317,35 @@ body {
 }
 
 
-/* =========================================================
+/* ─────────────────────────────
    DEPLOYMENT HISTORY
-========================================================= */
+───────────────────────────── */
 
 .deployment-history {
-  position: relative;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
 }
 
-/* =========================================================
+/* ─────────────────────────────
    HEADER
-========================================================= */
+───────────────────────────── */
 
 .deployment-history-header {
-  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 2rem;
-  padding: 2rem;
-  border-radius: 30px;
-  overflow: hidden;
 
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,0.03),
-      rgba(255,255,255,0.01)
-    );
+  gap: 24px;
 
-  border: 1px solid rgba(255,255,255,0.08);
-
-  backdrop-filter: blur(18px);
-
-  box-shadow:
-    0 10px 40px rgba(0,0,0,0.35),
-    inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-.deployment-history-header::before {
-  content: "";
-
-  position: absolute;
-  inset: 0;
-
-  background:
-    radial-gradient(
-      circle at top right,
-      rgba(220,38,38,0.18),
-      transparent 55%
-    );
-
-  pointer-events: none;
-}
-
-/* =========================================================
-   LEFT SIDE
-========================================================= */
-
-.deployment-history-left {
-  display: flex;
-  flex-direction: column;
-  gap: 0.8rem;
-  z-index: 2;
-}
-
-.history-mini-badge {
-  width: fit-content;
-
-  padding:
-    0.45rem
-    0.9rem;
-
-  border-radius: 999px;
-
-  background:
-    rgba(220,38,38,0.12);
-
-  border:
-    1px solid
-    rgba(239,68,68,0.3);
-
-  color: #f87171;
-
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-
-  text-transform: uppercase;
-
-  font-family:
-    "JetBrains Mono",
-    monospace;
+  margin-bottom: 28px;
 }
 
 .deployment-history-left h2 {
-  margin: 0;
+  margin: 10px 0 6px;
 
-  color: #ffffff;
+  color: #fff;
 
-  font-size: clamp(
-    1.8rem,
-    3vw,
-    2.8rem
-  );
-
-  font-weight: 800;
-
-  line-height: 1.1;
+  font-size: 28px;
+  font-weight: 700;
 
   font-family:
     "Syne",
@@ -1436,93 +1353,37 @@ body {
 }
 
 .deployment-history-left p {
-  max-width: 580px;
+  color: #9ca3af;
 
-  margin: 0;
+  font-size: 13px;
 
-  color: #a1a1aa;
+  line-height: 1.7;
 
-  font-size: 0.98rem;
-
-  line-height: 1.8;
+  font-family:
+    "JetBrains Mono",
+    monospace;
 }
 
-/* =========================================================
-   RIGHT STATS
-========================================================= */
+.history-mini-badge {
+  width: fit-content;
 
-.deployment-history-right {
-  display: grid;
+  padding: 7px 14px;
 
-  grid-template-columns:
-    repeat(4, minmax(120px, 1fr));
-
-  gap: 1rem;
-
-  width: 100%;
-  max-width: 560px;
-
-  z-index: 2;
-}
-
-.history-stat-card {
-  position: relative;
-
-  padding: 1.3rem;
-
-  border-radius: 24px;
-
-  overflow: hidden;
+  border-radius: 999px;
 
   background:
-    linear-gradient(
-      180deg,
-      rgba(255,255,255,0.04),
-      rgba(255,255,255,0.015)
-    );
+    rgba(239,68,68,0.08);
 
   border:
     1px solid
-    rgba(255,255,255,0.08);
+    rgba(239,68,68,0.18);
 
-  transition:
-    transform 0.35s cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    ),
-    border-color 0.35s ease,
-    box-shadow 0.35s ease;
+  color: #f87171;
 
-  backdrop-filter: blur(12px);
+  font-size: 10px;
+  font-weight: 700;
 
-  min-height: 120px;
-
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-}
-
-.history-stat-card:hover {
-  transform:
-    translateY(-6px);
-
-  border-color:
-    rgba(239,68,68,0.35);
-
-  box-shadow:
-    0 16px 40px rgba(220,38,38,0.15);
-}
-
-.stat-label {
-  color: #71717a;
-
-  font-size: 0.78rem;
-
-  font-weight: 600;
-
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 
   text-transform: uppercase;
 
@@ -1531,20 +1392,50 @@ body {
     monospace;
 }
 
-.stat-value {
-  margin-top: 1rem;
+/* ─────────────────────────────
+   STATS
+───────────────────────────── */
 
-  color: #ffffff;
+.deployment-history-right {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
 
-  font-size: 2rem;
+.history-stat-card {
+  min-width: 110px;
 
-  font-weight: 800;
+  padding: 16px;
 
-  line-height: 1;
+  border-radius: 18px;
+
+  background:
+    rgba(255,255,255,0.03);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.06);
+}
+
+.stat-label {
+  display: block;
+
+  color: #9ca3af;
+
+  font-size: 11px;
+
+  margin-bottom: 8px;
 
   font-family:
-    "Syne",
-    sans-serif;
+    "JetBrains Mono",
+    monospace;
+}
+
+.stat-value {
+  color: #fff;
+
+  font-size: 22px;
+  font-weight: 700;
 }
 
 .history-stat-card.success .stat-value {
@@ -1559,90 +1450,88 @@ body {
   color: #f87171;
 }
 
-/* =========================================================
+/* ─────────────────────────────
    ACTIONS
-========================================================= */
+───────────────────────────── */
 
 .history-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
 
-  padding: 1.2rem 1.4rem;
-
-  border-radius: 24px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(255,255,255,0.03),
-      rgba(255,255,255,0.015)
-    );
-
-  border:
-    1px solid
-    rgba(255,255,255,0.08);
-
-  backdrop-filter: blur(14px);
-}
-
-.history-actions-left,
-.history-actions-right {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin-bottom: 28px;
 }
 
 .history-live-indicator {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
 
-  color: #d4d4d8;
+  gap: 10px;
 
-  font-size: 0.92rem;
-  font-weight: 600;
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(34,197,94,0.08);
+
+  border:
+    1px solid
+    rgba(34,197,94,0.16);
+
+  color: #4ade80;
+
+  font-size: 11px;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
 }
 
 .history-live-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
 
   border-radius: 50%;
 
-  background: #22c55e;
-
-  box-shadow:
-    0 0 0 6px rgba(34,197,94,0.12),
-    0 0 20px rgba(34,197,94,0.8);
+  background: #4ade80;
 
   animation:
-    pulseLive 2s infinite;
+    pulseDot 1.8s ease infinite;
+}
+
+.history-actions-right {
+  display: flex;
+  gap: 12px;
 }
 
 .history-action-btn {
-  position: relative;
+  height: 42px;
 
-  padding:
-    0.9rem
-    1.3rem;
+  padding: 0 18px;
 
-  border-radius: 16px;
+  border-radius: 14px;
 
   border: none;
 
   cursor: pointer;
 
-  font-size: 0.9rem;
-  font-weight: 700;
+  color: #fff;
+
+  font-size: 12px;
+  font-weight: 600;
 
   transition:
-    transform 0.25s ease,
-    box-shadow 0.25s ease,
-    background 0.25s ease;
+    all 0.25s ease;
+}
 
-  overflow: hidden;
+.history-action-btn.ghost {
+  background:
+    rgba(255,255,255,0.04);
+
+  border:
+    1px solid
+    rgba(255,255,255,0.08);
 }
 
 .history-action-btn:hover {
@@ -1650,131 +1539,151 @@ body {
     translateY(-2px);
 }
 
-.history-action-btn.ghost {
-  color: #ffffff;
-
-  background:
-    rgba(255,255,255,0.06);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.08);
-}
-
-.history-action-btn.ghost:hover {
-  background:
-    rgba(255,255,255,0.12);
-}
-
-.history-action-btn.danger {
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #dc2626,
-      #ef4444
-    );
-
-  box-shadow:
-    0 12px 30px rgba(239,68,68,0.25);
-}
-
-.history-action-btn.danger:hover {
-  box-shadow:
-    0 18px 40px rgba(239,68,68,0.35);
-}
-
-/* =========================================================
+/* ─────────────────────────────
    GRID
-========================================================= */
+───────────────────────────── */
 
 .deployment-grid {
   display: grid;
 
   grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(420px, 1fr)
-    );
+    repeat(auto-fit, minmax(360px, 1fr));
 
-  gap: 1.8rem;
-
-  width: 100%;
+  gap: 24px;
 }
 
 .deployment-grid-item {
-  opacity: 0;
-
   animation:
-    deploymentCardReveal
-    0.7s cubic-bezier(
-      0.22,
-      1,
-      0.36,
-      1
-    )
-    forwards;
+    deploymentReveal 0.4s ease both;
 }
 
-/* =========================================================
-   LOADING
-========================================================= */
+/* ─────────────────────────────
+   CARD WRAPPER
+───────────────────────────── */
 
-.history-loading {
+.deployment-card-wrapper {
   position: relative;
+}
+
+/* ─────────────────────────────
+   DELETE BUTTON
+───────────────────────────── */
+
+.deployment-delete-btn {
+  position: absolute;
+
+  top: 14px;
+  right: 14px;
+
+  width: 34px;
+  height: 34px;
+
+  border: none;
+
+  border-radius: 12px;
+
+  cursor: pointer;
+
+  z-index: 20;
 
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
 
-  gap: 1rem;
-
-  min-height: 420px;
-
-  padding: 3rem;
-
-  border-radius: 32px;
-
-  overflow: hidden;
-
   background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,0.03),
-      rgba(255,255,255,0.015)
-    );
+    rgba(239,68,68,0.08);
 
   border:
     1px solid
-    rgba(255,255,255,0.08);
+    rgba(239,68,68,0.18);
 
-  backdrop-filter: blur(16px);
+  color: #f87171;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  transition:
+    all 0.22s ease;
 }
 
-.history-loading-glow {
-  position: absolute;
+.deployment-delete-btn:hover {
 
-  width: 420px;
-  height: 420px;
+  transform:
+    translateY(-2px)
+    scale(1.05);
 
   background:
-    radial-gradient(
-      circle,
-      rgba(220,38,38,0.2),
-      transparent 70%
-    );
+    rgba(239,68,68,0.16);
 
-  filter: blur(40px);
+  box-shadow:
+    0 0 20px
+    rgba(239,68,68,0.18);
+}
 
-  animation:
-    pulseGlow 4s ease-in-out infinite;
+/* ─────────────────────────────
+   EMPTY STATE
+───────────────────────────── */
+
+.history-empty {
+  text-align: center;
+
+  padding: 80px 20px;
+
+  border-radius: 24px;
+
+  background:
+    rgba(255,255,255,0.02);
+
+  border:
+    1px dashed
+    rgba(255,255,255,0.08);
+}
+
+.history-empty-icon {
+  font-size: 56px;
+
+  margin-bottom: 18px;
+}
+
+.history-empty h2 {
+  color: #fff;
+
+  margin-bottom: 12px;
+
+  font-size: 24px;
+
+  font-family:
+    "Syne",
+    sans-serif;
+}
+
+.history-empty p {
+  color: #9ca3af;
+
+  font-size: 13px;
+
+  line-height: 1.8;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+}
+
+/* ─────────────────────────────
+   LOADING
+───────────────────────────── */
+
+.history-loading {
+  text-align: center;
+
+  padding: 80px 20px;
 }
 
 .history-loader {
-  width: 80px;
-  height: 80px;
+  width: 56px;
+  height: 56px;
+
+  margin: 0 auto 20px;
 
   border-radius: 50%;
 
@@ -1782,191 +1691,69 @@ body {
     3px solid
     rgba(255,255,255,0.08);
 
-  border-top:
-    3px solid #ef4444;
+  border-top-color: #ef4444;
 
   animation:
-    spinLoader 1s linear infinite;
-
-  z-index: 2;
+    spin 1s linear infinite;
 }
 
-/* =========================================================
-   EMPTY
-========================================================= */
+.history-loading h2 {
+  color: #fff;
 
-.history-empty {
-  position: relative;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  text-align: center;
-
-  gap: 1rem;
-
-  min-height: 460px;
-
-  padding: 4rem;
-
-  overflow: hidden;
-
-  border-radius: 36px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,255,255,0.025),
-      rgba(255,255,255,0.01)
-    );
-
-  border:
-    1px solid
-    rgba(255,255,255,0.08);
-
-  backdrop-filter: blur(18px);
+  margin-bottom: 10px;
 }
 
-.history-empty-grid {
-  position: absolute;
-  inset: 0;
-
-  background-image:
-    linear-gradient(
-      rgba(255,255,255,0.03) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      90deg,
-      rgba(255,255,255,0.03) 1px,
-      transparent 1px
-    );
-
-  background-size: 40px 40px;
+.history-loading p {
+  color: #9ca3af;
 }
 
-.history-empty-glow {
-  position: absolute;
-
-  width: 500px;
-  height: 500px;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(220,38,38,0.22),
-      transparent 70%
-    );
-
-  filter: blur(60px);
-}
-
-.history-empty-icon {
-  position: relative;
-
-  width: 120px;
-  height: 120px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 30px;
-
-  background:
-    rgba(255,255,255,0.04);
-
-  border:
-    1px solid
-    rgba(255,255,255,0.08);
-
-  font-size: 3.5rem;
-}
-
-/* =========================================================
+/* ─────────────────────────────
    ANIMATIONS
-========================================================= */
+───────────────────────────── */
 
-@keyframes deploymentCardReveal {
-
-  from {
-    opacity: 0;
-
-    transform:
-      translateY(30px)
-      scale(0.98);
-  }
-
-  to {
-    opacity: 1;
-
-    transform:
-      translateY(0)
-      scale(1);
-  }
-}
-
-@keyframes spinLoader {
-
-  from {
-    transform: rotate(0deg);
-  }
+@keyframes spin {
 
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes pulseGlow {
+@keyframes pulseDot {
 
-  0%,
-  100% {
-    opacity: 0.5;
+  0%,100% {
     transform: scale(1);
   }
 
   50% {
-    opacity: 1;
-    transform: scale(1.08);
+    transform: scale(1.25);
   }
 }
 
-@keyframes pulseLive {
+@keyframes deploymentReveal {
 
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 1;
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(14px);
   }
 
-  50% {
-    transform: scale(1.3);
-    opacity: 0.7;
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0);
   }
 }
 
-/* =========================================================
-   RESPONSIVE
-========================================================= */
+/* ─────────────────────────────
+   MOBILE
+───────────────────────────── */
 
-@media (max-width: 1200px) {
+@media (max-width: 768px) {
 
   .deployment-history-header {
     flex-direction: column;
-  }
-
-  .deployment-history-right {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 900px) {
-
-  .deployment-history-right {
-    grid-template-columns:
-      repeat(2, 1fr);
   }
 
   .deployment-grid {
@@ -1976,45 +1763,15 @@ body {
   .history-actions {
     flex-direction: column;
     align-items: flex-start;
-  }
 
-  .history-actions-right {
-    width: 100%;
-  }
-
-  .history-action-btn {
-    flex: 1;
-    width: 100%;
-  }
-}
-
-@media (max-width: 640px) {
-
-  .deployment-history-header {
-    padding: 1.2rem;
-    border-radius: 24px;
+    gap: 16px;
   }
 
   .deployment-history-right {
-    grid-template-columns: 1fr;
-  }
-
-  .deployment-grid {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-  }
-
-  .history-empty,
-  .history-loading {
-    min-height: 340px;
-    padding: 2rem;
-  }
-
-  .history-actions-right {
-    flex-direction: column;
-  }
-
-  .history-action-btn {
     width: 100%;
+  }
+
+  .history-stat-card {
+    flex: 1;
   }
 }
