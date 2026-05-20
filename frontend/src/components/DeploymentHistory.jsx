@@ -6,7 +6,6 @@ function DeploymentHistory({
   deployments = [],
   loading = false,
   onDeleteDeployment,
-  onClearHistory,
 }) {
 
   /*
@@ -104,27 +103,6 @@ function DeploymentHistory({
     ).length;
 
   /*
-    DELETE ALL
-  */
-
-  const handleClearHistory = () => {
-
-    const confirmed =
-      window.confirm(
-        "Delete all deployment history?"
-      );
-
-    if (
-      confirmed &&
-      onClearHistory
-    ) {
-
-      onClearHistory();
-
-    }
-  };
-
-  /*
     LOADING STATE
   */
 
@@ -136,8 +114,6 @@ function DeploymentHistory({
 
         <div className="history-loading">
 
-          <div className="history-loading-glow"></div>
-
           <div className="history-loader"></div>
 
           <h2>
@@ -146,9 +122,8 @@ function DeploymentHistory({
 
           <p>
 
-            Fetching live deployment
-            infrastructure data from
-            backend runtime engine...
+            Fetching deployment
+            runtime data...
 
           </p>
 
@@ -174,10 +149,6 @@ function DeploymentHistory({
 
         <div className="history-empty">
 
-          <div className="history-empty-grid"></div>
-
-          <div className="history-empty-glow"></div>
-
           <div className="history-empty-icon">
 
             🚀
@@ -191,8 +162,7 @@ function DeploymentHistory({
           <p>
 
             Start your first deployment
-            to launch real-time CI/CD
-            infrastructure with DeployX.
+            to launch DeployX runtime.
 
           </p>
 
@@ -229,9 +199,8 @@ function DeploymentHistory({
 
           <p>
 
-            Monitor and manage your
-            production deployments
-            in real-time.
+            Monitor production
+            deployments in real-time.
 
           </p>
 
@@ -311,15 +280,11 @@ function DeploymentHistory({
 
       <div className="history-actions">
 
-        <div className="history-actions-left">
+        <div className="history-live-indicator">
 
-          <div className="history-live-indicator">
+          <span className="history-live-dot"></span>
 
-            <span className="history-live-dot"></span>
-
-            Live Deployment Sync
-
-          </div>
+          Live Deployment Sync
 
         </div>
 
@@ -330,15 +295,6 @@ function DeploymentHistory({
           >
 
             Refresh
-
-          </button>
-
-          <button
-            className="history-action-btn danger"
-            onClick={handleClearHistory}
-          >
-
-            Delete History
 
           </button>
 
@@ -364,18 +320,52 @@ function DeploymentHistory({
               className="deployment-grid-item"
               style={{
                 animationDelay:
-                  `${index * 0.06}s`,
+                  `${index * 0.05}s`,
               }}
             >
 
-              <DeploymentItem
-                deployment={
-                  deployment
-                }
-                onDelete={
-                  onDeleteDeployment
-                }
-              />
+              {/* CARD WRAPPER */}
+
+              <div className="deployment-card-wrapper">
+
+                {/* DELETE BUTTON */}
+
+                <button
+                  className="deployment-delete-btn"
+                  onClick={() => {
+
+                    const confirmed =
+                      window.confirm(
+                        "Delete this deployment?"
+                      );
+
+                    if (
+                      confirmed &&
+                      onDeleteDeployment
+                    ) {
+
+                      onDeleteDeployment(
+                        deployment.id
+                      );
+
+                    }
+
+                  }}
+                >
+
+                  ✕
+
+                </button>
+
+                {/* DEPLOYMENT CARD */}
+
+                <DeploymentItem
+                  deployment={
+                    deployment
+                  }
+                />
+
+              </div>
 
             </div>
 
