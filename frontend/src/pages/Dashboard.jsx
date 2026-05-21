@@ -51,6 +51,9 @@ function Dashboard() {
   const [latestDeployment, setLatestDeployment] =
     useState(null);
 
+  const [activeDeployment, setActiveDeployment] =
+    useState(null);
+
   const [initialLoading, setInitialLoading] =
     useState(true);
 
@@ -142,13 +145,22 @@ function Dashboard() {
               `/deployments/${deploymentId}/status`
             );
 
-          const deployment =
+          const deploymentResponse =
             response.data?.deployment ||
             response.data;
 
-          setLatestDeployment(
-            deployment
-          );
+          const deployment = {
+            ...deploymentResponse,
+            id:
+              deploymentResponse.id ||
+              deploymentResponse.deployment_id,
+            deployment_id:
+              deploymentResponse.deployment_id ||
+              deploymentResponse.id
+          };
+
+          setLatestDeployment(deployment);
+          setActiveDeployment(deployment);
 
           setDeployments((prev) => {
 
@@ -182,6 +194,7 @@ function Dashboard() {
 
           if (
             status === "running" ||
+            status === "live" ||
             status === "failed"
           ) {
 
@@ -189,6 +202,17 @@ function Dashboard() {
               pollingRef.current
             );
 
+            pollingRef.current = null;
+
+            setLatestDeployment(
+              deployment
+            );
+
+            setActiveDeployment(
+              deployment
+            );
+
+            fetchDeployments();
           }
 
         } catch (error) {
@@ -234,6 +258,7 @@ function Dashboard() {
       latestDeployment?.id &&
       status &&
       status !== "running" &&
+      status !== "live" &&
       status !== "failed"
     ) {
 
@@ -295,6 +320,9 @@ function Dashboard() {
       case "running":
         return 100;
 
+      case "live":
+        return 100;
+
       case "failed":
         return 100;
 
@@ -353,9 +381,8 @@ function Dashboard() {
               </p>
 
               <RepoForm
-                refreshDeployments={
-                  fetchDeployments
-                }
+                refreshDeployments={fetchDeployments}
+                setActiveDeployment={setActiveDeployment}
               />
 
             </section>

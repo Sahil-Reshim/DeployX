@@ -45,7 +45,9 @@ function ProductionLink({
     deploymentStatus ===
       "running" ||
     deploymentStatus ===
-      "success";
+      "success" ||
+    deploymentStatus ===
+      "live";
 
   const isFailed =
     deploymentStatus ===

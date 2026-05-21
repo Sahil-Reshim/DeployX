@@ -91,7 +91,18 @@ def run_docker_container(image_name, repo_path=None):
                 internal_port = detected
 
         # Try multiple candidate ports if detection fails
-        candidate_ports = list({internal_port, 3000, 5000, 5173, 8000, 8080})
+        candidate_ports = []
+
+        for port in [
+            internal_port,
+            5000,
+            3000,
+            5173,
+            8000,
+            8080
+        ]:
+            if port not in candidate_ports:
+                candidate_ports.append(port)
 
         container = client.containers.run(
             image=image_name,
@@ -118,16 +129,23 @@ def run_docker_container(image_name, repo_path=None):
             }
 
         # Find the mapped host port
-        host_port = get_container_url(container, internal_port)
+        preferred_ports = [
+            5000,
+            3000,
+            5173,
+            8000,
+            8080
+        ]
 
-        # If primary port not mapped, try candidates
-        if not host_port:
-            for p in candidate_ports:
-                host_port = get_container_url(container, p)
-                if host_port:
-                    internal_port = p
-                    break
+        host_port = None
 
+        for p in preferred_ports:
+            host_port = get_container_url(container, p)
+
+            if host_port:
+                internal_port = p
+                break
+    
         if not host_port:
             container.remove(force=True)
             return {

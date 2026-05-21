@@ -4,7 +4,7 @@ import Loader from "./Loader";
 
 function RepoForm({
   refreshDeployments,
-  setActiveDeployment
+  setActiveDeployment,
 }) {
 
   const [repoUrl, setRepoUrl] =
@@ -77,7 +77,8 @@ function RepoForm({
             await refreshDeployments();
 
             if (
-              status === "running"
+              status === "running" ||
+              status === "live"
             ) {
 
               setMessage({
@@ -166,6 +167,16 @@ function RepoForm({
             }
           );
 
+        if (!response.data?.success) {
+
+          throw new Error(
+            response.data?.error ||
+            response.data?.message ||
+            "Deployment request failed"
+          );
+
+        }
+
         const deploymentId =
           response.data
             ?.deployment_id;
@@ -194,6 +205,13 @@ function RepoForm({
 
         setRepoUrl("");
 
+        setLoading(false);
+
+        setMessage({
+          text: "Deployment started successfully. Tracking live status...",
+          type: "success"
+        });
+
       } catch (error) {
 
         setLoading(false);
@@ -214,6 +232,7 @@ function RepoForm({
 
           setMessage({
             text:
+              error.message ||
               "Cannot connect to backend server",
             type: "error"
           });
