@@ -277,24 +277,24 @@ function RepoForm({
             Repository URL
           </label>
 
-          <div className="repo-url-wrapper">
+          <div className="repo-input-wrapper">
 
-            <span className="repo-url-icon">
-              GitHub
-            </span>
+              <span className="repo-prefix">
+                  GitHub
+              </span>
 
-            <input
-              type="text"
-              placeholder="https://github.com/user/project"
-              className="repo-url-input"
-              value={repoUrl}
-              onChange={(e) =>
-                setRepoUrl(
-                  e.target.value
-                )
-              }
-              disabled={loading}
-            />
+              <input
+                type="text"
+                placeholder="https://github.com/user/project"
+                className="repo-input"
+                value={repoUrl}
+                onChange={(e) =>
+                  setRepoUrl(
+                    e.target.value
+                  )
+                }
+                disabled={loading}
+              />
 
           </div>
 

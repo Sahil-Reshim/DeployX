@@ -1,3 +1,5 @@
+import useDeploymentSocket
+from "../hooks/useDeploymentSocket";
 import { useEffect, useState, useRef } from "react";
 
 import Navbar from "../components/Navbar";
@@ -60,6 +62,12 @@ function Dashboard() {
   const pollingRef = useRef(null);
 
   const hasFetched = useRef(false);
+  const {
+    statusData,
+    logs
+  } = useDeploymentSocket(
+    latestDeployment?.id
+  );
 
   /* ─────────────────────────────────────────────
      FETCH DEPLOYMENTS
@@ -228,6 +236,33 @@ function Dashboard() {
       2000
     );
   };
+
+/* ─────────────────────────────────────────────
+   SOCKET LIVE UPDATES
+───────────────────────────────────────────── */
+
+useEffect(() => {
+
+  if (!statusData)
+    return;
+
+  setLatestDeployment(prev => ({
+
+    ...prev,
+    status:
+      statusData.status
+
+  }));
+
+  setActiveDeployment(prev => ({
+
+    ...prev,
+    status:
+      statusData.status
+
+  }));
+
+}, [statusData]);
 
   /* ─────────────────────────────────────────────
      INITIAL LOAD
