@@ -2,7 +2,14 @@ import threading
 from database import init_db
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from sockets.socket_manager import (
+    socketio,
+    emit_deployment_update,
+    emit_log
+)
 
+import sockets.deployment_socket
+import sockets.logs_socket
 from services.git_service import clone_repository
 from services.framework_detector import detect_framework
 from services.dockerfile_generator import generate_dockerfile
@@ -36,6 +43,7 @@ from services.cleanup_service import (
 
 
 app = Flask(__name__)
+socketio.init_app(app)
 CORS(app)
 
 init_db()
@@ -47,127 +55,6 @@ def home():
         "success": True,
         "message": "DeployX Backend Running 🚀"
     })
-
-def run_deployment_job(deployment_id, repo_url):
-
-    repo_path = None
-    image_name = None
-    container_id = None
-
-    try:
-        print("\n========== BACKGROUND DEPLOYMENT STARTED ==========")
-        print("Deployment ID:", deployment_id)
-        print("Repo URL:", repo_url)
-
-        # STEP 1 → CLONING
-        update_deployment_step(deployment_id, "cloning")
-
-        clone_result = clone_repository(repo_url)
-        print("Clone Result:", clone_result)
-
-        if not clone_result["success"]:
-            fail_deployment(deployment_id, "failed")
-
-            repo_path = clone_result.get("repo_path")
-            if repo_path:
-                remove_repo_folder(repo_path)
-
-            return
-
-        repo_path = clone_result["repo_path"]
-
-        # STEP 2 → FRAMEWORK DETECTION
-        update_deployment_step(deployment_id, "detecting")
-
-        framework_result = detect_framework(repo_path)
-        print("Framework Result:", framework_result)
-
-        if not framework_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
-            return
-
-        # STEP 3 → DOCKERFILE GENERATION
-        update_deployment_step(deployment_id, "dockerfile_generating")
-
-        dockerfile_result = generate_dockerfile(
-            repo_path,
-            framework_result["framework"]
-        )
-        print("Dockerfile Result:", dockerfile_result)
-
-        if not dockerfile_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
-            return
-
-        # STEP 4 → BUILD IMAGE
-        update_deployment_step(deployment_id, "building")
-
-        docker_result = build_docker_image(repo_path)
-        print("Docker Result:", docker_result)
-
-        if not docker_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
-            return
-
-        image_name = docker_result["image_name"]
-
-        # STEP 5 → RUN CONTAINER
-        update_deployment_step(deployment_id, "deploying")
-
-        container_result = run_docker_container(
-            image_name,
-            repo_path=repo_path
-        )
-        print("Container Result:", container_result)
-
-        if not container_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_image(image_name)
-            remove_repo_folder(repo_path)
-            return
-
-        container_id = container_result["container_id"]
-
-        # STEP 6 → COMPLETE DEPLOYMENT
-        update_deployment_step(deployment_id, "running")
-
-        complete_deployment(
-            deployment_id,
-            framework_result,
-            docker_result,
-            container_result
-        )
-
-        # STEP 7 → SAVE LOGS
-        save_build_logs(
-            deployment_id,
-            docker_result.get("logs", [])
-        )
-
-        save_container_logs(
-            deployment_id,
-            container_result.get("logs", [])
-        )
-
-        print("\n========== BACKGROUND DEPLOYMENT COMPLETED ==========")
-
-    except Exception as e:
-        print("\n========== BACKGROUND DEPLOYMENT ERROR ==========")
-        print(str(e))
-
-        fail_deployment(deployment_id, "failed")
-
-        if container_id:
-            remove_container(container_id)
-
-        if image_name:
-            remove_image(image_name)
-
-        if repo_path:
-            remove_repo_folder(repo_path)
             
 def run_deployment_job(deployment_id, repo_url):
 
@@ -180,7 +67,21 @@ def run_deployment_job(deployment_id, repo_url):
         print("Deployment ID:", deployment_id)
         print("Repo URL:", repo_url)
 
-        update_deployment_step(deployment_id, "cloning")
+        update_deployment_step(
+            deployment_id,
+            "cloning"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "cloning",
+            "Cloning repository..."
+        )
+
+        emit_log(
+            deployment_id,
+            "Starting repository clone..."
+        )
 
         print("\n[STEP 1] Cloning Repository...")
         clone_result = clone_repository(repo_url)
@@ -197,7 +98,16 @@ def run_deployment_job(deployment_id, repo_url):
 
         repo_path = clone_result["repo_path"]
 
-        update_deployment_step(deployment_id, "detecting")
+        update_deployment_step(
+            deployment_id,
+            "detecting"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "detecting",
+            "Detecting framework..."
+        )
 
         print("\n[STEP 2] Detecting Framework...")
         framework_result = detect_framework(repo_path)
@@ -207,7 +117,16 @@ def run_deployment_job(deployment_id, repo_url):
             remove_repo_folder(repo_path)
             return
 
-        update_deployment_step(deployment_id, "dockerfile_generating")
+        update_deployment_step(
+            deployment_id,
+            "dockerfile_generating"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "dockerfile_generating",
+            "Generating Dockerfile..."
+        )
 
         print("\n[STEP 3] Generating Dockerfile...")
         dockerfile_result = generate_dockerfile(
@@ -220,10 +139,22 @@ def run_deployment_job(deployment_id, repo_url):
             remove_repo_folder(repo_path)
             return
 
-        update_deployment_step(deployment_id, "building")
+        update_deployment_step(
+            deployment_id,
+            "building"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "building",
+            "Building Docker image..."
+        )
 
         print("\n[STEP 4] Building Docker Image...")
-        docker_result = build_docker_image(repo_path)
+        docker_result = build_docker_image(
+            repo_path,
+            deployment_id
+        )
 
         if not docker_result["success"]:
             fail_deployment(deployment_id, "failed")
@@ -232,12 +163,22 @@ def run_deployment_job(deployment_id, repo_url):
 
         image_name = docker_result["image_name"]
 
-        update_deployment_step(deployment_id, "deploying")
+        update_deployment_step(
+            deployment_id,
+            "deploying"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "deploying",
+            "Starting container..."
+        )
 
         print("\n[STEP 5] Running Container...")
         container_result = run_docker_container(
             image_name,
-            repo_path=repo_path
+            deployment_id,
+            repo_path
         )
 
         if not container_result["success"]:
@@ -248,7 +189,16 @@ def run_deployment_job(deployment_id, repo_url):
 
         container_id = container_result["container_id"]
 
-        update_deployment_step(deployment_id, "running")
+        update_deployment_step(
+            deployment_id,
+            "running"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "running",
+            "Container running"
+        )
 
         complete_deployment(
             deployment_id,
@@ -270,19 +220,40 @@ def run_deployment_job(deployment_id, repo_url):
         print("\n========== BACKGROUND DEPLOYMENT COMPLETED ==========")
 
     except Exception as e:
+
         print("\n========== BACKGROUND DEPLOYMENT ERROR ==========")
         print(str(e))
 
-        fail_deployment(deployment_id, "failed")
+        emit_deployment_update(
+            deployment_id,
+            "failed",
+            str(e)
+        )
+
+        emit_log(
+            deployment_id,
+            f"ERROR: {str(e)}"
+        )
+
+        fail_deployment(
+            deployment_id,
+            "failed"
+        )
 
         if container_id:
-            remove_container(container_id)
+            remove_container(
+                container_id
+            )
 
         if image_name:
-            remove_image(image_name)
+            remove_image(
+                image_name
+            )
 
         if repo_path:
-            remove_repo_folder(repo_path)
+            remove_repo_folder(
+                repo_path
+            )
 
 @app.route("/deploy", methods=["POST"])
 def deploy():
@@ -475,8 +446,9 @@ def cleanup_repo():
 
 if __name__ == "__main__":
 
-    app.run(
-        debug=True,
+    socketio.run(
+        app,
         host="0.0.0.0",
-        port=5000
+        port=5000,
+        debug=True
     )

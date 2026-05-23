@@ -1,5 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 
+import useDeploymentSocket from "../hooks/useDeploymentSocket";
+
 import Navbar from "../components/Navbar";
 import RepoForm from "../components/RepoForm";
 import DeploymentHistory from "../components/DeploymentHistory";
@@ -38,6 +40,7 @@ function ComingSoon({ title }) {
     </div>
 
   );
+
 }
 
 function Dashboard() {
@@ -60,6 +63,12 @@ function Dashboard() {
   const pollingRef = useRef(null);
 
   const hasFetched = useRef(false);
+
+  const {
+    statusData
+  } = useDeploymentSocket(
+    latestDeployment?.id
+  );
 
   /* ─────────────────────────────────────────────
      FETCH DEPLOYMENTS
@@ -89,9 +98,13 @@ function Dashboard() {
             )
         );
 
-      setDeployments(sortedDeployments);
+      setDeployments(
+        sortedDeployments
+      );
 
-      if (sortedDeployments.length > 0) {
+      if (
+        sortedDeployments.length > 0
+      ) {
 
         setLatestDeployment(
           sortedDeployments[0]
@@ -115,94 +128,53 @@ function Dashboard() {
       setInitialLoading(false);
 
     }
+
   };
 
   /* ─────────────────────────────────────────────
      POLL DEPLOYMENT STATUS
   ───────────────────────────────────────────── */
 
-  const pollDeploymentStatus = (
-    deploymentId
-  ) => {
+  const pollDeploymentStatus =
+    (deploymentId) => {
 
-    if (!deploymentId) return;
+      if (!deploymentId)
+        return;
 
-    if (pollingRef.current) {
+      if (pollingRef.current) {
 
-      clearInterval(
-        pollingRef.current
-      );
+        clearInterval(
+          pollingRef.current
+        );
 
-    }
+      }
 
-    pollingRef.current = setInterval(
-      async () => {
+      pollingRef.current =
+        setInterval(async () => {
 
-        try {
+          try {
 
-          const response =
-            await API.get(
-              `/deployments/${deploymentId}/status`
-            );
-
-          const deploymentResponse =
-            response.data?.deployment ||
-            response.data;
-
-          const deployment = {
-            ...deploymentResponse,
-            id:
-              deploymentResponse.id ||
-              deploymentResponse.deployment_id,
-            deployment_id:
-              deploymentResponse.deployment_id ||
-              deploymentResponse.id
-          };
-
-          setLatestDeployment(deployment);
-          setActiveDeployment(deployment);
-
-          setDeployments((prev) => {
-
-            const updated =
-              prev.map((item) =>
-                item.id === deployment.id
-                  ? deployment
-                  : item
+            const response =
+              await API.get(
+                `/deployments/${deploymentId}/status`
               );
 
-            const exists =
-              updated.find(
-                (item) =>
-                  item.id === deployment.id
-              );
+            const deploymentResponse =
+              response.data?.deployment ||
+              response.data;
 
-            if (!exists) {
+            if (!deploymentResponse)
+              return;
 
-              updated.unshift(
-                deployment
-              );
-
-            }
-
-            return updated;
-
-          });
-
-          const status =
-            deployment?.status?.toLowerCase();
-
-          if (
-            status === "running" ||
-            status === "live" ||
-            status === "failed"
-          ) {
-
-            clearInterval(
-              pollingRef.current
-            );
-
-            pollingRef.current = null;
+            const deployment = {
+              ...deploymentResponse,
+              id:
+                deploymentResponse.id ||
+                deploymentResponse.deployment_id,
+              deployment_id:
+                deploymentResponse.deployment_id ||
+                deploymentResponse.id
+            };
 
             setLatestDeployment(
               deployment
@@ -212,22 +184,86 @@ function Dashboard() {
               deployment
             );
 
-            fetchDeployments();
+            setDeployments((prev) => {
+
+              const updated =
+                prev.map((item) =>
+                  item.id === deployment.id
+                    ? deployment
+                    : item
+                );
+
+              const exists =
+                updated.find(
+                  (item) =>
+                    item.id === deployment.id
+                );
+
+              if (!exists) {
+
+                updated.unshift(
+                  deployment
+                );
+
+              }
+
+              return updated;
+
+            });
+
+            const status =
+              deployment?.status?.toLowerCase();
+
+            if (
+              status === "running" ||
+              status === "live" ||
+              status === "failed" ||
+              status === "completed"
+            ) {
+
+              clearInterval(
+                pollingRef.current
+              );
+
+              pollingRef.current = null;
+
+              fetchDeployments();
+
+            }
+
+          } catch (error) {
+
+            console.error(
+              "Polling failed:",
+              error
+            );
+
           }
 
-        } catch (error) {
+        }, 2000);
 
-          console.error(
-            "Polling failed:",
-            error
-          );
+    };
 
-        }
+  /* ─────────────────────────────────────────────
+     SOCKET LIVE UPDATES
+  ───────────────────────────────────────────── */
 
-      },
-      2000
-    );
-  };
+  useEffect(() => {
+
+    if (!statusData)
+      return;
+
+    setLatestDeployment((prev) => ({
+      ...(prev || {}),
+      status: statusData.status
+    }));
+
+    setActiveDeployment((prev) => ({
+      ...(prev || {}),
+      status: statusData.status
+    }));
+
+  }, [statusData]);
 
   /* ─────────────────────────────────────────────
      INITIAL LOAD
@@ -328,19 +364,20 @@ function Dashboard() {
 
       default:
         return 10;
+
     }
-  };
-
-  const isStepActive = (
-    requiredProgress
-  ) => {
-
-    return (
-      getProgress() >=
-      requiredProgress
-    );
 
   };
+
+  const isStepActive =
+    (requiredProgress) => {
+
+      return (
+        getProgress() >=
+        requiredProgress
+      );
+
+    };
 
   /* ─────────────────────────────────────────────
      PAGE RENDER
@@ -353,6 +390,7 @@ function Dashboard() {
       case "dashboard":
 
         return (
+
           <>
 
             {/* HERO */}
@@ -627,6 +665,7 @@ function Dashboard() {
             </section>
 
           </>
+
         );
 
       case "deployments":
@@ -693,7 +732,9 @@ function Dashboard() {
 
       default:
         return null;
+
     }
+
   };
 
   /* ─────────────────────────────────────────────
@@ -754,6 +795,7 @@ function Dashboard() {
     </div>
 
   );
+
 }
 
 export default Dashboard;
