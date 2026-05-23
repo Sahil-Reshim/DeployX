@@ -60,8 +60,6 @@ function Dashboard() {
   const [initialLoading, setInitialLoading] =
     useState(true);
 
-  const pollingRef = useRef(null);
-
   const hasFetched = useRef(false);
 
   const {
@@ -132,119 +130,6 @@ function Dashboard() {
   };
 
   /* ─────────────────────────────────────────────
-     POLL DEPLOYMENT STATUS
-  ───────────────────────────────────────────── */
-
-  const pollDeploymentStatus =
-    (deploymentId) => {
-
-      if (!deploymentId)
-        return;
-
-      if (pollingRef.current) {
-
-        clearInterval(
-          pollingRef.current
-        );
-
-      }
-
-      pollingRef.current =
-        setInterval(async () => {
-
-          try {
-
-            const response =
-              await API.get(
-                `/deployments/${deploymentId}/status`
-              );
-
-            const deploymentResponse =
-              response.data?.deployment ||
-              response.data;
-
-            if (!deploymentResponse)
-              return;
-
-            const deployment = {
-              ...deploymentResponse,
-              id:
-                deploymentResponse.id ||
-                deploymentResponse.deployment_id,
-              deployment_id:
-                deploymentResponse.deployment_id ||
-                deploymentResponse.id
-            };
-
-            setLatestDeployment(
-              deployment
-            );
-
-            setActiveDeployment(
-              deployment
-            );
-
-            setDeployments((prev) => {
-
-              const updated =
-                prev.map((item) =>
-                  item.id === deployment.id
-                    ? deployment
-                    : item
-                );
-
-              const exists =
-                updated.find(
-                  (item) =>
-                    item.id === deployment.id
-                );
-
-              if (!exists) {
-
-                updated.unshift(
-                  deployment
-                );
-
-              }
-
-              return updated;
-
-            });
-
-            const status =
-              deployment?.status?.toLowerCase();
-
-            if (
-              status === "running" ||
-              status === "live" ||
-              status === "failed" ||
-              status === "completed"
-            ) {
-
-              clearInterval(
-                pollingRef.current
-              );
-
-              pollingRef.current = null;
-
-              fetchDeployments();
-
-            }
-
-          } catch (error) {
-
-            console.error(
-              "Polling failed:",
-              error
-            );
-
-          }
-
-        }, 2000);
-
-    };
-
-  /* ─────────────────────────────────────────────
      SOCKET LIVE UPDATES
   ───────────────────────────────────────────── */
 
@@ -265,61 +150,21 @@ function Dashboard() {
 
   }, [statusData]);
 
-  /* ─────────────────────────────────────────────
-     INITIAL LOAD
-  ───────────────────────────────────────────── */
+/* ─────────────────────────────────────────────
+   INITIAL LOAD
+───────────────────────────────────────────── */
 
-  useEffect(() => {
+useEffect(() => {
 
-    if (!hasFetched.current) {
+  if (!hasFetched.current) {
 
-      hasFetched.current = true;
+    hasFetched.current = true;
 
-      fetchDeployments();
+    fetchDeployments();
 
-    }
+  }
 
-  }, []);
-
-  /* ─────────────────────────────────────────────
-     AUTO POLLING
-  ───────────────────────────────────────────── */
-
-  useEffect(() => {
-
-    const status =
-      latestDeployment?.status?.toLowerCase();
-
-    if (
-      latestDeployment?.id &&
-      status &&
-      status !== "running" &&
-      status !== "live" &&
-      status !== "failed"
-    ) {
-
-      pollDeploymentStatus(
-        latestDeployment.id
-      );
-
-    }
-
-    return () => {
-
-      if (pollingRef.current) {
-
-        clearInterval(
-          pollingRef.current
-        );
-
-      }
-
-    };
-
-  }, [
-    latestDeployment?.id,
-    latestDeployment?.status
-  ]);
+}, []);
 
   /* ─────────────────────────────────────────────
      PROGRESS

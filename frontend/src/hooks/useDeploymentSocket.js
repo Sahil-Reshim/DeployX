@@ -26,16 +26,21 @@ function useDeploymentSocket(
       return;
 
     /*
-      JOIN ROOM
+      JOIN ONLY IF SOCKET
+      IS ALREADY CONNECTED
     */
 
-    socket.emit(
-      "join_deployment",
-      {
-        deployment_id:
-          deploymentId
-      }
-    );
+    if (socket.connected) {
+
+      socket.emit(
+        "join_deployment",
+        {
+          deployment_id:
+            deploymentId
+        }
+      );
+
+    }
 
     /*
       SOCKET CONNECT
