@@ -1,6 +1,6 @@
-import useDeploymentSocket
-from "../hooks/useDeploymentSocket";
 import { useEffect, useState, useRef } from "react";
+
+import useDeploymentSocket from "../hooks/useDeploymentSocket";
 
 import Navbar from "../components/Navbar";
 import RepoForm from "../components/RepoForm";
@@ -40,6 +40,7 @@ function ComingSoon({ title }) {
     </div>
 
   );
+
 }
 
 function Dashboard() {
@@ -62,9 +63,9 @@ function Dashboard() {
   const pollingRef = useRef(null);
 
   const hasFetched = useRef(false);
+
   const {
-    statusData,
-    logs
+    statusData
   } = useDeploymentSocket(
     latestDeployment?.id
   );
@@ -97,9 +98,13 @@ function Dashboard() {
             )
         );
 
-      setDeployments(sortedDeployments);
+      setDeployments(
+        sortedDeployments
+      );
 
-      if (sortedDeployments.length > 0) {
+      if (
+        sortedDeployments.length > 0
+      ) {
 
         setLatestDeployment(
           sortedDeployments[0]
@@ -123,94 +128,53 @@ function Dashboard() {
       setInitialLoading(false);
 
     }
+
   };
 
   /* ─────────────────────────────────────────────
      POLL DEPLOYMENT STATUS
   ───────────────────────────────────────────── */
 
-  const pollDeploymentStatus = (
-    deploymentId
-  ) => {
+  const pollDeploymentStatus =
+    (deploymentId) => {
 
-    if (!deploymentId) return;
+      if (!deploymentId)
+        return;
 
-    if (pollingRef.current) {
+      if (pollingRef.current) {
 
-      clearInterval(
-        pollingRef.current
-      );
+        clearInterval(
+          pollingRef.current
+        );
 
-    }
+      }
 
-    pollingRef.current = setInterval(
-      async () => {
+      pollingRef.current =
+        setInterval(async () => {
 
-        try {
+          try {
 
-          const response =
-            await API.get(
-              `/deployments/${deploymentId}/status`
-            );
-
-          const deploymentResponse =
-            response.data?.deployment ||
-            response.data;
-
-          const deployment = {
-            ...deploymentResponse,
-            id:
-              deploymentResponse.id ||
-              deploymentResponse.deployment_id,
-            deployment_id:
-              deploymentResponse.deployment_id ||
-              deploymentResponse.id
-          };
-
-          setLatestDeployment(deployment);
-          setActiveDeployment(deployment);
-
-          setDeployments((prev) => {
-
-            const updated =
-              prev.map((item) =>
-                item.id === deployment.id
-                  ? deployment
-                  : item
+            const response =
+              await API.get(
+                `/deployments/${deploymentId}/status`
               );
 
-            const exists =
-              updated.find(
-                (item) =>
-                  item.id === deployment.id
-              );
+            const deploymentResponse =
+              response.data?.deployment ||
+              response.data;
 
-            if (!exists) {
+            if (!deploymentResponse)
+              return;
 
-              updated.unshift(
-                deployment
-              );
-
-            }
-
-            return updated;
-
-          });
-
-          const status =
-            deployment?.status?.toLowerCase();
-
-          if (
-            status === "running" ||
-            status === "live" ||
-            status === "failed"
-          ) {
-
-            clearInterval(
-              pollingRef.current
-            );
-
-            pollingRef.current = null;
+            const deployment = {
+              ...deploymentResponse,
+              id:
+                deploymentResponse.id ||
+                deploymentResponse.deployment_id,
+              deployment_id:
+                deploymentResponse.deployment_id ||
+                deploymentResponse.id
+            };
 
             setLatestDeployment(
               deployment
@@ -220,49 +184,86 @@ function Dashboard() {
               deployment
             );
 
-            fetchDeployments();
+            setDeployments((prev) => {
+
+              const updated =
+                prev.map((item) =>
+                  item.id === deployment.id
+                    ? deployment
+                    : item
+                );
+
+              const exists =
+                updated.find(
+                  (item) =>
+                    item.id === deployment.id
+                );
+
+              if (!exists) {
+
+                updated.unshift(
+                  deployment
+                );
+
+              }
+
+              return updated;
+
+            });
+
+            const status =
+              deployment?.status?.toLowerCase();
+
+            if (
+              status === "running" ||
+              status === "live" ||
+              status === "failed" ||
+              status === "completed"
+            ) {
+
+              clearInterval(
+                pollingRef.current
+              );
+
+              pollingRef.current = null;
+
+              fetchDeployments();
+
+            }
+
+          } catch (error) {
+
+            console.error(
+              "Polling failed:",
+              error
+            );
+
           }
 
-        } catch (error) {
+        }, 2000);
 
-          console.error(
-            "Polling failed:",
-            error
-          );
+    };
 
-        }
+  /* ─────────────────────────────────────────────
+     SOCKET LIVE UPDATES
+  ───────────────────────────────────────────── */
 
-      },
-      2000
-    );
-  };
+  useEffect(() => {
 
-/* ─────────────────────────────────────────────
-   SOCKET LIVE UPDATES
-───────────────────────────────────────────── */
+    if (!statusData)
+      return;
 
-useEffect(() => {
+    setLatestDeployment((prev) => ({
+      ...(prev || {}),
+      status: statusData.status
+    }));
 
-  if (!statusData)
-    return;
+    setActiveDeployment((prev) => ({
+      ...(prev || {}),
+      status: statusData.status
+    }));
 
-  setLatestDeployment(prev => ({
-
-    ...prev,
-    status:
-      statusData.status
-
-  }));
-
-  setActiveDeployment(prev => ({
-
-    ...prev,
-    status:
-      statusData.status
-
-  }));
-
-}, [statusData]);
+  }, [statusData]);
 
   /* ─────────────────────────────────────────────
      INITIAL LOAD
@@ -363,19 +364,20 @@ useEffect(() => {
 
       default:
         return 10;
+
     }
-  };
-
-  const isStepActive = (
-    requiredProgress
-  ) => {
-
-    return (
-      getProgress() >=
-      requiredProgress
-    );
 
   };
+
+  const isStepActive =
+    (requiredProgress) => {
+
+      return (
+        getProgress() >=
+        requiredProgress
+      );
+
+    };
 
   /* ─────────────────────────────────────────────
      PAGE RENDER
@@ -388,6 +390,7 @@ useEffect(() => {
       case "dashboard":
 
         return (
+
           <>
 
             {/* HERO */}
@@ -662,6 +665,7 @@ useEffect(() => {
             </section>
 
           </>
+
         );
 
       case "deployments":
@@ -728,7 +732,9 @@ useEffect(() => {
 
       default:
         return null;
+
     }
+
   };
 
   /* ─────────────────────────────────────────────
@@ -789,6 +795,7 @@ useEffect(() => {
     </div>
 
   );
+
 }
 
 export default Dashboard;
