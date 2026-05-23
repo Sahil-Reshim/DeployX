@@ -1,5 +1,6 @@
 from datetime import datetime
 from database import get_db_connection
+from services.monitor_service import start_monitoring
 
 
 def create_deployment(repo_url):
@@ -149,6 +150,11 @@ def complete_deployment(
     conn.commit()
     conn.close()
 
+    # START LIVE MONITORING
+    start_monitoring(
+        deployment_id,
+        container_result.get("container_id")
+    )
 
 def fail_deployment(
     deployment_id,

@@ -1,6 +1,9 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
-import socket from "../sockets/socket";
+import socket from "../services/socket";
 
 function useDeploymentSocket(
   deploymentId
@@ -12,10 +15,19 @@ function useDeploymentSocket(
   const [logs, setLogs] =
     useState([]);
 
+  const [
+    connectionStatus,
+    setConnectionStatus
+  ] = useState("connecting");
+
   useEffect(() => {
 
     if (!deploymentId)
       return;
+
+    /*
+      JOIN ROOM
+    */
 
     socket.emit(
       "join_deployment",
@@ -25,22 +37,102 @@ function useDeploymentSocket(
       }
     );
 
+    /*
+      SOCKET CONNECT
+    */
+
+    const handleConnect =
+      () => {
+
+        console.log(
+          "Socket connected"
+        );
+
+        setConnectionStatus(
+          "connected"
+        );
+
+        /*
+          REJOIN ROOM AFTER RECONNECT
+        */
+
+        socket.emit(
+          "join_deployment",
+          {
+            deployment_id:
+              deploymentId
+          }
+        );
+      };
+
+    /*
+      SOCKET DISCONNECT
+    */
+
+    const handleDisconnect =
+      () => {
+
+        console.log(
+          "Socket disconnected"
+        );
+
+        setConnectionStatus(
+          "disconnected"
+        );
+      };
+
+    /*
+      DEPLOYMENT UPDATE
+    */
+
     const handleDeploymentUpdate =
       (data) => {
 
         setStatusData(data);
       };
 
+    /*
+      LOG UPDATE
+    */
+
     const handleLogUpdate =
       (data) => {
 
-        setLogs(
-          prev => [
+        setLogs(prev => {
+
+          /*
+            PREVENT DUPLICATES
+          */
+
+          if (
+            prev[
+              prev.length - 1
+            ] === data.log
+          ) {
+
+            return prev;
+          }
+
+          return [
             ...prev,
             data.log
-          ]
-        );
+          ];
+        });
       };
+
+    /*
+      REGISTER EVENTS
+    */
+
+    socket.on(
+      "connect",
+      handleConnect
+    );
+
+    socket.on(
+      "disconnect",
+      handleDisconnect
+    );
 
     socket.on(
       "deployment_update",
@@ -51,6 +143,10 @@ function useDeploymentSocket(
       "log_update",
       handleLogUpdate
     );
+
+    /*
+      CLEANUP
+    */
 
     return () => {
 
@@ -63,6 +159,16 @@ function useDeploymentSocket(
       );
 
       socket.off(
+        "connect",
+        handleConnect
+      );
+
+      socket.off(
+        "disconnect",
+        handleDisconnect
+      );
+
+      socket.off(
         "deployment_update",
         handleDeploymentUpdate
       );
@@ -71,14 +177,18 @@ function useDeploymentSocket(
         "log_update",
         handleLogUpdate
       );
-
     };
 
   }, [deploymentId]);
 
   return {
+
     statusData,
-    logs
+
+    logs,
+
+    connectionStatus
+
   };
 
 }
