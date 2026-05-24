@@ -25,20 +25,20 @@ function useDeploymentSocket(
     if (!deploymentId)
       return;
 
-    /*
-      JOIN ROOM
-    */
+    const joinRoom = () => {
 
-    socket.emit(
-      "join_deployment",
-      {
-        deployment_id:
-          deploymentId
-      }
-    );
+      socket.emit(
+        "join_deployment",
+        {
+          deployment_id:
+            deploymentId
+        }
+      );
+
+    };
 
     /*
-      SOCKET CONNECT
+      CONNECT
     */
 
     const handleConnect =
@@ -52,21 +52,11 @@ function useDeploymentSocket(
           "connected"
         );
 
-        /*
-          REJOIN ROOM AFTER RECONNECT
-        */
-
-        socket.emit(
-          "join_deployment",
-          {
-            deployment_id:
-              deploymentId
-          }
-        );
+        joinRoom();
       };
 
     /*
-      SOCKET DISCONNECT
+      DISCONNECT
     */
 
     const handleDisconnect =
@@ -98,11 +88,7 @@ function useDeploymentSocket(
     const handleLogUpdate =
       (data) => {
 
-        setLogs(prev => {
-
-          /*
-            PREVENT DUPLICATES
-          */
+        setLogs((prev) => {
 
           if (
             prev[
@@ -117,6 +103,7 @@ function useDeploymentSocket(
             ...prev,
             data.log
           ];
+
         });
       };
 
@@ -143,6 +130,20 @@ function useDeploymentSocket(
       "log_update",
       handleLogUpdate
     );
+
+    /*
+      IF ALREADY CONNECTED
+    */
+
+    if (socket.connected) {
+
+      joinRoom();
+
+      setConnectionStatus(
+        "connected"
+      );
+
+    }
 
     /*
       CLEANUP
