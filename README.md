@@ -1,11 +1,14 @@
 # DeployX 🚀
 
-TEST = https://github.com/vitejs/vite.git
-
 <div align="center">
 
-### Smart DevOps Deployment Platform.
-Built with Flask, React, Docker, Jenkins, and Kubernetes.
+![DeployX Banner](https://img.shields.io/badge/DeployX-Modern%20DevOps%20Platform-0f172a?style=for-the-badge)
+
+### Smart DevOps Deployment Platform
+
+Built with React, Flask, Docker, WebSockets, Jenkins, and Kubernetes.
+
+Inspired by platforms like Vercel, Railway, Render, and Grafana.
 
 </div>
 
@@ -13,15 +16,16 @@ Built with Flask, React, Docker, Jenkins, and Kubernetes.
 
 # 🌌 Overview
 
-DeployX is a modern full-stack DevOps platform designed to simplify application deployment, infrastructure automation, monitoring, and container orchestration .
+DeployX is a modern full-stack DevOps deployment platform built to simplify application deployment, infrastructure automation, realtime monitoring, and container orchestration.
 
-Inspired by platforms like **Vercel**, **Jenkins**, **Grafana**, and **Kubernetes Dashboard**, DeployX provides developers with an all-in-one deployment ecosystem where applications can be:
+It provides developers with a complete deployment ecosystem where applications can be:
 
-- Deployed instantly
-- Containerized automatically
-- Managed efficiently
-- Monitored in real time
-- Scaled seamlessly
+* 🚀 Deployed instantly
+* 🐳 Containerized automatically
+* 📊 Monitored in realtime
+* 📜 Debugged using live logs
+* ⚙️ Managed through a modern dashboard
+* ☸️ Scaled using Kubernetes
 
 DeployX simulates real-world production-grade DevOps workflows while maintaining a clean and developer-friendly experience.
 
@@ -29,24 +33,23 @@ DeployX simulates real-world production-grade DevOps workflows while maintaining
 
 # ✨ Core Features
 
----
-
 ## 🚀 Automated GitHub Deployments
 
 DeployX allows developers to:
 
-- Connect GitHub repositories
-- Trigger deployments instantly
-- Deploy applications automatically
-- Redeploy updated codebases
-- View deployment status in real time
-- Generate deployment URLs
+* Connect GitHub repositories
+* Trigger deployments instantly
+* Deploy applications automatically
+* Redeploy updated codebases
+* View deployment status in realtime
+* Generate deployment URLs
 
 ### Supported Workflows
-- Frontend deployments
-- Backend deployments
-- Dockerized applications
-- Multi-service projects
+
+* Frontend deployments
+* Backend deployments
+* Dockerized applications
+* Multi-service projects
 
 ---
 
@@ -54,17 +57,79 @@ DeployX allows developers to:
 
 DeployX automatically:
 
-- Clones GitHub repositories
-- Detects application environments
-- Builds Docker images
-- Creates isolated containers
-- Runs deployments securely
+* Clones GitHub repositories
+* Detects application frameworks
+* Generates Dockerfiles
+* Builds Docker images
+* Creates isolated containers
+* Runs deployments securely
 
 ### Benefits
-- Consistent environments
-- Portable deployments
-- Production-ready containers
-- Faster deployment lifecycle
+
+* Consistent environments
+* Portable deployments
+* Production-ready containers
+* Faster deployment lifecycle
+
+---
+
+## ⚡ Realtime Deployment Engine
+
+DeployX includes a live deployment runtime system powered by:
+
+* Flask-SocketIO
+* WebSockets
+* Background deployment workers
+* Live deployment state updates
+
+### Live Deployment States
+
+```txt
+queued → cloning → detecting → dockerfile_generating
+→ building → deploying → running → live
+```
+
+---
+
+## 📊 Advanced Monitoring Dashboard
+
+DeployX provides realtime infrastructure monitoring similar to:
+
+* Grafana
+* Prometheus
+* Railway
+* Render
+* Vercel
+
+### Monitoring Features
+
+* CPU utilization tracking
+* RAM monitoring
+* Network RX/TX tracking
+* Container health analytics
+* Deployment metrics
+* Live infrastructure graphs
+* Historical metrics charts
+
+### Monitoring UI Includes
+
+* Realtime metric cards
+* Animated charts
+* Live container status
+* Health indicators
+* Runtime monitoring panels
+
+---
+
+## 📜 Realtime Logs Viewer
+
+Users can:
+
+* View live deployment logs
+* Monitor container output
+* Debug failed deployments
+* Track build progress
+* Watch deployment lifecycle updates
 
 ---
 
@@ -72,12 +137,12 @@ DeployX automatically:
 
 Integrated CI/CD workflows powered by Jenkins allow:
 
-- Automated builds
-- Automated testing
-- Continuous Integration
-- Continuous Deployment
-- Deployment pipeline visualization
-- Build status tracking
+* Automated builds
+* Automated testing
+* Continuous Integration
+* Continuous Deployment
+* Deployment pipeline visualization
+* Build status tracking
 
 ### Pipeline Flow
 
@@ -91,67 +156,39 @@ Push Code → Build → Test → Dockerize → Deploy
 
 DeployX leverages Kubernetes for:
 
-- Container orchestration
-- Horizontal scaling
-- Load balancing
-- Self-healing containers
-- Cluster management
-- High availability deployments
+* Container orchestration
+* Horizontal scaling
+* Load balancing
+* Self-healing containers
+* Cluster management
+* High availability deployments
 
 ### Kubernetes Features
-- Pods
-- Services
-- Deployments
-- Ingress support
-- Replica scaling
 
----
-
-## 📊 Monitoring & Metrics Dashboard
-
-The monitoring system provides:
-
-- CPU utilization tracking
-- Memory/RAM monitoring
-- Container health analytics
-- Deployment metrics
-- Server monitoring
-- Infrastructure visualization
-
-### Inspired By
-- Grafana
-- Prometheus
-
----
-
-## 📜 Real-Time Logs Viewer
-
-Users can:
-
-- View live deployment logs
-- Monitor container output
-- Debug failed deployments
-- Track build progress
-- Monitor deployment lifecycle
+* Pods
+* Services
+* Deployments
+* Ingress support
+* Replica scaling
 
 ---
 
 # 🧠 System Architecture
 
 ```txt
-Frontend (React)
-        │
-        ▼
+Frontend (React + Vite)
+            │
+            ▼
 Backend API (Flask)
-        │
-        ▼
-Deployment Engine
-        │
- ┌──────┼─────────┐
- ▼      ▼         ▼
-Docker Jenkins Kubernetes
-        │
-        ▼
+            │
+            ▼
+Realtime Deployment Engine
+            │
+   ┌────────┼────────┐
+   ▼        ▼        ▼
+Docker   Jenkins  Kubernetes
+            │
+            ▼
 Monitoring Services
 (Prometheus + Grafana)
 ```
@@ -160,16 +197,19 @@ Monitoring Services
 
 # 🏗️ Tech Stack
 
-| Layer | Technology |
-|------|-------------|
-| Frontend | React + Vite |
-| Backend | Flask |
-| Containerization | Docker |
-| CI/CD | Jenkins |
-| Orchestration | Kubernetes |
-| Monitoring | Prometheus + Grafana |
-| API Communication | Axios |
-| Styling | CSS3 |
+| Layer                  | Technology           |
+| ---------------------- | -------------------- |
+| Frontend               | React + Vite         |
+| Backend                | Flask                |
+| Realtime Communication | Flask-SocketIO       |
+| Containerization       | Docker               |
+| CI/CD                  | Jenkins              |
+| Orchestration          | Kubernetes           |
+| Monitoring             | Prometheus + Grafana |
+| Charts                 | Recharts             |
+| Animations             | Framer Motion        |
+| API Communication      | Axios                |
+| Styling                | CSS3                 |
 
 ---
 
@@ -180,16 +220,20 @@ DeployX/
 │
 ├── backend/
 │   ├── services/
+│   ├── sockets/
 │   ├── app.py
+│   ├── database.py
 │   ├── requirements.txt
 │   └── Dockerfile
 │
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
+│   │   ├── hooks/
 │   │   ├── pages/
+│   │   ├── services/
 │   │   ├── styles/
-│   │   └── services/
+│   │   └── monitoring/
 │   │
 │   ├── package.json
 │   └── vite.config.js
@@ -203,35 +247,56 @@ DeployX/
 
 ```txt
 1. User submits GitHub repository
-            │
-            ▼
+                │
+                ▼
 2. DeployX clones repository
-            │
-            ▼
-3. Docker image gets created
-            │
-            ▼
-4. Container starts running
-            │
-            ▼
-5. Deployment URL generated
-            │
-            ▼
-6. Logs & metrics monitored
+                │
+                ▼
+3. Framework gets detected
+                │
+                ▼
+4. Docker image gets created
+                │
+                ▼
+5. Container starts running
+                │
+                ▼
+6. Deployment URL generated
+                │
+                ▼
+7. Logs & metrics monitored live
 ```
 
 ---
 
 # 🎨 Frontend Features
 
-- Modern DevOps-inspired UI
-- Animated dashboard
-- Deployment cards
-- Real-time logs section
-- Production deployment panel
-- Responsive layout
-- Glassmorphism design
-- Interactive deployment pipeline
+* Modern DevOps-inspired UI
+* Animated dashboard
+* Realtime deployment monitoring
+* Deployment history section
+* Production deployment panel
+* Live logs viewer
+* Pipeline visualization
+* Monitoring charts
+* Responsive layout
+* Glassmorphism UI
+* Interactive animations
+
+---
+
+# 📡 Realtime Monitoring Features
+
+DeployX now supports:
+
+* ✅ Live CPU monitoring
+* ✅ Live RAM monitoring
+* ✅ Live Network RX/TX monitoring
+* ✅ Health monitoring system
+* ✅ WebSocket-based live updates
+* ✅ Realtime charts
+* ✅ Historical monitoring data
+* ✅ Deployment-specific runtime tracking
 
 ---
 
@@ -239,16 +304,19 @@ DeployX/
 
 ## Upcoming Features
 
-- 🔐 User Authentication
-- 🌍 Custom Domains
-- ☁️ Cloud Deployment
-- 📦 Multi-framework support
-- 📈 Advanced analytics
-- 🔔 Deployment notifications
-- 🧩 Plugin ecosystem
-- 🤖 AI-powered deployment assistant
-- 🌐 Team collaboration
-- 📊 Real-time infrastructure monitoring
+* 🔐 User Authentication
+* 🌍 Custom Domains
+* ☁️ Cloud Deployment
+* 📦 Multi-framework support
+* 📈 Advanced analytics
+* 🔔 Deployment notifications
+* 🤖 AI-powered deployment assistant
+* 🌐 Team collaboration
+* 📊 Advanced infrastructure monitoring
+* ♻️ Deployment rollback system
+* 📦 Multi-container deployments
+* ⚡ Auto scaling engine
+* 🛡️ Runtime recovery system
 
 ---
 
@@ -258,13 +326,11 @@ DeployX/
 
 ```bash
 git clone https://github.com/tanvishinde017/DeployX.git
-
-git clone https://github.com/Sahil-Reshim/DeployX.git
 ```
 
 ---
 
-## Backend Setup
+# ⚙️ Backend Setup
 
 ```bash
 cd backend
@@ -282,7 +348,7 @@ http://127.0.0.1:5000
 
 ---
 
-## Frontend Setup
+# 🎨 Frontend Setup
 
 ```bash
 cd frontend
@@ -316,15 +382,25 @@ docker run -p 5000:5000 deployx
 
 ---
 
+# 🧪 Test Repository
+
+```txt
+https://github.com/vitejs/vite.git
+```
+
+---
+
 # 📸 UI Preview
 
 ```txt
-Modern Dashboard
-Production Deployment Panel
-Deployment Logs Viewer
-Pipeline Visualization
-Responsive Navbar
-Monitoring Section
+✔ Modern Dashboard
+✔ Production Deployment Panel
+✔ Deployment Logs Viewer
+✔ Realtime Monitoring Dashboard
+✔ Pipeline Visualization
+✔ Responsive Navbar
+✔ Infrastructure Monitoring
+✔ Animated Runtime Metrics
 ```
 
 ---
@@ -335,12 +411,13 @@ Contributions are welcome.
 
 You can contribute by:
 
-- Improving UI/UX
-- Adding deployment providers
-- Enhancing monitoring systems
-- Improving CI/CD workflows
-- Adding Kubernetes features
-- Optimizing backend performance
+* Improving UI/UX
+* Adding deployment providers
+* Enhancing monitoring systems
+* Improving CI/CD workflows
+* Adding Kubernetes features
+* Optimizing backend performance
+* Improving realtime infrastructure
 
 ---
 
@@ -354,18 +431,22 @@ This project is licensed under the MIT License.
 
 DeployX is inspired by modern DevOps and deployment platforms:
 
-- Vercel
-- Docker
-- Jenkins
-- Kubernetes
-- Grafana
-- Prometheus
+* Vercel
+* Railway
+* Render
+* Docker
+* Jenkins
+* Kubernetes
+* Grafana
+* Prometheus
 
 ---
 
-# 👨‍💻 Author
+# 👨‍💻 Authors
 
-### Tanavi Shinde and Sahil Reshim
+### Tanavi Shinde
+
+### Sahil Reshim
 
 Building modern DevOps systems and scalable deployment platforms 🚀
 
@@ -375,8 +456,7 @@ Building modern DevOps systems and scalable deployment platforms 🚀
 
 If you like this project:
 
-- ⭐ Star the repository
-- 🍴 Fork the project
-- 🛠️ Contribute improvements
-- 🚀 Share DeployX with others
- 
+* ⭐ Star the repository
+* 🍴 Fork the project
+* 🛠️ Contribute improvements
+* 🚀 Share DeployX with others
