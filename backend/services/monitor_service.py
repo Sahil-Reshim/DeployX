@@ -2,14 +2,102 @@ import docker
 import threading
 import time
 
-from sockets.socket_manager import emit_log
+from sockets.socket_manager import (
+    emit_monitoring_update
+)
 
 client = docker.from_env()
 
 monitor_threads = {}
 
 
-def get_container_stats(container_id):
+def calculate_cpu_percent(stats):
+
+    cpu_delta = (
+        stats["cpu_stats"]["cpu_usage"]["total_usage"]
+        -
+        stats["precpu_stats"]["cpu_usage"]["total_usage"]
+    )
+
+    system_delta = (
+        stats["cpu_stats"]["system_cpu_usage"]
+        -
+        stats["precpu_stats"]["system_cpu_usage"]
+    )
+
+    online_cpus = stats["cpu_stats"].get(
+        "online_cpus",
+        1
+    )
+
+    if system_delta > 0:
+
+        return round(
+            (cpu_delta / system_delta)
+            * online_cpus
+            * 100.0,
+            2
+        )
+
+    return 0
+
+
+def calculate_memory_mb(stats):
+
+    memory_usage = stats["memory_stats"].get(
+        "usage",
+        0
+    )
+
+    return round(
+        memory_usage / (1024 * 1024),
+        2
+    )
+
+
+def calculate_network_kb(stats):
+
+    networks = stats.get(
+        "networks",
+        {}
+    )
+
+    rx = 0
+    tx = 0
+
+    for interface in networks.values():
+
+        rx += interface.get(
+            "rx_bytes",
+            0
+        )
+
+        tx += interface.get(
+            "tx_bytes",
+            0
+        )
+
+    return (
+        round(rx / 1024, 2),
+        round(tx / 1024, 2)
+    )
+
+
+def get_health(cpu):
+
+    if cpu > 85:
+        return "critical"
+
+    if cpu > 60:
+        return "warning"
+
+    return "healthy"
+
+
+def monitor_container(
+    deployment_id,
+    container_id
+):
 
     try:
 
@@ -17,160 +105,66 @@ def get_container_stats(container_id):
             container_id
         )
 
-        stats = container.stats(
-            stream=False
-        )
+        while True:
 
-        cpu_delta = (
-            stats["cpu_stats"]["cpu_usage"]["total_usage"]
-            -
-            stats["precpu_stats"]["cpu_usage"]["total_usage"]
-        )
+            container.reload()
 
-        system_delta = (
-            stats["cpu_stats"]["system_cpu_usage"]
-            -
-            stats["precpu_stats"]["system_cpu_usage"]
-        )
+            if container.status != "running":
 
-        cpu_percent = 0.0
+                emit_monitoring_update(
+                    deployment_id,
+                    {
+                        "cpu": 0,
+                        "ram": 0,
+                        "network_rx": 0,
+                        "network_tx": 0,
+                        "health": "offline"
+                    }
+                )
 
-        if system_delta > 0:
+                break
 
-            cpu_percent = (
-                cpu_delta / system_delta
-            ) * 100.0
-
-        memory_usage = (
-            stats["memory_stats"]["usage"]
-            /
-            (1024 * 1024)
-        )
-
-        memory_limit = (
-            stats["memory_stats"]["limit"]
-            /
-            (1024 * 1024)
-        )
-
-        memory_percent = (
-            memory_usage / memory_limit
-        ) * 100
-
-        network_rx = 0
-        network_tx = 0
-
-        networks = stats.get(
-            "networks",
-            {}
-        )
-
-        for interface in networks.values():
-
-            network_rx += interface.get(
-                "rx_bytes",
-                0
+            stats = container.stats(
+                stream=False
             )
 
-            network_tx += interface.get(
-                "tx_bytes",
-                0
+            cpu = calculate_cpu_percent(
+                stats
             )
 
-        return {
-            "success": True,
-            "cpu_percent": round(
-                cpu_percent,
-                2
-            ),
-            "memory_usage_mb": round(
-                memory_usage,
-                2
-            ),
-            "memory_limit_mb": round(
-                memory_limit,
-                2
-            ),
-            "memory_percent": round(
-                memory_percent,
-                2
-            ),
-            "network_rx_mb": round(
-                network_rx / (1024 * 1024),
-                2
-            ),
-            "network_tx_mb": round(
-                network_tx / (1024 * 1024),
-                2
-            ),
-            "status": container.status,
-            "container_name": container.name,
-            "container_id": container.short_id
-        }
+            ram = calculate_memory_mb(
+                stats
+            )
+
+            network_rx, network_tx = (
+                calculate_network_kb(
+                    stats
+                )
+            )
+
+            health = get_health(cpu)
+
+            metrics = {
+                "cpu": cpu,
+                "ram": ram,
+                "network_rx": network_rx,
+                "network_tx": network_tx,
+                "health": health
+            }
+
+            emit_monitoring_update(
+                deployment_id,
+                metrics
+            )
+
+            time.sleep(2)
 
     except Exception as e:
 
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
-
-def stream_container_monitoring(
-    deployment_id,
-    container_id
-):
-
-    while True:
-
-        try:
-
-            stats = get_container_stats(
-                container_id
-            )
-
-            if not stats["success"]:
-
-                emit_log(
-                    deployment_id,
-                    f"[MONITOR ERROR] {stats['error']}"
-                )
-
-                break
-
-            monitoring_log = (
-                f"[MONITOR] "
-                f"CPU: {stats['cpu_percent']}% | "
-                f"RAM: {stats['memory_usage_mb']}MB "
-                f"({stats['memory_percent']}%) | "
-                f"NET RX: {stats['network_rx_mb']}MB | "
-                f"NET TX: {stats['network_tx_mb']}MB"
-            )
-
-            emit_log(
-                deployment_id,
-                monitoring_log
-            )
-
-            if stats["status"] != "running":
-
-                emit_log(
-                    deployment_id,
-                    "[MONITOR] Container stopped"
-                )
-
-                break
-
-            time.sleep(5)
-
-        except Exception as e:
-
-            emit_log(
-                deployment_id,
-                f"[MONITOR ERROR] {str(e)}"
-            )
-
-            break
+        print(
+            "Monitoring Error:",
+            str(e)
+        )
 
 
 def start_monitoring(
@@ -179,11 +173,10 @@ def start_monitoring(
 ):
 
     if deployment_id in monitor_threads:
-
         return
 
     thread = threading.Thread(
-        target=stream_container_monitoring,
+        target=monitor_container,
         args=(
             deployment_id,
             container_id
@@ -191,15 +184,8 @@ def start_monitoring(
         daemon=True
     )
 
-    monitor_threads[deployment_id] = thread
+    monitor_threads[
+        deployment_id
+    ] = thread
 
     thread.start()
-
-
-def stop_monitoring(
-    deployment_id
-):
-
-    if deployment_id in monitor_threads:
-
-        del monitor_threads[deployment_id]
