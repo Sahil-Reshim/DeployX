@@ -7,6 +7,7 @@ import "./styles/navbar.css";
 import "./styles/deployment.css";
 import "./styles/logs.css";
 import "./styles/animations.css";
+import "./styles/monitoring.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
