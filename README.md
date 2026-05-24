@@ -6,7 +6,7 @@
 
 ### Smart DevOps Deployment Platform
 
-Built with React, Flask, Docker, WebSockets, Jenkins, and Kubernetes .
+Built with React, Flask, Docker, WebSockets, Jenkins, and Kubernetes.
 
 Inspired by platforms like Vercel, Railway, Render, and Grafana.
 
