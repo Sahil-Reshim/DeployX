@@ -8,6 +8,7 @@ import DeploymentHistory from "../components/DeploymentHistory";
 import ProductionLink from "../components/ProductionLink";
 import LogsViewer from "../components/LogsViewer";
 import DeploymentPipeline from "../components/DeploymentPipeline";
+import MonitoringPanel from "../components/monitoring/MonitoringPanel";
 
 import API from "../services/api";
 
@@ -56,6 +57,24 @@ function Dashboard() {
 
   const [activeDeployment, setActiveDeployment] =
     useState(null);
+
+    const [metrics, setMetrics] =
+  useState({
+    cpu: 0,
+    ram: 0,
+    network_rx: 0,
+    network_tx: 0,
+    health: "healthy"
+  });
+
+const [cpuHistory, setCpuHistory] =
+  useState([]);
+
+const [ramHistory, setRamHistory] =
+  useState([]);
+
+const [networkHistory, setNetworkHistory] =
+  useState([]);
 
   const [initialLoading, setInitialLoading] =
     useState(true);
@@ -135,20 +154,106 @@ function Dashboard() {
 
   useEffect(() => {
 
-    if (!statusData)
-      return;
+  if (!statusData)
+    return;
 
-    setLatestDeployment((prev) => ({
-      ...(prev || {}),
-      status: statusData.status
-    }));
+  setLatestDeployment((prev) => ({
+    ...(prev || {}),
+    status: statusData.status
+  }));
 
-    setActiveDeployment((prev) => ({
-      ...(prev || {}),
-      status: statusData.status
-    }));
+  setActiveDeployment((prev) => ({
+    ...(prev || {}),
+    status: statusData.status
+  }));
 
-  }, [statusData]);
+  /*
+    MONITORING METRICS
+  */
+
+  if (statusData.metrics) {
+
+    setMetrics({
+      cpu:
+        statusData.metrics.cpu || 0,
+
+      ram:
+        statusData.metrics.ram || 0,
+
+      network_rx:
+        statusData.metrics.network_rx || 0,
+
+      network_tx:
+        statusData.metrics.network_tx || 0,
+
+      health:
+        statusData.metrics.health ||
+        "healthy"
+    });
+
+    /*
+      CPU HISTORY
+    */
+
+    setCpuHistory((prev) => [
+
+      ...prev.slice(-20),
+
+      {
+        time:
+          new Date()
+            .toLocaleTimeString(),
+
+        value:
+          statusData.metrics.cpu || 0
+      }
+
+    ]);
+
+    /*
+      RAM HISTORY
+    */
+
+    setRamHistory((prev) => [
+
+      ...prev.slice(-20),
+
+      {
+        time:
+          new Date()
+            .toLocaleTimeString(),
+
+        value:
+          statusData.metrics.ram || 0
+      }
+
+    ]);
+
+    /*
+      NETWORK HISTORY
+    */
+
+    setNetworkHistory((prev) => [
+
+      ...prev.slice(-20),
+
+      {
+        time:
+          new Date()
+            .toLocaleTimeString(),
+
+        rx:
+          statusData.metrics.network_rx || 0,
+
+        tx:
+          statusData.metrics.network_tx || 0
+      }
+
+    ]);
+
+  }
+
+}, [statusData]);
 
 /* ─────────────────────────────────────────────
    INITIAL LOAD
@@ -427,60 +532,265 @@ useEffect(() => {
 
               {/* GRID */}
 
-              <div className="dashboard-grid">
+<div className="dashboard-grid">
 
-                <div className="grid-left">
+  {/* LEFT */}
 
-                  <div className="section-block">
+  <div className="grid-left">
 
-                    <p className="section-title">
-                      Production Deployment
-                    </p>
+    {/* PRODUCTION */}
 
-                    <ProductionLink
-                      deployment={
-                        latestDeployment
-                      }
-                    />
+    <div className="section-block">
 
-                  </div>
+      <p className="section-title">
+        Production Deployment
+      </p>
 
-                  <div className="section-block">
+      <ProductionLink
+        deployment={latestDeployment}
+      />
 
-                    <p className="section-title">
-                      Deployment Pipeline
-                    </p>
+    </div>
 
-                    <DeploymentPipeline
-                      status={
-                        latestDeployment?.status
-                      }
-                    />
+    {/* PIPELINE */}
 
-                  </div>
+    <div className="section-block">
 
-                </div>
+      <p className="section-title">
+        Deployment Pipeline
+      </p>
 
-                <div className="grid-right">
+      <DeploymentPipeline
+        status={latestDeployment?.status}
+      />
 
-                  <div className="section-block">
+    </div>
 
-                    <p className="section-title">
-                      Live Deployment Logs
-                    </p>
+  </div>
 
-                    <LogsViewer
-                      deploymentId={
-                        latestDeployment?.id
-                      }
-                    />
+  {/* RIGHT */}
 
-                  </div>
+  <div className="grid-right">
 
-                </div>
+    {/* LIVE MONITORING */}
 
-              </div>
+    <div className="section-block monitoring-preview-card">
 
+      <div className="monitoring-header">
+
+        <div>
+
+          <p className="section-title">
+            Live Infrastructure Monitoring
+          </p>
+
+          <h2 className="monitoring-title">
+            DeployX Runtime Metrics
+          </h2>
+
+        </div>
+
+        <div className="monitoring-live">
+
+          <span className="live-dot"></span>
+
+          LIVE
+
+        </div>
+
+      </div>
+
+      {/* STATS */}
+
+      <div className="monitoring-stats-grid">
+
+        <div className="monitor-stat-card">
+
+          <span className="monitor-stat-label">
+            CPU Usage
+          </span>
+
+          <h1>
+            {metrics.cpu}%
+          </h1>
+
+          <div className="monitor-bar">
+
+            <div
+              className="monitor-bar-fill cpu"
+              style={{
+                width: `${metrics.cpu}%`
+              }}
+            />
+
+          </div>
+
+        </div>
+
+        <div className="monitor-stat-card">
+
+          <span className="monitor-stat-label">
+            RAM Usage
+          </span>
+
+          <h1>
+            {metrics.ram}%
+          </h1>
+
+          <div className="monitor-bar">
+
+            <div
+              className="monitor-bar-fill ram"
+              style={{
+                width: `${metrics.ram}%`
+              }}
+            />
+
+          </div>
+
+        </div>
+
+      </div>
+
+      {/* NETWORK */}
+
+      <div className="network-activity">
+
+        <div className="network-box">
+
+          <span>
+            Network RX
+          </span>
+
+          <h3>
+            {metrics.network_rx}
+            {" "}
+            KB/s
+          </h3>
+
+        </div>
+
+        <div className="network-box">
+
+          <span>
+            Network TX
+          </span>
+
+          <h3>
+            {metrics.network_tx}
+            {" "}
+            KB/s
+          </h3>
+
+        </div>
+
+      </div>
+
+      {/* HEALTH */}
+
+      <div className="health-card">
+
+        <div className="health-pulse"></div>
+
+        <div>
+
+          <span className="health-label">
+            System Health
+          </span>
+
+          <h2>
+            {metrics.health}
+          </h2>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    {/* LOGS */}
+
+    <div className="section-block">
+
+      <p className="section-title">
+        Live Deployment Logs
+      </p>
+
+      <LogsViewer
+        deploymentId={
+          latestDeployment?.id
+        }
+      />
+
+    </div>
+
+    {/* EXTRA MONITORING */}
+
+    <div className="section-block infra-card">
+
+      <div className="infra-top">
+
+        <div>
+
+          <span className="infra-mini">
+            DEPLOYX EDGE NETWORK
+          </span>
+
+          <h2>
+            Global Runtime Infrastructure
+          </h2>
+
+        </div>
+
+        <div className="infra-status">
+
+          OPERATIONAL
+
+        </div>
+
+      </div>
+
+      <div className="infra-grid">
+
+        <div className="infra-node">
+
+          <span>Containers</span>
+
+          <h1>12</h1>
+
+        </div>
+
+        <div className="infra-node">
+
+          <span>Requests</span>
+
+          <h1>24K</h1>
+
+        </div>
+
+        <div className="infra-node">
+
+          <span>Latency</span>
+
+          <h1>43ms</h1>
+
+        </div>
+
+        <div className="infra-node">
+
+          <span>Regions</span>
+
+          <h1>8</h1>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
               {/* HISTORY */}
 
               <div className="history-section">
@@ -569,11 +879,23 @@ useEffect(() => {
 
       case "monitoring":
 
-        return (
-          <ComingSoon
-            title="Monitoring"
-          />
-        );
+  return (
+
+    <section className="deployment-ui page-spacing">
+
+      <MonitoringPanel
+        metrics={metrics}
+        cpuHistory={cpuHistory}
+        ramHistory={ramHistory}
+        networkHistory={networkHistory}
+        deploymentStatus={
+          latestDeployment?.status
+        }
+      />
+
+    </section>
+
+  );
 
       default:
         return null;

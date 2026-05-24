@@ -49,3 +49,23 @@ def emit_log(
         },
         room=room
     )
+
+
+def emit_monitoring_update(
+    deployment_id,
+    metrics
+):
+
+    room = get_deployment_room(
+        deployment_id
+    )
+
+    socketio.emit(
+        "deployment_update",
+        {
+            "deployment_id": deployment_id,
+            "status": "running",
+            "metrics": metrics
+        },
+        room=room
+    )
