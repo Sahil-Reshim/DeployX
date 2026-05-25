@@ -478,9 +478,7 @@ def get_deployments():
     "/deployments/<int:deployment_id>",
     methods=["DELETE"]
 )
-def delete_deployment(
-    deployment_id
-):
+def delete_deployment(deployment_id):
 
     try:
 
@@ -490,11 +488,13 @@ def delete_deployment(
 
         cursor = conn.cursor()
 
-        # CHECK EXISTING DEPLOYMENT
+        # =================================================
+        # CHECK DEPLOYMENT EXISTS
+        # =================================================
 
         cursor.execute(
             """
-            SELECT status
+            SELECT *
             FROM deployments
             WHERE id=?
             """,
@@ -508,26 +508,15 @@ def delete_deployment(
             conn.close()
 
             return jsonify({
+
                 "success": False,
                 "message": "Deployment not found"
+
             }), 404
 
-        deployment_status = (
-            deployment[0] or ""
-        ).lower()
-
-        # ONLY ALLOW FAILED DELETE
-
-        if deployment_status != "failed":
-
-            conn.close()
-
-            return jsonify({
-                "success": False,
-                "message": "Only failed deployments can be deleted"
-            }), 400
-
-        # DELETE LOGS
+        # =================================================
+        # DELETE BUILD LOGS
+        # =================================================
 
         cursor.execute(
             """
@@ -537,6 +526,10 @@ def delete_deployment(
             (deployment_id,)
         )
 
+        # =================================================
+        # DELETE CONTAINER LOGS
+        # =================================================
+
         cursor.execute(
             """
             DELETE FROM container_logs
@@ -545,7 +538,9 @@ def delete_deployment(
             (deployment_id,)
         )
 
+        # =================================================
         # DELETE DEPLOYMENT
+        # =================================================
 
         cursor.execute(
             """
@@ -560,17 +555,22 @@ def delete_deployment(
         conn.close()
 
         return jsonify({
+
             "success": True,
             "message": "Deployment deleted successfully"
+
         }), 200
 
     except Exception as e:
 
+        print("DELETE ERROR:", str(e))
+
         return jsonify({
+
             "success": False,
             "error": str(e)
-        }), 500
 
+        }), 500
 
 # =========================================================
 # DEPLOYMENT STATUS
