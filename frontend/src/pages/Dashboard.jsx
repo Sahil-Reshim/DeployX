@@ -149,6 +149,75 @@ const [networkHistory, setNetworkHistory] =
   };
 
   /* ─────────────────────────────────────────────
+   DELETE DEPLOYMENT
+───────────────────────────────────────────── */
+
+const handleDeleteDeployment = async (
+  deploymentId
+) => {
+
+  try {
+
+    await API.delete(
+      `/deployments/${deploymentId}`
+    );
+
+    /*
+      REMOVE FROM UI
+    */
+
+    setDeployments((prev) =>
+
+      prev.filter(
+
+        (deployment) =>
+
+          deployment.id !==
+          deploymentId
+
+      )
+
+    );
+
+    /*
+      RESET ACTIVE
+    */
+
+    if (
+      latestDeployment?.id ===
+      deploymentId
+    ) {
+
+      setLatestDeployment(null);
+
+    }
+
+    /*
+      REFRESH
+    */
+
+    fetchDeployments();
+
+  } catch (error) {
+
+    console.error(
+      "Delete Error:",
+      error
+    );
+
+    alert(
+
+      error?.response?.data?.message ||
+
+      "Failed to delete deployment"
+
+    );
+
+  }
+
+};
+
+  /* ─────────────────────────────────────────────
      SOCKET LIVE UPDATES
   ───────────────────────────────────────────── */
 
@@ -813,6 +882,8 @@ useEffect(() => {
 
                 <DeploymentHistory
                   deployments={deployments}
+                  onDeleteDeployment={handleDeleteDeployment}
+                  onRefresh={fetchDeployments}
                 />
 
               </div>
@@ -847,6 +918,8 @@ useEffect(() => {
 
             <DeploymentHistory
               deployments={deployments}
+              onDeleteDeployment={handleDeleteDeployment}
+              onRefresh={fetchDeployments}
             />
 
           </section>
