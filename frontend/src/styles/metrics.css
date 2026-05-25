@@ -1,0 +1,207 @@
+/* =====================================================
+METRICS GRID
+===================================================== */
+
+.metrics-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(240px, 1fr));
+
+  gap: 24px;
+}
+
+/* =====================================================
+METRIC CARD
+===================================================== */
+
+.metric-card {
+
+  position: relative;
+
+  overflow: hidden;
+
+  padding: 28px;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.02)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  backdrop-filter: blur(18px);
+
+  transition:
+    all .35s ease;
+}
+
+.metric-card:hover {
+
+  transform:
+    translateY(-5px);
+
+  border-color:
+    rgba(239,68,68,.22);
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.35);
+}
+
+.metric-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(239,68,68,.10),
+      transparent 55%
+    );
+
+  pointer-events: none;
+}
+
+/* =====================================================
+HEADER
+===================================================== */
+
+.metric-header {
+
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 24px;
+}
+
+.metric-title {
+
+  color:
+    rgba(255,255,255,.55);
+
+  font-size: 12px;
+
+  text-transform: uppercase;
+
+  letter-spacing: .14em;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+}
+
+.metric-icon {
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  width: 46px;
+  height: 46px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(239,68,68,.12);
+
+  color: #f87171;
+}
+
+/* =====================================================
+VALUE
+===================================================== */
+
+.metric-value {
+
+  font-size: 42px;
+
+  font-weight: 800;
+
+  margin-bottom: 18px;
+
+  color: white;
+}
+
+/* =====================================================
+LIVE
+===================================================== */
+
+.metric-live {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  color:
+    rgba(255,255,255,.45);
+
+  font-size: 11px;
+
+  letter-spacing: .14em;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+}
+
+.live-dot {
+
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #4ade80;
+
+  animation:
+    pulseLive 1.5s infinite;
+}
+
+/* =====================================================
+ANIMATION
+===================================================== */
+
+@keyframes pulseLive {
+
+  0%,100% {
+
+    transform: scale(1);
+  }
+
+  50% {
+
+    transform: scale(1.35);
+  }
+}
+
+/* =====================================================
+RESPONSIVE
+===================================================== */
+
+@media (max-width: 600px) {
+
+  .metric-value {
+
+    font-size: 32px;
+  }
+
+  .metric-card {
+
+    padding: 22px;
+  }
+}

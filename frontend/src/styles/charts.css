@@ -1,0 +1,155 @@
+/* =====================================================
+CHARTS GRID
+===================================================== */
+
+.charts-grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fit, minmax(420px, 1fr));
+
+  gap: 28px;
+}
+
+/* =====================================================
+CHART CARD
+===================================================== */
+
+.chart-card {
+
+  position: relative;
+
+  overflow: hidden;
+
+  padding: 28px;
+
+  border-radius: 28px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.02)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  backdrop-filter: blur(18px);
+
+  transition:
+    all .3s ease;
+}
+
+.chart-card:hover {
+
+  transform:
+    translateY(-4px);
+
+  border-color:
+    rgba(239,68,68,.22);
+
+  box-shadow:
+    0 20px 50px rgba(0,0,0,.35);
+}
+
+.chart-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(239,68,68,.10),
+      transparent 55%
+    );
+
+  pointer-events: none;
+}
+
+.chart-card h3 {
+
+  position: relative;
+
+  z-index: 2;
+
+  margin-bottom: 24px;
+
+  font-size: 20px;
+
+  font-weight: 700;
+
+  color: #fff;
+}
+
+/* =====================================================
+RECHARTS
+===================================================== */
+
+.recharts-tooltip-wrapper {
+
+  outline: none !important;
+}
+
+.recharts-default-tooltip {
+
+  background:
+    rgba(10,10,10,.92) !important;
+
+  border:
+    1px solid rgba(255,255,255,.08) !important;
+
+  border-radius: 14px !important;
+
+  backdrop-filter: blur(18px);
+
+  color: white !important;
+}
+
+.recharts-tooltip-label {
+
+  color:
+    rgba(255,255,255,.55) !important;
+}
+
+.recharts-cartesian-axis-tick-value {
+
+  fill:
+    rgba(255,255,255,.35);
+}
+
+.recharts-cartesian-grid line {
+
+  stroke:
+    rgba(255,255,255,.04);
+}
+
+/* =====================================================
+RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .charts-grid {
+
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .chart-card {
+
+    padding: 22px;
+  }
+
+  .chart-card h3 {
+
+    font-size: 18px;
+  }
+}

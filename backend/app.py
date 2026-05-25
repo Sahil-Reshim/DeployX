@@ -1,7 +1,16 @@
 import threading
+import sqlite3
+
 from database import init_db
-from flask import Flask, request, jsonify
+
+from flask import (
+    Flask,
+    request,
+    jsonify
+)
+
 from flask_cors import CORS
+
 from sockets.socket_manager import (
     socketio,
     emit_deployment_update,
@@ -10,9 +19,16 @@ from sockets.socket_manager import (
 
 import sockets.deployment_socket
 import sockets.logs_socket
+
 from services.git_service import clone_repository
-from services.framework_detector import detect_framework
-from services.dockerfile_generator import generate_dockerfile
+
+from services.framework_detector import (
+    detect_framework
+)
+
+from services.dockerfile_generator import (
+    generate_dockerfile
+)
 
 from services.log_service import (
     save_build_logs,
@@ -41,31 +57,54 @@ from services.cleanup_service import (
     remove_repo_folder
 )
 
+# =========================================================
+# APP CONFIG
+# =========================================================
 
 app = Flask(__name__)
-socketio.init_app(app)
+
 CORS(app)
+
+socketio.init_app(
+    app,
+    cors_allowed_origins="*"
+)
 
 init_db()
 
+# =========================================================
+# HOME
+# =========================================================
 
 @app.route("/")
 def home():
+
     return jsonify({
         "success": True,
         "message": "DeployX Backend Running 🚀"
     })
-            
-def run_deployment_job(deployment_id, repo_url):
+
+
+# =========================================================
+# BACKGROUND DEPLOYMENT
+# =========================================================
+
+def run_deployment_job(
+    deployment_id,
+    repo_url
+):
 
     repo_path = None
     image_name = None
     container_id = None
 
     try:
-        print("\n========== BACKGROUND DEPLOYMENT STARTED ==========")
-        print("Deployment ID:", deployment_id)
-        print("Repo URL:", repo_url)
+
+        print("\n========== DEPLOYMENT STARTED ==========")
+
+        # -------------------------------------------------
+        # CLONE
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -83,20 +122,35 @@ def run_deployment_job(deployment_id, repo_url):
             "Starting repository clone..."
         )
 
-        print("\n[STEP 1] Cloning Repository...")
-        clone_result = clone_repository(repo_url)
+        clone_result = clone_repository(
+            repo_url
+        )
 
         if not clone_result["success"]:
-            fail_deployment(deployment_id, "failed")
 
-            repo_path = clone_result.get("repo_path")
+            fail_deployment(
+                deployment_id,
+                "failed"
+            )
+
+            repo_path = clone_result.get(
+                "repo_path"
+            )
 
             if repo_path:
-                remove_repo_folder(repo_path)
+                remove_repo_folder(
+                    repo_path
+                )
 
             return
 
-        repo_path = clone_result["repo_path"]
+        repo_path = clone_result[
+            "repo_path"
+        ]
+
+        # -------------------------------------------------
+        # FRAMEWORK DETECTION
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -109,13 +163,26 @@ def run_deployment_job(deployment_id, repo_url):
             "Detecting framework..."
         )
 
-        print("\n[STEP 2] Detecting Framework...")
-        framework_result = detect_framework(repo_path)
+        framework_result = detect_framework(
+            repo_path
+        )
 
         if not framework_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
+
+            fail_deployment(
+                deployment_id,
+                "failed"
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
             return
+
+        # -------------------------------------------------
+        # DOCKERFILE
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -128,16 +195,27 @@ def run_deployment_job(deployment_id, repo_url):
             "Generating Dockerfile..."
         )
 
-        print("\n[STEP 3] Generating Dockerfile...")
         dockerfile_result = generate_dockerfile(
             repo_path,
             framework_result["framework"]
         )
 
         if not dockerfile_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
+
+            fail_deployment(
+                deployment_id,
+                "failed"
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
             return
+
+        # -------------------------------------------------
+        # BUILD IMAGE
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -150,18 +228,31 @@ def run_deployment_job(deployment_id, repo_url):
             "Building Docker image..."
         )
 
-        print("\n[STEP 4] Building Docker Image...")
         docker_result = build_docker_image(
             repo_path,
             deployment_id
         )
 
         if not docker_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_repo_folder(repo_path)
+
+            fail_deployment(
+                deployment_id,
+                "failed"
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
             return
 
-        image_name = docker_result["image_name"]
+        image_name = docker_result[
+            "image_name"
+        ]
+
+        # -------------------------------------------------
+        # RUN CONTAINER
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -174,7 +265,6 @@ def run_deployment_job(deployment_id, repo_url):
             "Starting container..."
         )
 
-        print("\n[STEP 5] Running Container...")
         container_result = run_docker_container(
             image_name,
             deployment_id,
@@ -182,12 +272,29 @@ def run_deployment_job(deployment_id, repo_url):
         )
 
         if not container_result["success"]:
-            fail_deployment(deployment_id, "failed")
-            remove_image(image_name)
-            remove_repo_folder(repo_path)
+
+            fail_deployment(
+                deployment_id,
+                "failed"
+            )
+
+            remove_image(
+                image_name
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
             return
 
-        container_id = container_result["container_id"]
+        container_id = container_result[
+            "container_id"
+        ]
+
+        # -------------------------------------------------
+        # RUNNING
+        # -------------------------------------------------
 
         update_deployment_step(
             deployment_id,
@@ -209,19 +316,30 @@ def run_deployment_job(deployment_id, repo_url):
 
         save_build_logs(
             deployment_id,
-            docker_result.get("logs", [])
+            docker_result.get(
+                "logs",
+                []
+            )
         )
 
         save_container_logs(
             deployment_id,
-            container_result.get("logs", [])
+            container_result.get(
+                "logs",
+                []
+            )
         )
 
-        print("\n========== BACKGROUND DEPLOYMENT COMPLETED ==========")
+        print(
+            "\n========== DEPLOYMENT COMPLETED =========="
+        )
 
     except Exception as e:
 
-        print("\n========== BACKGROUND DEPLOYMENT ERROR ==========")
+        print(
+            "\n========== DEPLOYMENT ERROR =========="
+        )
+
         print(str(e))
 
         emit_deployment_update(
@@ -255,27 +373,43 @@ def run_deployment_job(deployment_id, repo_url):
                 repo_path
             )
 
-@app.route("/deploy", methods=["POST"])
+
+# =========================================================
+# DEPLOY API
+# =========================================================
+
+@app.route(
+    "/deploy",
+    methods=["POST"]
+)
 def deploy():
 
     try:
+
         data = request.get_json()
 
         if not data:
+
             return jsonify({
                 "success": False,
                 "error": "No JSON data received"
             }), 400
 
-        repo_url = data.get("repo_url")
+        repo_url = data.get(
+            "repo_url"
+        )
 
         if not repo_url:
+
             return jsonify({
                 "success": False,
-                "error": "GitHub repo URL is required"
+                "error": "GitHub repo URL required"
             }), 400
 
-        deployment = create_deployment(repo_url)
+        deployment = create_deployment(
+            repo_url
+        )
+
         deployment_id = deployment["id"]
 
         update_deployment_step(
@@ -285,7 +419,10 @@ def deploy():
 
         deployment_thread = threading.Thread(
             target=run_deployment_job,
-            args=(deployment_id, repo_url)
+            args=(
+                deployment_id,
+                repo_url
+            )
         )
 
         deployment_thread.start()
@@ -298,15 +435,25 @@ def deploy():
         }), 202
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
 
-@app.route("/deployments", methods=["GET"])
+
+# =========================================================
+# GET ALL DEPLOYMENTS
+# =========================================================
+
+@app.route(
+    "/deployments",
+    methods=["GET"]
+)
 def get_deployments():
 
     try:
+
         deployments = get_all_deployments()
 
         return jsonify({
@@ -316,20 +463,135 @@ def get_deployments():
         })
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
 
-@app.route("/deployments/<int:deployment_id>/status", methods=["GET"])
-def get_deployment_status(deployment_id):
+
+# =========================================================
+# DELETE DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>",
+    methods=["DELETE"]
+)
+def delete_deployment(
+    deployment_id
+):
 
     try:
+
+        conn = sqlite3.connect(
+            "deployx.db"
+        )
+
+        cursor = conn.cursor()
+
+        # CHECK EXISTING DEPLOYMENT
+
+        cursor.execute(
+            """
+            SELECT status
+            FROM deployments
+            WHERE id=?
+            """,
+            (deployment_id,)
+        )
+
+        deployment = cursor.fetchone()
+
+        if not deployment:
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Deployment not found"
+            }), 404
+
+        deployment_status = (
+            deployment[0] or ""
+        ).lower()
+
+        # ONLY ALLOW FAILED DELETE
+
+        if deployment_status != "failed":
+
+            conn.close()
+
+            return jsonify({
+                "success": False,
+                "message": "Only failed deployments can be deleted"
+            }), 400
+
+        # DELETE LOGS
+
+        cursor.execute(
+            """
+            DELETE FROM build_logs
+            WHERE deployment_id=?
+            """,
+            (deployment_id,)
+        )
+
+        cursor.execute(
+            """
+            DELETE FROM container_logs
+            WHERE deployment_id=?
+            """,
+            (deployment_id,)
+        )
+
+        # DELETE DEPLOYMENT
+
+        cursor.execute(
+            """
+            DELETE FROM deployments
+            WHERE id=?
+            """,
+            (deployment_id,)
+        )
+
+        conn.commit()
+
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Deployment deleted successfully"
+        }), 200
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# =========================================================
+# DEPLOYMENT STATUS
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>/status",
+    methods=["GET"]
+)
+def get_deployment_status(
+    deployment_id
+):
+
+    try:
+
         deployment = get_deployment_by_id(
             deployment_id
         )
 
         if not deployment:
+
             return jsonify({
                 "success": False,
                 "message": "Deployment not found"
@@ -337,112 +599,168 @@ def get_deployment_status(deployment_id):
 
         return jsonify({
             "success": True,
-            "deployment_id": deployment["id"],
-            "repo_url": deployment["repo_url"],
-            "framework": deployment["framework"],
-            "status": deployment["status"],
-            "url": deployment["url"],
-            "port": deployment["port"],
-            "created_at": deployment["created_at"]
-        }), 200
+            "deployment": deployment
+        })
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "error": str(e)
         }), 500
 
-@app.route("/deployments/<int:deployment_id>/logs", methods=["GET"])
-def deployment_logs(deployment_id):
+
+# =========================================================
+# BUILD LOGS
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>/logs",
+    methods=["GET"]
+)
+def deployment_logs(
+    deployment_id
+):
 
     try:
-        logs_result = get_build_logs(deployment_id)
 
-        if not logs_result["success"]:
-            return jsonify(logs_result), 404
+        logs_result = get_build_logs(
+            deployment_id
+        )
 
-        return jsonify(logs_result)
+        return jsonify(
+            logs_result
+        )
 
     except Exception as e:
+
         return jsonify({
             "success": False,
-            "error": str(e),
-            "logs": []
+            "error": str(e)
         }), 500
 
 
-@app.route("/deployments/<int:deployment_id>/container-logs", methods=["GET"])
-def deployment_container_logs(deployment_id):
+# =========================================================
+# CONTAINER LOGS
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>/container-logs",
+    methods=["GET"]
+)
+def deployment_container_logs(
+    deployment_id
+):
 
     try:
-        logs_result = get_container_logs(deployment_id)
 
-        if not logs_result["success"]:
-            return jsonify(logs_result), 404
+        logs_result = get_container_logs(
+            deployment_id
+        )
 
-        return jsonify(logs_result)
+        return jsonify(
+            logs_result
+        )
 
     except Exception as e:
+
         return jsonify({
             "success": False,
-            "error": str(e),
-            "logs": []
+            "error": str(e)
         }), 500
 
 
-@app.route("/cleanup/container", methods=["DELETE"])
+# =========================================================
+# CLEANUP ROUTES
+# =========================================================
+
+@app.route(
+    "/cleanup/container",
+    methods=["DELETE"]
+)
 def cleanup_container():
 
     try:
+
         data = request.get_json()
-        container_id = data.get("container_id")
 
-        result = remove_container(container_id)
+        container_id = data.get(
+            "container_id"
+        )
 
-        return jsonify(result), 200 if result["success"] else 400
+        result = remove_container(
+            container_id
+        )
+
+        return jsonify(result)
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
 
-@app.route("/cleanup/image", methods=["DELETE"])
+@app.route(
+    "/cleanup/image",
+    methods=["DELETE"]
+)
 def cleanup_image():
 
     try:
+
         data = request.get_json()
-        image_name = data.get("image_name")
 
-        result = remove_image(image_name)
+        image_name = data.get(
+            "image_name"
+        )
 
-        return jsonify(result), 200 if result["success"] else 400
+        result = remove_image(
+            image_name
+        )
+
+        return jsonify(result)
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
 
-@app.route("/cleanup/repo", methods=["DELETE"])
+@app.route(
+    "/cleanup/repo",
+    methods=["DELETE"]
+)
 def cleanup_repo():
 
     try:
+
         data = request.get_json()
-        repo_path = data.get("repo_path")
 
-        result = remove_repo_folder(repo_path)
+        repo_path = data.get(
+            "repo_path"
+        )
 
-        return jsonify(result), 200 if result["success"] else 400
+        result = remove_repo_folder(
+            repo_path
+        )
+
+        return jsonify(result)
 
     except Exception as e:
+
         return jsonify({
             "success": False,
             "message": str(e)
         }), 500
 
+
+# =========================================================
+# MAIN
+# =========================================================
 
 if __name__ == "__main__":
 
