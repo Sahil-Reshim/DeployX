@@ -158,6 +158,7 @@ def run_docker_container(
 
         for port in [
             internal_port,
+            80,
             5000,
             3000,
             5173,
@@ -170,7 +171,7 @@ def run_docker_container(
         container = client.containers.run(
             image=image_name,
             detach=True,
-            ports={f"{p}/tcp": None for p in candidate_ports},
+            ports={f"{internal_port}/tcp": None},
             environment={"PORT": str(internal_port)},
         )
 
@@ -201,22 +202,19 @@ def run_docker_container(
         ).start()
 
         # Find the mapped host port
-        preferred_ports = [
-            5000,
-            3000,
-            5173,
-            8000,
-            8080
-        ]
+        host_port = get_container_url(
+            container,
+            internal_port
+        )
 
-        host_port = None
+        if not host_port:
+            container.remove(force=True)
 
-        for p in preferred_ports:
-            host_port = get_container_url(container, p)
-
-            if host_port:
-                internal_port = p
-                break
+            return {
+                "success": False,
+                "message": f"Could not determine port mapping for {internal_port}",
+                "logs": []
+            }
     
         if not host_port:
             container.remove(force=True)

@@ -106,6 +106,34 @@ def init_db():
     """)
 
     # =====================================================
+    # DEPLOYMENT METRICS TABLE
+    # =====================================================
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS deployment_metrics (
+
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+
+        deployment_id INTEGER,
+
+        cpu REAL,
+        ram REAL,
+
+        network_rx REAL,
+        network_tx REAL,
+
+        health TEXT,
+
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+        FOREIGN KEY (deployment_id)
+        REFERENCES deployments(id)
+        ON DELETE CASCADE
+
+    )
+    """)
+
+    # =====================================================
     # INDEXES
     # =====================================================
 
