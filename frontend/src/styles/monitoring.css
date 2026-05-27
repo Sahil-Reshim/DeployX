@@ -1,0 +1,170 @@
+/* =====================================================
+MONITORING PANEL
+===================================================== */
+
+.monitoring-panel {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 28px;
+}
+
+/* =====================================================
+TOP SECTION
+===================================================== */
+
+.monitoring-top {
+
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+
+  padding: 32px;
+
+  border-radius: 30px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255,255,255,.05),
+      rgba(255,255,255,.02)
+    );
+
+  border:
+    1px solid rgba(255,255,255,.08);
+
+  backdrop-filter: blur(18px);
+
+  position: relative;
+
+  overflow: hidden;
+}
+
+.monitoring-top::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 0;
+
+  background:
+    radial-gradient(
+      circle at top right,
+      rgba(239,68,68,.12),
+      transparent 60%
+    );
+
+  pointer-events: none;
+}
+
+.monitoring-label {
+
+  color:
+    rgba(255,255,255,.45);
+
+  font-size: 12px;
+
+  text-transform: uppercase;
+
+  letter-spacing: .16em;
+
+  margin-bottom: 14px;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+}
+
+.monitoring-top h1 {
+
+  font-size: 36px;
+
+  font-weight: 800;
+
+  color: white;
+}
+
+/* =====================================================
+EMPTY STATE
+===================================================== */
+
+.empty-monitoring {
+
+  padding: 100px 20px;
+
+  text-align: center;
+
+  border-radius: 30px;
+
+  background:
+    rgba(255,255,255,.03);
+
+  border:
+    1px dashed rgba(255,255,255,.08);
+
+  backdrop-filter: blur(18px);
+}
+
+.empty-monitoring h2 {
+
+  font-size: 34px;
+
+  margin-bottom: 18px;
+
+  color: white;
+}
+
+.empty-monitoring p {
+
+  color:
+    rgba(255,255,255,.55);
+
+  line-height: 1.8;
+
+  max-width: 500px;
+
+  margin: auto;
+}
+
+/* =====================================================
+RESPONSIVE
+===================================================== */
+
+@media (max-width: 900px) {
+
+  .monitoring-top {
+
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+
+  .monitoring-top {
+
+    padding: 24px;
+  }
+
+  .monitoring-top h1 {
+
+    font-size: 28px;
+  }
+
+  .empty-monitoring {
+
+    padding: 80px 20px;
+  }
+
+  .empty-monitoring h2 {
+
+    font-size: 28px;
+  }
+}
