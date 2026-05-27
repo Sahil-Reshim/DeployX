@@ -233,7 +233,10 @@ def run_docker_container(
             "success": True,
             "message": "Container started successfully",
             "container_id": container.short_id,
+
             "port": host_port,
+            "internal_port": internal_port,
+
             "url": local_url,
             "local_url": local_url,
             "logs": logs
@@ -245,4 +248,53 @@ def run_docker_container(
             "message": "Container failed to start",
             "error": str(e),
             "logs": []
+        }
+        
+import docker
+
+client = docker.from_env()
+
+
+def stop_container(container_id):
+
+    try:
+
+        container = client.containers.get(
+            container_id
+        )
+
+        container.stop()
+
+        return {
+            "success": True,
+            "message": "Container stopped"
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
+        
+def start_container(container_id):
+
+    try:
+
+        container = client.containers.get(
+            container_id
+        )
+
+        container.start()
+
+        return {
+            "success": True,
+            "message": "Container started"
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
         }

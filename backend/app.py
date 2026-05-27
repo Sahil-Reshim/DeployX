@@ -51,7 +51,10 @@ from services.deployment_service import (
     complete_deployment,
     fail_deployment,
     get_all_deployments,
-    get_deployment_by_id
+    get_deployment_by_id,
+    stop_deployment,
+    start_deployment,
+    restart_deployment
 )
 
 from services.monitor_service import (
@@ -319,14 +322,6 @@ def run_deployment_job(
             framework_result,
             docker_result,
             container_result
-        )
-
-        from managers.state_manager import get_state
-
-        print(
-            get_state(
-                str(deployment_id)
-            )
         )
 
         save_build_logs(
@@ -634,6 +629,93 @@ def get_deployment_status(
             "success": True,
             "deployment": deployment
         })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# STOP DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/stop",
+    methods=["POST"]
+)
+def stop_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = stop_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# START DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/start",
+    methods=["POST"]
+)
+def start_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = start_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# RESTART DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/restart",
+    methods=["POST"]
+)
+def restart_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = restart_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
 
     except Exception as e:
 

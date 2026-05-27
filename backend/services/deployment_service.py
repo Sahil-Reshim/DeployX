@@ -1,8 +1,16 @@
 from datetime import datetime
 from database import get_db_connection
 from services.monitor_service import start_monitoring
-from managers.state_manager import set_state
+from managers.state_manager import (
+    set_state,
+    get_state,
+    update_state
+)
 
+from services.docker_service import (
+    stop_container,
+    start_container
+)
 
 
 def create_deployment(repo_url):
@@ -163,7 +171,10 @@ def complete_deployment(
 
             "status": "running",
 
-            "internal_port": 5000,   # temporary
+            "internal_port":
+            container_result.get(
+                "internal_port"
+            ),
             "public_port": container_result.get(
                 "port"
             ),
@@ -235,3 +246,122 @@ def get_deployment_by_id(deployment_id):
         return dict(deployment)
 
     return None
+
+def stop_deployment(
+    deployment_id
+):
+
+    state = get_state(
+        str(deployment_id)
+    )
+
+    if not state:
+
+        return {
+            "success": False,
+            "message": "Deployment not found"
+        }
+
+    result = stop_container(
+        state["container_id"]
+    )
+
+    if not result["success"]:
+
+        return result
+
+    update_deployment_status(
+        deployment_id,
+        "stopped"
+    )
+
+    update_state(
+        str(deployment_id),
+        {
+            "status": "stopped",
+            "monitoring_active": False,
+            "log_streaming": False
+        }
+    )
+
+    return {
+        "success": True,
+        "message": "Deployment stopped"
+    }
+    
+def start_deployment(
+    deployment_id
+):
+
+    state = get_state(
+        str(deployment_id)
+    )
+
+    if not state:
+
+        return {
+            "success": False,
+            "message": "Deployment not found"
+        }
+
+    result = start_container(
+        state["container_id"]
+    )
+
+    if not result["success"]:
+
+        return result
+
+    update_deployment_status(
+        deployment_id,
+        "running"
+    )
+
+    update_state(
+        str(deployment_id),
+        {
+            "status": "running",
+            "monitoring_active": True,
+            "log_streaming": True
+        }
+    )
+
+    return {
+        "success": True,
+        "message": "Deployment started"
+    }
+
+def restart_deployment(
+    deployment_id
+):
+
+    update_deployment_status(
+        deployment_id,
+        "restarting"
+    )
+
+    update_state(
+        str(deployment_id),
+        {
+            "status":"restarting"
+        }
+    )
+
+    stop_result = stop_deployment(
+        deployment_id
+    )
+
+    if not stop_result["success"]:
+        return stop_result
+
+    start_result = start_deployment(
+        deployment_id
+    )
+
+    if not start_result["success"]:
+        return start_result
+
+    return {
+        "success": True,
+        "message": "Deployment restarted"
+    }
