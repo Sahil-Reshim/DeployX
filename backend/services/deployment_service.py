@@ -2,6 +2,30 @@ from datetime import datetime
 from database import get_db_connection
 from services.monitor_service import start_monitoring
 from managers.state_manager import (
+    remove_state
+)
+
+from sockets.socket_manager import (
+    emit_deployment_started,
+    emit_deployment_stopped,
+    emit_deployment_restarted
+)
+
+from services.docker_service import (
+    stop_container
+)
+
+from services.monitor_service import (
+    start_monitoring,
+    stop_monitoring
+)
+
+from services.cleanup_service import (
+    remove_container,
+    remove_image
+)
+
+from managers.state_manager import (
     set_state,
     get_state,
     update_state
@@ -11,7 +35,6 @@ from services.docker_service import (
     stop_container,
     start_container
 )
-
 
 def create_deployment(repo_url):
 
@@ -284,6 +307,10 @@ def stop_deployment(
         }
     )
 
+    emit_deployment_stopped(
+        deployment_id
+    )
+
     return {
         "success": True,
         "message": "Deployment stopped"
@@ -326,6 +353,15 @@ def start_deployment(
         }
     )
 
+    start_monitoring(
+        deployment_id,
+        state["container_id"]
+    )
+
+    emit_deployment_started(
+        deployment_id
+    )
+
     return {
         "success": True,
         "message": "Deployment started"
@@ -361,7 +397,59 @@ def restart_deployment(
     if not start_result["success"]:
         return start_result
 
+    emit_deployment_restarted(
+        deployment_id
+    )
+
     return {
         "success": True,
         "message": "Deployment restarted"
+    }
+    
+def delete_deployment_lifecycle(
+    deployment_id
+):
+
+    deployment = get_deployment_by_id(
+        deployment_id
+    )
+
+    if not deployment:
+
+        return {
+            "success": False,
+            "message": "Deployment not found"
+        }
+
+    stop_monitoring(
+        deployment_id
+    )
+
+    container_id = deployment.get(
+        "container_id"
+    )
+
+    image_name = deployment.get(
+        "image_name"
+    )
+
+    if container_id:
+
+        remove_container(
+            container_id
+        )
+
+    if image_name:
+
+        remove_image(
+            image_name
+        )
+
+    remove_state(
+        str(deployment_id)
+    )
+
+    return {
+        "success": True,
+        "message":"Lifecycle cleanup completed"
     }

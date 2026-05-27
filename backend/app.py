@@ -54,7 +54,8 @@ from services.deployment_service import (
     get_deployment_by_id,
     stop_deployment,
     start_deployment,
-    restart_deployment
+    restart_deployment,
+    delete_deployment_lifecycle
 )
 
 from services.monitor_service import (
@@ -521,6 +522,18 @@ def delete_deployment(deployment_id):
                 "message": "Deployment not found"
 
             }), 404
+
+        cleanup_result = delete_deployment_lifecycle(
+            deployment_id
+        )
+
+        if not cleanup_result["success"]:
+
+            conn.close()
+
+            return jsonify(
+                cleanup_result
+            ), 400
 
         # =================================================
         # STOP ACTIVE MONITORING
