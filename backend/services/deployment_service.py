@@ -1,6 +1,8 @@
 from datetime import datetime
 from database import get_db_connection
 from services.monitor_service import start_monitoring
+from managers.state_manager import set_state
+
 
 
 def create_deployment(repo_url):
@@ -150,10 +152,34 @@ def complete_deployment(
     conn.commit()
     conn.close()
 
-    # START LIVE MONITORING
+    # NEW: Register runtime state
+
+    set_state(
+        str(deployment_id),
+        {
+            "container_id": container_result.get(
+                "container_id"
+            ),
+
+            "status": "running",
+
+            "internal_port": 5000,   # temporary
+            "public_port": container_result.get(
+                "port"
+            ),
+
+            "monitoring_active": True,
+            "log_streaming": True
+        }
+    )
+
+    # Existing monitoring
+
     start_monitoring(
         deployment_id,
-        container_result.get("container_id")
+        container_result.get(
+            "container_id"
+        )
     )
 
 def fail_deployment(

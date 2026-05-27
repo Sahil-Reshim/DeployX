@@ -321,6 +321,14 @@ def run_deployment_job(
             container_result
         )
 
+        from managers.state_manager import get_state
+
+        print(
+            get_state(
+                str(deployment_id)
+            )
+        )
+
         save_build_logs(
             deployment_id,
             docker_result.get(
