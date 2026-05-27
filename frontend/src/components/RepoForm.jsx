@@ -7,240 +7,269 @@ function RepoForm({
   setActiveDeployment,
 }) {
 
-  const [repoUrl, setRepoUrl] =
-    useState("");
+  const [repoUrl, setRepoUrl] = useState("");
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [message, setMessage] =
-    useState({
-      text: "",
-      type: ""
-    });
+  const [message, setMessage] = useState({
+    text: "",
+    type: ""
+  });
 
   const pollingRef = useRef(null);
+
+  /* ─────────────────────────────────────────────
+     CLEANUP
+  ───────────────────────────────────────────── */
 
   useEffect(() => {
 
     return () => {
 
       if (pollingRef.current) {
+
         clearInterval(pollingRef.current);
+
       }
 
     };
 
   }, []);
 
+  /* ─────────────────────────────────────────────
+     STOP POLLING
+  ───────────────────────────────────────────── */
+
   const stopPolling = () => {
 
     if (pollingRef.current) {
 
-      clearInterval(
-        pollingRef.current
-      );
+      clearInterval(pollingRef.current);
 
       pollingRef.current = null;
 
     }
+
   };
 
-  const pollDeploymentStatus =
-    (deploymentId) => {
+  /* ─────────────────────────────────────────────
+     POLL DEPLOYMENT STATUS
+  ───────────────────────────────────────────── */
 
-      stopPolling();
+  const pollDeploymentStatus = (deploymentId) => {
 
-      pollingRef.current =
-        setInterval(async () => {
+    stopPolling();
 
-          try {
-
-            const response =
-              await API.get(
-                `/deployments/${deploymentId}/status`
-              );
-
-            const deployment =
-              response.data;
-
-            const status =
-              (
-                deployment.status ||
-                ""
-              ).toLowerCase();
-
-            setActiveDeployment(
-              deployment
-            );
-
-            await refreshDeployments();
-
-            if (
-              status === "running" ||
-              status === "live"
-            ) {
-
-              setMessage({
-                text:
-                  `Deployment Live 🚀 ${deployment.url}`,
-                type: "success"
-              });
-
-              stopPolling();
-
-              setLoading(false);
-
-            }
-
-            if (
-              status === "failed"
-            ) {
-
-              setMessage({
-                text:
-                  deployment.error ||
-                  "Deployment failed",
-                type: "error"
-              });
-
-              stopPolling();
-
-              setLoading(false);
-
-            }
-
-          } catch (error) {
-
-            console.error(
-              "Polling error:",
-              error
-            );
-
-            stopPolling();
-
-            setLoading(false);
-
-            setMessage({
-              text:
-                "Failed to fetch deployment status",
-              type: "error"
-            });
-
-          }
-
-        }, 2000);
-    };
-
-  const handleDeploy =
-    async (e) => {
-
-      e.preventDefault();
-
-      if (!repoUrl.trim()) {
-
-        setMessage({
-          text:
-            "Please enter a valid GitHub repository URL",
-          type: "error"
-        });
-
-        return;
-      }
+    pollingRef.current = setInterval(async () => {
 
       try {
 
-        setLoading(true);
-
-        setMessage({
-          text:
-            "Initializing deployment pipeline...",
-          type: "info"
-        });
-
-        const response =
-          await API.post(
-            "/deploy",
-            {
-              repo_url:
-                repoUrl.trim()
-            }
-          );
-
-        if (!response.data?.success) {
-
-          throw new Error(
-            response.data?.error ||
-            response.data?.message ||
-            "Deployment request failed"
-          );
-
-        }
-
-        const deploymentId =
-          response.data
-            ?.deployment_id;
-
-        if (!deploymentId) {
-
-          throw new Error(
-            "Deployment ID missing"
-          );
-
-        }
-
-        setActiveDeployment({
-          deployment_id:
-            deploymentId,
-          repo_url:
-            repoUrl.trim(),
-          status: "queued",
-          logs: [],
-          steps: []
-        });
-
-        pollDeploymentStatus(
-          deploymentId
+        const response = await API.get(
+          `/deployments/${deploymentId}/status`
         );
 
-        setRepoUrl("");
+        const deployment =
+          response.data?.deployment ||
+          response.data;
 
-        setLoading(false);
+        if (!deployment) return;
 
-        setMessage({
-          text: "Deployment started successfully. Tracking live status...",
-          type: "success"
-        });
+        const normalizedDeployment = {
+          ...deployment,
+          id:
+            deployment.id ||
+            deployment.deployment_id,
+        };
 
-      } catch (error) {
+        const status = (
+          normalizedDeployment.status || ""
+        ).toLowerCase();
 
-        setLoading(false);
+        setActiveDeployment(
+          normalizedDeployment
+        );
 
-        if (error.response) {
+        await refreshDeployments();
+
+        /* SUCCESS */
+
+        if (
+          status === "running" ||
+          status === "live"
+        ) {
 
           setMessage({
             text:
-              error.response.data
-                .error ||
-              error.response.data
-                .message ||
+              `Deployment Live 🚀 ${normalizedDeployment.url || ""}`,
+            type: "success"
+          });
+
+          stopPolling();
+
+          setLoading(false);
+
+        }
+
+        /* FAILED */
+
+        if (status === "failed") {
+
+          setMessage({
+            text:
+              normalizedDeployment.error ||
               "Deployment failed",
             type: "error"
           });
 
-        } else {
+          stopPolling();
 
-          setMessage({
-            text:
-              error.message ||
-              "Cannot connect to backend server",
-            type: "error"
-          });
+          setLoading(false);
 
         }
 
+      } catch (error) {
+
+        console.error(
+          "Polling error:",
+          error
+        );
+
+        stopPolling();
+
+        setLoading(false);
+
+        setMessage({
+          text:
+            "Failed to fetch deployment status",
+          type: "error"
+        });
+
       }
-    };
+
+    }, 2000);
+
+  };
+
+  /* ─────────────────────────────────────────────
+     DEPLOY
+  ───────────────────────────────────────────── */
+
+  const handleDeploy = async (e) => {
+
+    e.preventDefault();
+
+    if (!repoUrl.trim()) {
+
+      setMessage({
+        text:
+          "Please enter a valid GitHub repository URL",
+        type: "error"
+      });
+
+      return;
+
+    }
+
+    try {
+
+      setLoading(true);
+
+      setMessage({
+        text:
+          "Initializing deployment pipeline...",
+        type: "info"
+      });
+
+      const response = await API.post(
+        "/deploy",
+        {
+          repo_url: repoUrl.trim()
+        }
+      );
+
+      const data = response.data;
+
+      if (!data?.success) {
+
+        throw new Error(
+          data?.error ||
+          data?.message ||
+          "Deployment request failed"
+        );
+
+      }
+
+      const deploymentId =
+        data?.deployment_id;
+
+      if (!deploymentId) {
+
+        throw new Error(
+          "Deployment ID missing"
+        );
+
+      }
+
+      /* ACTIVE DEPLOYMENT */
+
+      setActiveDeployment({
+        id: deploymentId,
+        deployment_id: deploymentId,
+        repo_url: repoUrl.trim(),
+        status: "queued",
+        logs: [],
+      });
+
+      /* START POLLING */
+
+      pollDeploymentStatus(
+        deploymentId
+      );
+
+      /* RESET */
+
+      setRepoUrl("");
+
+      setMessage({
+        text:
+          "Deployment started successfully 🚀",
+        type: "success"
+      });
+
+    } catch (error) {
+
+      console.error(error);
+
+      setLoading(false);
+
+      if (error.response) {
+
+        setMessage({
+          text:
+            error.response.data?.error ||
+            error.response.data?.message ||
+            "Deployment failed",
+          type: "error"
+        });
+
+      } else {
+
+        setMessage({
+          text:
+            error.message ||
+            "Cannot connect to backend server",
+          type: "error"
+        });
+
+      }
+
+    }
+
+  };
+
+  /* ─────────────────────────────────────────────
+     UI
+  ───────────────────────────────────────────── */
 
   return (
 
@@ -289,9 +318,7 @@ function RepoForm({
               className="repo-url-input"
               value={repoUrl}
               onChange={(e) =>
-                setRepoUrl(
-                  e.target.value
-                )
+                setRepoUrl(e.target.value)
               }
               disabled={loading}
             />
@@ -303,9 +330,7 @@ function RepoForm({
         <button
           type="submit"
           className={`deploy-btn ${
-            loading
-              ? "loading"
-              : ""
+            loading ? "loading" : ""
           }`}
           disabled={loading}
         >
@@ -340,7 +365,9 @@ function RepoForm({
       )}
 
     </div>
+
   );
+
 }
 
 export default RepoForm;

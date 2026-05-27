@@ -2,42 +2,59 @@ import { useMemo } from "react";
 
 import DeploymentItem from "./DeploymentItem";
 
+/*
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DEPLOYMENT HISTORY COMPONENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+*/
+
 function DeploymentHistory({
-  deployments = [],
-  loading = false,
+  deployments,
+  loading,
   onDeleteDeployment,
+  onRefresh,
+  onStartDeployment,
+  onStopDeployment,
+  onRestartDeployment,
+  actionLoading
 }) {
 
   /*
-    SORT DEPLOYMENTS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  SORT DEPLOYMENTS (LATEST FIRST)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
 
-  const sortedDeployments =
-    useMemo(() => {
+  const sortedDeployments = useMemo(() => {
 
-      return deployments
-        .slice()
-        .sort((a, b) => {
+    return [...deployments].sort((a, b) => {
 
-          return (
-            new Date(
-              b.created_at || 0
-            ).getTime() -
-            new Date(
-              a.created_at || 0
-            ).getTime()
-          );
+      return (
+        new Date(
+          b.created_at || 0
+        ).getTime()
+        -
+        new Date(
+          a.created_at || 0
+        ).getTime()
+      );
 
-        });
+    });
 
-    }, [deployments]);
+  }, [deployments]);
 
   /*
-    STATS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DEPLOYMENT STATS
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
 
   const totalDeployments =
     sortedDeployments.length;
+
+  /*
+    SUCCESSFUL DEPLOYMENTS
+  */
 
   const successfulDeployments =
     sortedDeployments.filter(
@@ -45,18 +62,14 @@ function DeploymentHistory({
 
         const status =
           (
-            deployment.status ||
-            ""
+            deployment.status || ""
           ).toLowerCase();
 
         return [
 
           "running",
-
           "success",
-
           "live",
-
           "completed",
 
         ].includes(status);
@@ -64,126 +77,159 @@ function DeploymentHistory({
       }
     ).length;
 
+  /*
+    FAILED DEPLOYMENTS
+  */
+
   const failedDeployments =
     sortedDeployments.filter(
       (deployment) => {
 
         return (
           deployment.status
-            ?.toLowerCase() ===
-          "failed"
-        );
-
-      }
-    ).length;
-
-  const activeDeployments =
-    sortedDeployments.filter(
-      (deployment) => {
-
-        return [
-
-          "queued",
-
-          "cloning",
-
-          "detecting",
-
-          "dockerfile_generating",
-
-          "building",
-
-          "deploying",
-
-        ].includes(
-          deployment.status?.toLowerCase()
+            ?.toLowerCase()
+          === "failed"
         );
 
       }
     ).length;
 
   /*
-    LOADING STATE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  DELETE DEPLOYMENT
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  */
+
+  const handleDelete = async (
+    deploymentId
+  ) => {
+
+    /*
+      CHECK ID
+    */
+
+    if (!deploymentId) {
+
+      alert(
+        "Deployment ID missing"
+      );
+
+      return;
+
+    }
+
+    /*
+      CONFIRM DELETE
+    */
+
+    const confirmed =
+      window.confirm(
+        "Delete this deployment permanently?"
+      );
+
+    if (!confirmed) return;
+
+    /*
+      CALL PARENT DELETE FUNCTION
+    */
+
+    try {
+
+      if (onDeleteDeployment) {
+
+        await onDeleteDeployment(
+          deploymentId
+        );
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Delete Error:",
+        error
+      );
+
+    }
+
+  };
+
+  /*
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  LOADING UI
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
 
   if (loading) {
 
     return (
 
-      <div className="deployment-history">
+      <div className="history-loading">
 
-        <div className="history-loading">
+        <div className="history-loader"></div>
 
-          <div className="history-loader"></div>
+        <h2>
+          Loading Deployments
+        </h2>
 
-          <h2>
-            Loading Deployments
-          </h2>
-
-          <p>
-
-            Fetching deployment
-            runtime data...
-
-          </p>
-
-        </div>
+        <p>
+          Fetching deployment history...
+        </p>
 
       </div>
 
     );
+
   }
 
   /*
-    EMPTY STATE
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  EMPTY UI
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
 
-  if (
-    !deployments ||
-    deployments.length === 0
-  ) {
+  if (!deployments.length) {
 
     return (
 
-      <div className="deployment-history">
+      <div className="history-empty">
 
-        <div className="history-empty">
-
-          <div className="history-empty-icon">
-
-            🚀
-
-          </div>
-
-          <h2>
-            No Deployments Yet
-          </h2>
-
-          <p>
-
-            Start your first deployment
-            to launch DeployX runtime.
-
-          </p>
-
+        <div className="history-empty-icon">
+          🚀
         </div>
+
+        <h2>
+          No Deployments Yet
+        </h2>
+
+        <p>
+          Deploy your first repository
+          to start runtime history.
+        </p>
 
       </div>
 
     );
+
   }
 
   /*
-    MAIN UI
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  MAIN UI
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
 
   return (
 
     <div className="deployment-history">
 
-      {/* HEADER */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━
+          HEADER
+      ━━━━━━━━━━━━━━━━━━━━━━━ */}
 
       <div className="deployment-history-header">
+
+        {/* LEFT SIDE */}
 
         <div className="deployment-history-left">
 
@@ -194,26 +240,30 @@ function DeploymentHistory({
           </div>
 
           <h2>
+
             Deployment History
+
           </h2>
 
           <p>
 
-            Monitor production
-            deployments in real-time.
+            Monitor, manage and track
+            all deployments in real time.
 
           </p>
 
         </div>
 
+        {/* RIGHT STATS */}
+
         <div className="deployment-history-right">
+
+          {/* TOTAL */}
 
           <div className="history-stat-card">
 
             <span className="stat-label">
-
               Total
-
             </span>
 
             <strong className="stat-value">
@@ -224,12 +274,12 @@ function DeploymentHistory({
 
           </div>
 
+          {/* LIVE */}
+
           <div className="history-stat-card success">
 
             <span className="stat-label">
-
               Live
-
             </span>
 
             <strong className="stat-value">
@@ -240,28 +290,12 @@ function DeploymentHistory({
 
           </div>
 
-          <div className="history-stat-card active">
-
-            <span className="stat-label">
-
-              Active
-
-            </span>
-
-            <strong className="stat-value">
-
-              {activeDeployments}
-
-            </strong>
-
-          </div>
+          {/* FAILED */}
 
           <div className="history-stat-card failed">
 
             <span className="stat-label">
-
               Failed
-
             </span>
 
             <strong className="stat-value">
@@ -276,22 +310,32 @@ function DeploymentHistory({
 
       </div>
 
-      {/* ACTION BAR */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━
+          ACTIONS
+      ━━━━━━━━━━━━━━━━━━━━━━━ */}
 
       <div className="history-actions">
+
+        {/* LIVE INDICATOR */}
 
         <div className="history-live-indicator">
 
           <span className="history-live-dot"></span>
 
-          Live Deployment Sync
+          Live Sync Enabled
 
         </div>
+
+        {/* ACTION BUTTONS */}
 
         <div className="history-actions-right">
 
           <button
-            className="history-action-btn ghost"
+            className="
+              history-action-btn
+              ghost
+            "
+            onClick={onRefresh}
           >
 
             Refresh
@@ -302,74 +346,98 @@ function DeploymentHistory({
 
       </div>
 
-      {/* GRID */}
+      {/* ━━━━━━━━━━━━━━━━━━━━━━━
+          DEPLOYMENT GRID
+      ━━━━━━━━━━━━━━━━━━━━━━━ */}
 
       <div className="deployment-grid">
 
         {sortedDeployments.map(
-          (
-            deployment,
-            index
-          ) => (
 
-            <div
-              key={
-                deployment.id ||
-                index
-              }
-              className="deployment-grid-item"
-              style={{
-                animationDelay:
-                  `${index * 0.05}s`,
-              }}
-            >
+          (deployment, index) => {
 
-              {/* CARD WRAPPER */}
+            /*
+              CHECK FAILED STATUS
+            */
 
-              <div className="deployment-card-wrapper">
+            const isFailed =
+              deployment.status
+                ?.toLowerCase()
+              === "failed";
 
-                {/* DELETE BUTTON */}
+            return (
 
-                <button
-                  className="deployment-delete-btn"
-                  onClick={() => {
+              <div
+                key={
+                  deployment.id ||
+                  index
+                }
+                className="
+                  deployment-grid-item
+                "
+              >
 
-                    const confirmed =
-                      window.confirm(
-                        "Delete this deployment?"
-                      );
+                {/* ━━━━━━━━━━━
+                    CARD WRAPPER
+                ━━━━━━━━━━━ */}
 
-                    if (
-                      confirmed &&
-                      onDeleteDeployment
-                    ) {
+                <div className="
+                  deployment-card-wrapper
+                ">
 
-                      onDeleteDeployment(
+                  {/* DELETE BUTTON */}
+
+                  <button
+                    className="
+                      deployment-delete-btn
+                    "
+                    onClick={() =>
+                      handleDelete(
                         deployment.id
-                      );
-
+                      )
                     }
+                    title="
+                      Delete Deployment
+                    "
+                  >
 
-                  }}
-                >
+                    ✕
 
-                  ✕
+                  </button>
 
-                </button>
+                  {/* FAILED BADGE */}
 
-                {/* DEPLOYMENT CARD */}
+                  {isFailed && (
 
-                <DeploymentItem
-                  deployment={
-                    deployment
-                  }
-                />
+                    <div className="
+                      failed-badge
+                    ">
+
+                      FAILED
+
+                    </div>
+
+                  )}
+
+                  {/* DEPLOYMENT CARD */}
+
+                  <DeploymentItem
+                      deployment={deployment}
+                      onDeleteDeployment={onDeleteDeployment}
+                      onStartDeployment={onStartDeployment}
+                      onStopDeployment={onStopDeployment}
+                      onRestartDeployment={onRestartDeployment}
+                      actionLoading={actionLoading?.[deployment.id]}
+                    />
+
+                </div>
 
               </div>
 
-            </div>
+            );
 
-          )
+          }
+
         )}
 
       </div>
@@ -377,6 +445,7 @@ function DeploymentHistory({
     </div>
 
   );
+
 }
 
 export default DeploymentHistory;
