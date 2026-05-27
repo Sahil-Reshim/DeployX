@@ -1649,3 +1649,282 @@
     grid-template-columns: 1fr;
   }
 }
+
+
+/*
+─────────────────────────────────────────────
+PHASE 7 ACTION BUTTONS
+─────────────────────────────────────────────
+*/
+
+
+.deployment-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 2;
+}
+
+/*
+─────────────────────────────────────────────
+BASE BUTTON
+─────────────────────────────────────────────
+*/
+
+.action-btn {
+  position: relative;
+  overflow: hidden;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  outline: none;
+
+  padding: 13px 22px;
+
+  border-radius: 16px;
+
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+
+  cursor: pointer;
+
+  min-width: 125px;
+  height: 48px;
+
+  color: #ffffff;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  backdrop-filter: blur(14px);
+
+  transition:
+    transform 0.22s ease,
+    box-shadow 0.22s ease,
+    opacity 0.22s ease,
+    border 0.22s ease;
+
+  box-shadow:
+    0 6px 18px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/*
+─────────────────────────────────────────────
+SHINE EFFECT
+─────────────────────────────────────────────
+*/
+
+.action-btn::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+  left: -120%;
+
+  width: 80%;
+  height: 100%;
+
+  background: linear-gradient(
+    120deg,
+    transparent,
+    rgba(255, 255, 255, 0.28),
+    transparent
+  );
+
+  transform: skewX(-20deg);
+
+  transition: 0.7s;
+}
+
+.action-btn:hover::before {
+  left: 130%;
+}
+
+/*
+─────────────────────────────────────────────
+HOVER
+─────────────────────────────────────────────
+*/
+
+.action-btn:hover {
+  transform: translateY(-3px) scale(1.015);
+
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.35),
+    0 0 18px rgba(255, 255, 255, 0.08);
+}
+
+/*
+─────────────────────────────────────────────
+ACTIVE PRESS
+─────────────────────────────────────────────
+*/
+
+.action-btn:active {
+  transform: scale(0.97);
+}
+
+/*
+─────────────────────────────────────────────
+DISABLED
+─────────────────────────────────────────────
+*/
+
+.action-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+
+  filter: grayscale(0.2);
+
+  box-shadow:
+    0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:disabled::before {
+  display: none;
+}
+
+/*
+─────────────────────────────────────────────
+START BUTTON
+─────────────────────────────────────────────
+*/
+
+.start-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #00c853 0%,
+      #00e676 50%,
+      #69f0ae 100%
+    );
+
+  box-shadow:
+    0 10px 24px rgba(0, 230, 118, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.start-btn:hover {
+  box-shadow:
+    0 14px 30px rgba(0, 230, 118, 0.35),
+    0 0 20px rgba(0, 230, 118, 0.25);
+}
+
+/*
+─────────────────────────────────────────────
+STOP BUTTON
+─────────────────────────────────────────────
+*/
+
+.stop-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #4b5563 0%,
+      #6b7280 50%,
+      #9ca3af 100%
+    );
+
+  box-shadow:
+    0 10px 24px rgba(107, 114, 128, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.stop-btn:hover {
+  box-shadow:
+    0 14px 30px rgba(107, 114, 128, 0.4),
+    0 0 20px rgba(156, 163, 175, 0.2);
+}
+
+/*
+─────────────────────────────────────────────
+RESTART BUTTON
+─────────────────────────────────────────────
+*/
+
+.restart-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #ff9800 0%,
+      #ffb74d 50%,
+      #ffd180 100%
+    );
+
+  box-shadow:
+    0 10px 24px rgba(255, 152, 0, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.restart-btn:hover {
+  box-shadow:
+    0 14px 30px rgba(255, 152, 0, 0.38),
+    0 0 22px rgba(255, 183, 77, 0.25);
+}
+
+/*
+─────────────────────────────────────────────
+DELETE BUTTON
+─────────────────────────────────────────────
+*/
+
+.delete-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #ff1744 0%,
+      #ff5252 50%,
+      #ff8a80 100%
+    );
+
+  box-shadow:
+    0 10px 24px rgba(255, 23, 68, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.delete-btn:hover {
+  box-shadow:
+    0 14px 30px rgba(255, 23, 68, 0.4),
+    0 0 24px rgba(255, 82, 82, 0.25);
+}
+
+/*
+─────────────────────────────────────────────
+RESPONSIVE
+─────────────────────────────────────────────
+*/
+
+@media (max-width: 768px) {
+
+  .deployment-actions {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .action-btn {
+    flex: 1;
+    min-width: 140px;
+  }
+
+}
+
+@media (max-width: 540px) {
+
+  .deployment-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .action-btn {
+    width: 100%;
+  }
+
+}
