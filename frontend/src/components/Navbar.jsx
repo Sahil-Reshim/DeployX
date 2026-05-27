@@ -31,23 +31,17 @@ function Navbar({
 
     {
       label: "Monitoring",
-      key: "monitoring",
-      comingSoon: true
+      key: "monitoring"
     }
 
   ];
 
   /* ─────────────────────────────────────────────
      HANDLE NAVIGATION
-     IMPORTANT:
-     Only changes page UI.
-     Deployment polling continues in Dashboard.
   ───────────────────────────────────────────── */
 
   const handleNavigation =
     useCallback((pageKey) => {
-
-      // Prevent unnecessary rerender
 
       if (activePage === pageKey) {
 
@@ -57,11 +51,7 @@ function Navbar({
 
       }
 
-      // Change page only
-
       setActivePage(pageKey);
-
-      // Close mobile menu
 
       setMobileOpen(false);
 
@@ -133,19 +123,11 @@ function Navbar({
               <li
                 key={item.key}
                 className={`nav-item
-
                   ${
                     isActive
                       ? "active"
                       : ""
                   }
-
-                  ${
-                    item.comingSoon
-                      ? "nav-coming-soon"
-                      : ""
-                  }
-
                 `}
                 onClick={() =>
                   handleNavigation(
@@ -159,16 +141,6 @@ function Navbar({
                   {item.label}
 
                 </span>
-
-                {item.comingSoon && (
-
-                  <span className="coming-soon-badge">
-
-                    SOON
-
-                  </span>
-
-                )}
 
                 {isActive && (
 
@@ -227,6 +199,7 @@ function Navbar({
     </nav>
 
   );
+
 }
 
 export default Navbar;

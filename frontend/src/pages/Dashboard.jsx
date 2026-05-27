@@ -1,4 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import useDeploymentSocket from "../hooks/useDeploymentSocket";
+import useDeployments from "../hooks/useDeployments";
+import useMonitoring from "../hooks/useMonitoring";
 
 import Navbar from "../components/Navbar";
 import RepoForm from "../components/RepoForm";
@@ -6,8 +10,7 @@ import DeploymentHistory from "../components/DeploymentHistory";
 import ProductionLink from "../components/ProductionLink";
 import LogsViewer from "../components/LogsViewer";
 import DeploymentPipeline from "../components/DeploymentPipeline";
-
-import API from "../services/api";
+import MonitoringPanel from "../components/monitoring/MonitoringPanel";
 
 import "../styles/dashboard.css";
 import "../styles/navbar.css";
@@ -38,321 +41,251 @@ function ComingSoon({ title }) {
     </div>
 
   );
+
 }
 
 function Dashboard() {
 
+  /*
+  ─────────────────────────────────────────────
+  ACTIVE PAGE
+  ─────────────────────────────────────────────
+  */
+
   const [activePage, setActivePage] =
     useState("dashboard");
 
-  const [deployments, setDeployments] =
-    useState([]);
-
-  const [latestDeployment, setLatestDeployment] =
-    useState(null);
+  /*
+  ─────────────────────────────────────────────
+  ACTIVE DEPLOYMENT
+  ─────────────────────────────────────────────
+  */
 
   const [activeDeployment, setActiveDeployment] =
     useState(null);
 
-  const [initialLoading, setInitialLoading] =
-    useState(true);
+  /*
+  ─────────────────────────────────────────────
+  DEPLOYMENTS HOOK
+  ─────────────────────────────────────────────
+  */
 
-  const pollingRef = useRef(null);
+  const {
 
-  const hasFetched = useRef(false);
+    deployments,
 
-  /* ─────────────────────────────────────────────
-     FETCH DEPLOYMENTS
-  ───────────────────────────────────────────── */
+    latestDeployment,
 
-  const fetchDeployments = async () => {
+    setLatestDeployment,
 
-    try {
+    loading: initialLoading,
 
-      const response = await API.get(
-        "/deployments"
-      );
+    fetchDeployments,
 
-      const deploymentData =
-        Array.isArray(response.data)
-          ? response.data
-          : response.data.deployments || [];
+    deleteDeployment,
 
-      const sortedDeployments =
-        deploymentData.sort(
-          (a, b) =>
-            new Date(
-              b.created_at || 0
-            ) -
-            new Date(
-              a.created_at || 0
-            )
-        );
+    startDeployment,
 
-      setDeployments(sortedDeployments);
+    stopDeployment,
 
-      if (sortedDeployments.length > 0) {
+    restartDeployment,
 
-        setLatestDeployment(
-          sortedDeployments[0]
-        );
+    actionLoading
 
-      } else {
+  } = useDeployments();
 
-        setLatestDeployment(null);
+  /*
+  ─────────────────────────────────────────────
+  SOCKET
+  ─────────────────────────────────────────────
+  */
 
-      }
+  const {
+    statusData
+  } = useDeploymentSocket(
+    latestDeployment?.id
+  );
 
-    } catch (error) {
+  /*
+  ─────────────────────────────────────────────
+  MONITORING
+  ─────────────────────────────────────────────
+  */
 
-      console.error(
-        "Failed to fetch deployments:",
-        error
-      );
+  const {
 
-    } finally {
+    metrics,
 
-      setInitialLoading(false);
+    cpuHistory,
 
-    }
-  };
+    ramHistory,
 
-  /* ─────────────────────────────────────────────
-     POLL DEPLOYMENT STATUS
-  ───────────────────────────────────────────── */
+    networkHistory
 
-  const pollDeploymentStatus = (
-    deploymentId
-  ) => {
+  } = useMonitoring(statusData);
 
-    if (!deploymentId) return;
-
-    if (pollingRef.current) {
-
-      clearInterval(
-        pollingRef.current
-      );
-
-    }
-
-    pollingRef.current = setInterval(
-      async () => {
-
-        try {
-
-          const response =
-            await API.get(
-              `/deployments/${deploymentId}/status`
-            );
-
-          const deploymentResponse =
-            response.data?.deployment ||
-            response.data;
-
-          const deployment = {
-            ...deploymentResponse,
-            id:
-              deploymentResponse.id ||
-              deploymentResponse.deployment_id,
-            deployment_id:
-              deploymentResponse.deployment_id ||
-              deploymentResponse.id
-          };
-
-          setLatestDeployment(deployment);
-          setActiveDeployment(deployment);
-
-          setDeployments((prev) => {
-
-            const updated =
-              prev.map((item) =>
-                item.id === deployment.id
-                  ? deployment
-                  : item
-              );
-
-            const exists =
-              updated.find(
-                (item) =>
-                  item.id === deployment.id
-              );
-
-            if (!exists) {
-
-              updated.unshift(
-                deployment
-              );
-
-            }
-
-            return updated;
-
-          });
-
-          const status =
-            deployment?.status?.toLowerCase();
-
-          if (
-            status === "running" ||
-            status === "live" ||
-            status === "failed"
-          ) {
-
-            clearInterval(
-              pollingRef.current
-            );
-
-            pollingRef.current = null;
-
-            setLatestDeployment(
-              deployment
-            );
-
-            setActiveDeployment(
-              deployment
-            );
-
-            fetchDeployments();
-          }
-
-        } catch (error) {
-
-          console.error(
-            "Polling failed:",
-            error
-          );
-
-        }
-
-      },
-      2000
-    );
-  };
-
-  /* ─────────────────────────────────────────────
-     INITIAL LOAD
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  LIVE STATUS UPDATE
+  FIXED: useEffect instead of useState
+  ─────────────────────────────────────────────
+  */
 
   useEffect(() => {
 
-    if (!hasFetched.current) {
+    if (!statusData)
+      return;
 
-      hasFetched.current = true;
+    setLatestDeployment((prev) => ({
 
-      fetchDeployments();
+      ...(prev || {}),
 
-    }
+      status:
+        statusData.status ||
+        prev?.status,
 
-  }, []);
+      url:
+        statusData.url ||
+        prev?.url,
 
-  /* ─────────────────────────────────────────────
-     AUTO POLLING
-  ───────────────────────────────────────────── */
+      logs:
+        statusData.logs ||
+        prev?.logs,
 
-  useEffect(() => {
+    }));
 
-    const status =
-      latestDeployment?.status?.toLowerCase();
+    setActiveDeployment((prev) => ({
 
-    if (
-      latestDeployment?.id &&
-      status &&
-      status !== "running" &&
-      status !== "live" &&
-      status !== "failed"
-    ) {
+      ...(prev || {}),
 
-      pollDeploymentStatus(
-        latestDeployment.id
-      );
+      status:
+        statusData.status ||
+        prev?.status,
 
-    }
+      url:
+        statusData.url ||
+        prev?.url,
 
-    return () => {
+    }));
 
-      if (pollingRef.current) {
+  }, [
 
-        clearInterval(
-          pollingRef.current
-        );
+    statusData,
+
+    setLatestDeployment
+
+  ]);
+
+  /*
+  ─────────────────────────────────────────────
+  DEPLOYMENT PROGRESS
+  ─────────────────────────────────────────────
+  */
+
+  const deploymentProgress =
+    useMemo(() => {
+
+      if (!latestDeployment)
+        return 0;
+
+      const status =
+        latestDeployment?.status
+          ?.toLowerCase();
+
+      switch (status) {
+
+        case "queued":
+          return 10;
+
+        case "cloning":
+          return 25;
+
+        case "detecting":
+          return 40;
+
+        case "dockerfile_generating":
+          return 55;
+
+        case "building":
+          return 72;
+
+        case "deploying":
+          return 90;
+
+        case "running":
+        case "live":
+        case "completed":
+          return 100;
+
+        case "failed":
+          return 100;
+
+        default:
+          return 0;
 
       }
+
+    }, [latestDeployment]);
+
+  /*
+  ─────────────────────────────────────────────
+  STEP ACTIVE
+  ─────────────────────────────────────────────
+  */
+
+  const isStepActive =
+    (requiredProgress) => {
+
+      return (
+        deploymentProgress >=
+        requiredProgress
+      );
 
     };
 
-  }, [
-    latestDeployment?.id,
-    latestDeployment?.status
-  ]);
+  /*
+  ─────────────────────────────────────────────
+  ACTIVE DEPLOYMENT NAME
+  ─────────────────────────────────────────────
+  */
 
-  /* ─────────────────────────────────────────────
-     PROGRESS
-  ───────────────────────────────────────────── */
+  const deploymentName =
+    useMemo(() => {
 
-  const getProgress = () => {
+      if (!latestDeployment?.repo_url) {
 
-    if (!latestDeployment)
-      return 0;
+        return "GitHub Repository";
 
-    const status =
-      latestDeployment?.status?.toLowerCase();
+      }
 
-    switch (status) {
+      return latestDeployment.repo_url
+        .replace(".git", "")
+        .split("/")
+        .slice(-2)
+        .join("/");
 
-      case "queued":
-        return 10;
+    }, [latestDeployment]);
 
-      case "cloning":
-        return 25;
-
-      case "detecting":
-        return 40;
-
-      case "dockerfile_generating":
-        return 55;
-
-      case "building":
-        return 72;
-
-      case "deploying":
-        return 90;
-
-      case "running":
-        return 100;
-
-      case "live":
-        return 100;
-
-      case "failed":
-        return 100;
-
-      default:
-        return 10;
-    }
-  };
-
-  const isStepActive = (
-    requiredProgress
-  ) => {
-
-    return (
-      getProgress() >=
-      requiredProgress
-    );
-
-  };
-
-  /* ─────────────────────────────────────────────
-     PAGE RENDER
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  PAGE RENDER
+  ─────────────────────────────────────────────
+  */
 
   const renderPage = () => {
 
     switch (activePage) {
 
+      /*
+      ─────────────────────────────────────────
+      DASHBOARD
+      ─────────────────────────────────────────
+      */
+
       case "dashboard":
 
         return (
+
           <>
 
             {/* HERO */}
@@ -404,15 +337,7 @@ function Dashboard() {
                       </p>
 
                       <h2>
-
-                        {latestDeployment.repo_url
-                          ? latestDeployment.repo_url
-                              .replace(".git", "")
-                              .split("/")
-                              .slice(-2)
-                              .join("/")
-                          : "GitHub Repository"}
-
+                        {deploymentName}
                       </h2>
 
                     </div>
@@ -442,7 +367,7 @@ function Dashboard() {
                       </span>
 
                       <span>
-                        {getProgress()}%
+                        {deploymentProgress}%
                       </span>
 
                     </div>
@@ -454,7 +379,7 @@ function Dashboard() {
                           latestDeployment?.status?.toLowerCase()
                         }`}
                         style={{
-                          width: `${getProgress()}%`
+                          width: `${deploymentProgress}%`
                         }}
                       />
 
@@ -546,7 +471,11 @@ function Dashboard() {
 
               <div className="dashboard-grid">
 
+                {/* LEFT */}
+
                 <div className="grid-left">
+
+                  {/* PRODUCTION */}
 
                   <div className="section-block">
 
@@ -555,12 +484,12 @@ function Dashboard() {
                     </p>
 
                     <ProductionLink
-                      deployment={
-                        latestDeployment
-                      }
+                      deployment={latestDeployment}
                     />
 
                   </div>
+
+                  {/* PIPELINE */}
 
                   <div className="section-block">
 
@@ -569,16 +498,150 @@ function Dashboard() {
                     </p>
 
                     <DeploymentPipeline
-                      status={
-                        latestDeployment?.status
-                      }
+                      status={latestDeployment?.status}
                     />
 
                   </div>
 
                 </div>
 
+                {/* RIGHT */}
+
                 <div className="grid-right">
+
+                  {/* MONITORING */}
+
+                  <div className="section-block monitoring-preview-card">
+
+                    <div className="monitoring-header">
+
+                      <div>
+
+                        <p className="section-title">
+                          Live Infrastructure Monitoring
+                        </p>
+
+                        <h2 className="monitoring-title">
+                          DeployX Runtime Metrics
+                        </h2>
+
+                      </div>
+
+                      <div className="monitoring-live">
+
+                        <span className="live-dot"></span>
+
+                        LIVE
+
+                      </div>
+
+                    </div>
+
+                    {/* STATS */}
+
+                    <div className="monitoring-stats-grid">
+
+                      <div className="monitor-stat-card">
+
+                        <span className="monitor-stat-label">
+                          CPU Usage
+                        </span>
+
+                        <h1>
+                          {metrics?.cpu || 0}%
+                        </h1>
+
+                        <div className="monitor-bar">
+
+                          <div
+                            className="monitor-bar-fill cpu"
+                            style={{
+                              width: `${metrics?.cpu || 0}%`
+                            }}
+                          />
+
+                        </div>
+
+                      </div>
+
+                      <div className="monitor-stat-card">
+
+                        <span className="monitor-stat-label">
+                          RAM Usage
+                        </span>
+
+                        <h1>
+                          {metrics?.ram || 0}%
+                        </h1>
+
+                        <div className="monitor-bar">
+
+                          <div
+                            className="monitor-bar-fill ram"
+                            style={{
+                              width: `${metrics?.ram || 0}%`
+                            }}
+                          />
+
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    {/* NETWORK */}
+
+                    <div className="network-activity">
+
+                      <div className="network-box">
+
+                        <span>
+                          Network RX
+                        </span>
+
+                        <h3>
+                          {metrics?.network_rx || 0} KB/s
+                        </h3>
+
+                      </div>
+
+                      <div className="network-box">
+
+                        <span>
+                          Network TX
+                        </span>
+
+                        <h3>
+                          {metrics?.network_tx || 0} KB/s
+                        </h3>
+
+                      </div>
+
+                    </div>
+
+                    {/* HEALTH */}
+
+                    <div className="health-card">
+
+                      <div className="health-pulse"></div>
+
+                      <div>
+
+                        <span className="health-label">
+                          System Health
+                        </span>
+
+                        <h2>
+                          {metrics?.health || "Healthy"}
+                        </h2>
+
+                      </div>
+
+                    </div>
+
+                  </div>
+
+                  {/* LOGS */}
 
                   <div className="section-block">
 
@@ -610,7 +673,7 @@ function Dashboard() {
 
                   <div className="count-badge">
 
-                    {deployments.length}
+                    {deployments?.length || 0}
                     {" "}
                     Deployments
 
@@ -620,6 +683,13 @@ function Dashboard() {
 
                 <DeploymentHistory
                   deployments={deployments}
+                  loading={initialLoading}
+                  onDeleteDeployment={deleteDeployment}
+                  onRefresh={fetchDeployments}
+                  onStartDeployment={startDeployment}
+                  onStopDeployment={stopDeployment}
+                  onRestartDeployment={restartDeployment}
+                  actionLoading={actionLoading}
                 />
 
               </div>
@@ -627,7 +697,14 @@ function Dashboard() {
             </section>
 
           </>
+
         );
+
+      /*
+      ─────────────────────────────────────────
+      DEPLOYMENTS PAGE
+      ─────────────────────────────────────────
+      */
 
       case "deployments":
 
@@ -643,7 +720,7 @@ function Dashboard() {
 
               <div className="count-badge">
 
-                {deployments.length}
+                {deployments?.length || 0}
                 {" "}
                 Deployments
 
@@ -653,11 +730,24 @@ function Dashboard() {
 
             <DeploymentHistory
               deployments={deployments}
+              loading={initialLoading}
+              onDeleteDeployment={deleteDeployment}
+              onRefresh={fetchDeployments}
+              onStartDeployment={startDeployment}
+              onStopDeployment={stopDeployment}
+              onRestartDeployment={restartDeployment}
+              actionLoading={actionLoading}
             />
 
           </section>
 
         );
+
+      /*
+      ─────────────────────────────────────────
+      LOGS PAGE
+      ─────────────────────────────────────────
+      */
 
       case "logs":
 
@@ -683,22 +773,69 @@ function Dashboard() {
 
         );
 
+      /*
+      ─────────────────────────────────────────
+      MONITORING PAGE
+      ─────────────────────────────────────────
+      */
+
       case "monitoring":
 
         return (
-          <ComingSoon
-            title="Monitoring"
-          />
+
+          <section className="deployment-ui page-spacing">
+
+            <MonitoringPanel
+              metrics={metrics}
+              cpuHistory={cpuHistory}
+              ramHistory={ramHistory}
+              networkHistory={networkHistory}
+              deploymentStatus={
+                latestDeployment?.status
+              }
+            />
+
+          </section>
+
+        );
+
+      /*
+      ─────────────────────────────────────────
+      ANALYTICS
+      ─────────────────────────────────────────
+      */
+
+      case "analytics":
+
+        return (
+          <ComingSoon title="Analytics Dashboard" />
+        );
+
+      /*
+      ─────────────────────────────────────────
+      SETTINGS
+      ─────────────────────────────────────────
+      */
+
+      case "settings":
+
+        return (
+          <ComingSoon title="Project Settings" />
         );
 
       default:
+
         return null;
+
     }
+
   };
 
-  /* ─────────────────────────────────────────────
-     MAIN RETURN
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  MAIN RETURN
+  ─────────────────────────────────────────────
+  */
 
   return (
 
@@ -754,6 +891,7 @@ function Dashboard() {
     </div>
 
   );
+
 }
 
 export default Dashboard;
