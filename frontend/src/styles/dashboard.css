@@ -344,11 +344,11 @@ REPO INPUT SECTION
 
   padding:
     0 22px
-    0 115px;
+    0 120px;
 
   color: white;
 
-  font-size: 15px;
+  font-size: 10px;
 
   outline: none;
 
@@ -1136,9 +1136,13 @@ REPO FORM
   transform: translateY(-50%);
 
   color:
-    rgba(255,255,255,.45);
+    rgba(255,255,255,.55);
 
-  font-size: 18px;
+  font-size: 14px;
+
+  font-weight: 700;
+
+  width: 70px;
 }
 
 .repo-url-input {
@@ -1148,7 +1152,7 @@ REPO FORM
   height: 68px;
 
   padding:
-    0 24px 0 58px;
+    0 24px 0 110px;
 
   border-radius: 18px;
 
@@ -1295,13 +1299,6 @@ REPO FORM
   .repo-form-header h2 {
 
     font-size: 28px;
-  }
-
-  .repo-url-input {
-
-    height: 60px;
-
-    font-size: 13px;
   }
 
   .deploy-btn {
