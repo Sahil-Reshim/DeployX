@@ -3,14 +3,21 @@ import { useMemo, useState } from "react";
 import StatusBadge from "./StatusBadge";
 
 function DeploymentItem({
-  deployment
+  deployment,
+  onDeleteDeployment,
+  onStartDeployment,
+  onStopDeployment,
+  onRestartDeployment,
+  actionLoading
 }) {
 
   const [copied, setCopied] =
     useState(false);
 
   /*
-    NORMALIZED DATA
+  ─────────────────────────────────────────────
+  NORMALIZED DATA
+  ─────────────────────────────────────────────
   */
 
   const deployUrl =
@@ -29,11 +36,8 @@ function DeploymentItem({
   const isLive = [
 
     "running",
-
     "success",
-
     "live",
-
     "completed",
 
   ].includes(
@@ -41,7 +45,50 @@ function DeploymentItem({
   );
 
   /*
-    REPOSITORY NAME
+  ─────────────────────────────────────────────
+  ACTION STATES
+  ─────────────────────────────────────────────
+  */
+
+  const isStopped =
+    deploymentStatus === "stopped";
+
+  const isRestarting =
+    deploymentStatus === "restarting";
+
+  const isTransitioning = [
+
+    "queued",
+    "cloning",
+    "detecting",
+    "dockerfile_generating",
+    "building",
+    "deploying",
+    "restarting"
+
+  ].includes(
+    deploymentStatus
+  );
+
+  /*
+  ─────────────────────────────────────────────
+  LOADING STATES
+  ─────────────────────────────────────────────
+  */
+
+  const isStarting =
+    actionLoading === "starting";
+
+  const isStopping =
+    actionLoading === "stopping";
+
+  const isRestartAction =
+    actionLoading === "restarting";
+
+  /*
+  ─────────────────────────────────────────────
+  REPOSITORY NAME
+  ─────────────────────────────────────────────
   */
 
   const repositoryName =
@@ -62,63 +109,67 @@ function DeploymentItem({
     }, [deployment]);
 
   /*
-    TIME AGO
+  ─────────────────────────────────────────────
+  TIME AGO
+  ─────────────────────────────────────────────
   */
 
-  const getTimeAgo = (
-    date
-  ) => {
+  const getTimeAgo =
+    (date) => {
 
-    if (!date)
-      return "Unknown";
+      if (!date)
+        return "Unknown";
 
-    const seconds =
-      Math.floor(
-        (
-          new Date() -
-          new Date(date)
-        ) / 1000
-      );
-
-    const intervals = [
-
-      {
-        label: "d",
-        value: 86400,
-      },
-
-      {
-        label: "h",
-        value: 3600,
-      },
-
-      {
-        label: "m",
-        value: 60,
-      },
-
-    ];
-
-    for (const interval of intervals) {
-
-      const count =
+      const seconds =
         Math.floor(
-          seconds /
-            interval.value
+          (
+            new Date() -
+            new Date(date)
+          ) / 1000
         );
 
-      if (count >= 1) {
+      const intervals = [
 
-        return `${count}${interval.label} ago`;
+        {
+          label: "d",
+          value: 86400,
+        },
+
+        {
+          label: "h",
+          value: 3600,
+        },
+
+        {
+          label: "m",
+          value: 60,
+        },
+
+      ];
+
+      for (const interval of intervals) {
+
+        const count =
+          Math.floor(
+            seconds /
+            interval.value
+          );
+
+        if (count >= 1) {
+
+          return `${count}${interval.label} ago`;
+
+        }
 
       }
-    }
 
-    return "just now";
-  };
+      return "just now";
+    };
 
   /*
-    COPY URL
+  ─────────────────────────────────────────────
+  COPY URL
+  ─────────────────────────────────────────────
   */
 
   const copyUrl =
@@ -152,7 +203,9 @@ function DeploymentItem({
     };
 
   /*
-    OPEN DEPLOYMENT
+  ─────────────────────────────────────────────
+  OPEN DEPLOYMENT
+  ─────────────────────────────────────────────
   */
 
   const openDeployment =
@@ -169,7 +222,9 @@ function DeploymentItem({
     };
 
   /*
-    STATUS LABEL
+  ─────────────────────────────────────────────
+  STATUS LABEL
+  ─────────────────────────────────────────────
   */
 
   const readableStatus =
@@ -183,8 +238,6 @@ function DeploymentItem({
     <div
       className={`deployment-item ${deploymentStatus}`}
     >
-
-      {/* BACKGROUND FX */}
 
       <div className="deployment-bg-grid"></div>
 
@@ -231,7 +284,7 @@ function DeploymentItem({
 
       </div>
 
-      {/* URL PREVIEW */}
+      {/* URL */}
 
       <div className="deployment-live-preview">
 
@@ -280,92 +333,127 @@ function DeploymentItem({
 
       </div>
 
-      {/* META GRID */}
+      {/* DETAILS */}
 
       <div className="deployment-details">
 
         <div className="deployment-detail-card">
-
-          <span>
-            Repository
-          </span>
-
-          <p>
-            {repositoryName}
-          </p>
-
+          <span>Repository</span>
+          <p>{repositoryName}</p>
         </div>
 
         <div className="deployment-detail-card">
-
-          <span>
-            Framework
-          </span>
-
-          <p>
-            {framework}
-          </p>
-
+          <span>Framework</span>
+          <p>{framework}</p>
         </div>
 
         <div className="deployment-detail-card">
-
-          <span>
-            Port
-          </span>
-
-          <p>
-
-            {deployment.port ||
-              "Pending"}
-
-          </p>
-
+          <span>Port</span>
+          <p>{deployment.port || "Pending"}</p>
         </div>
 
         <div className="deployment-detail-card">
-
-          <span>
-            Status
-          </span>
-
+          <span>Status</span>
           <p className={deploymentStatus}>
-
             {readableStatus}
-
           </p>
-
         </div>
 
         <div className="deployment-detail-card">
-
-          <span>
-            Created
-          </span>
-
+          <span>Created</span>
           <p>
-
             {getTimeAgo(
               deployment.created_at
             )}
-
           </p>
-
         </div>
 
         <div className="deployment-detail-card">
-
-          <span>
-            Deployment ID
-          </span>
-
+          <span>Deployment ID</span>
           <p>
-
             #{deployment.id || "N/A"}
-
           </p>
-
         </div>
+
+      </div>
+
+      {/* ACTIONS */}
+
+      <div className="deployment-actions">
+
+        <button
+          className="action-btn start-btn"
+          onClick={() =>
+            onStartDeployment(
+              deployment.id
+            )
+          }
+          disabled={
+            !isStopped ||
+            isTransitioning ||
+            !!actionLoading
+          }
+        >
+
+          {isStarting
+            ? "Starting..."
+            : "Start"}
+
+        </button>
+
+        <button
+          className="action-btn stop-btn"
+          onClick={() =>
+            onStopDeployment(
+              deployment.id
+            )
+          }
+          disabled={
+            isStopped ||
+            isTransitioning ||
+            !!actionLoading
+          }
+        >
+
+          {isStopping
+            ? "Stopping..."
+            : "Stop"}
+
+        </button>
+
+        <button
+          className="action-btn restart-btn"
+          onClick={() =>
+            onRestartDeployment(
+              deployment.id
+            )
+          }
+          disabled={
+            isRestarting ||
+            isTransitioning ||
+            !!actionLoading
+          }
+        >
+
+          {isRestartAction
+            ? "Restarting..."
+            : "Restart"}
+
+        </button>
+
+        <button
+          className="action-btn delete-btn"
+          onClick={() =>
+            onDeleteDeployment(
+              deployment.id
+            )
+          }
+          disabled={!!actionLoading}
+        >
+
+          Delete
+
+        </button>
 
       </div>
 
@@ -415,7 +503,7 @@ function DeploymentItem({
 
       </div>
 
-      {/* FAILED STATE */}
+      {/* FAILED */}
 
       {deploymentStatus ===
         "failed" && (
