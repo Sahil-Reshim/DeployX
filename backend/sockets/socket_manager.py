@@ -69,3 +69,41 @@ def emit_monitoring_update(
         },
         room=room
     )
+    
+def emit_deployment_started(
+    deployment_id
+):
+
+    socketio.emit(
+        "deployment_started",
+        {
+            "deployment_id": deployment_id,
+            "status": "running"
+        }
+    )
+
+
+def emit_deployment_stopped(
+    deployment_id
+):
+
+    socketio.emit(
+        "deployment_stopped",
+        {
+            "deployment_id": deployment_id,
+            "status": "stopped"
+        }
+    )
+
+
+def emit_deployment_restarted(
+    deployment_id
+):
+
+    socketio.emit(
+        "deployment_restarted",
+        {
+            "deployment_id": deployment_id,
+            "status": "running"
+        }
+    )
