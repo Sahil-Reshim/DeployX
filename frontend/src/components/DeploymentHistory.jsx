@@ -9,13 +9,14 @@ DEPLOYMENT HISTORY COMPONENT
 */
 
 function DeploymentHistory({
-
-  deployments = [],
-  loading = false,
-
+  deployments,
+  loading,
   onDeleteDeployment,
   onRefresh,
-
+  onStartDeployment,
+  onStopDeployment,
+  onRestartDeployment,
+  actionLoading
 }) {
 
   /*
@@ -421,10 +422,13 @@ function DeploymentHistory({
                   {/* DEPLOYMENT CARD */}
 
                   <DeploymentItem
-                    deployment={
-                      deployment
-                    }
-                  />
+                      deployment={deployment}
+                      onDeleteDeployment={onDeleteDeployment}
+                      onStartDeployment={onStartDeployment}
+                      onStopDeployment={onStopDeployment}
+                      onRestartDeployment={onRestartDeployment}
+                      actionLoading={actionLoading?.[deployment.id]}
+                    />
 
                 </div>
 
