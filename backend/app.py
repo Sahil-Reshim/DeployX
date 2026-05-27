@@ -1,7 +1,10 @@
 import threading
 import sqlite3
-
-from database import init_db
+from database import get_db_connection
+from database import (
+    init_db,
+    get_db_connection
+)
 
 from flask import (
     Flask,
@@ -48,7 +51,15 @@ from services.deployment_service import (
     complete_deployment,
     fail_deployment,
     get_all_deployments,
-    get_deployment_by_id
+    get_deployment_by_id,
+    stop_deployment,
+    start_deployment,
+    restart_deployment,
+    delete_deployment_lifecycle
+)
+
+from services.monitor_service import (
+    stop_monitoring
 )
 
 from services.cleanup_service import (
@@ -482,9 +493,7 @@ def delete_deployment(deployment_id):
 
     try:
 
-        conn = sqlite3.connect(
-            "deployx.db"
-        )
+        conn =  get_db_connection()
 
         cursor = conn.cursor()
 
@@ -514,6 +523,26 @@ def delete_deployment(deployment_id):
 
             }), 404
 
+        cleanup_result = delete_deployment_lifecycle(
+            deployment_id
+        )
+
+        if not cleanup_result["success"]:
+
+            conn.close()
+
+            return jsonify(
+                cleanup_result
+            ), 400
+
+        # =================================================
+        # STOP ACTIVE MONITORING
+        # =================================================
+
+        stop_monitoring(
+            deployment_id
+        )
+
         # =================================================
         # DELETE BUILD LOGS
         # =================================================
@@ -533,6 +562,18 @@ def delete_deployment(deployment_id):
         cursor.execute(
             """
             DELETE FROM container_logs
+            WHERE deployment_id=?
+            """,
+            (deployment_id,)
+        )
+
+        # =================================================
+        # DELETE METRICS
+        # =================================================
+
+        cursor.execute(
+            """
+            DELETE FROM deployment_metrics
             WHERE deployment_id=?
             """,
             (deployment_id,)
@@ -609,6 +650,212 @@ def get_deployment_status(
             "error": str(e)
         }), 500
 
+# =========================================================
+# STOP DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/stop",
+    methods=["POST"]
+)
+def stop_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = stop_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# START DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/start",
+    methods=["POST"]
+)
+def start_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = start_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# RESTART DEPLOYMENT
+# =========================================================
+
+@app.route(
+    "/deployment/<int:deployment_id>/restart",
+    methods=["POST"]
+)
+def restart_deployment_route(
+    deployment_id
+):
+
+    try:
+
+        result = restart_deployment(
+            deployment_id
+        )
+
+        return jsonify(
+            result
+        )
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+# =========================================================
+# METRICS HISTORY
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>/metrics",
+    methods=["GET"]
+)
+def get_metrics_history(
+    deployment_id
+):
+
+    try:
+
+        conn = get_db_connection()
+
+        metrics = conn.execute("""
+        SELECT
+            cpu,
+            ram,
+            network_rx,
+            network_tx,
+            health,
+            created_at
+
+        FROM deployment_metrics
+
+        WHERE deployment_id=?
+
+        ORDER BY created_at ASC
+        """, (
+            deployment_id,
+        )).fetchall()
+
+        conn.close()
+
+        return jsonify({
+
+            "success": True,
+
+            "metrics": [
+
+                dict(row)
+                for row in metrics
+            ]
+
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            "success": False,
+            "error": str(e)
+
+        }), 500
+
+
+# =========================================================
+# LATEST METRICS
+# =========================================================
+
+@app.route(
+    "/deployments/<int:deployment_id>/metrics/latest",
+    methods=["GET"]
+)
+def get_latest_metrics(
+    deployment_id
+):
+
+    try:
+
+        conn = get_db_connection()
+
+        metric = conn.execute("""
+        SELECT
+            cpu,
+            ram,
+            network_rx,
+            network_tx,
+            health,
+            created_at
+
+        FROM deployment_metrics
+
+        WHERE deployment_id=?
+
+        ORDER BY id DESC
+        LIMIT 1
+        """, (
+            deployment_id,
+        )).fetchone()
+
+        conn.close()
+
+        if metric:
+
+            return jsonify({
+
+                "success": True,
+                "metrics": dict(metric)
+
+            })
+
+        return jsonify({
+
+            "success": False,
+            "metrics": None
+
+        })
+
+    except Exception as e:
+
+        return jsonify({
+
+            "success": False,
+            "error": str(e)
+
+        }), 500
 
 # =========================================================
 # BUILD LOGS

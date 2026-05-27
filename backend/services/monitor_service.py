@@ -1,6 +1,7 @@
 import docker
 import threading
 import time
+from database import get_db_connection
 
 from sockets.socket_manager import (
     emit_monitoring_update
@@ -93,6 +94,67 @@ def get_health(cpu):
 
     return "healthy"
 
+def save_metrics(
+    deployment_id,
+    metrics
+):
+
+    try:
+
+        conn = get_db_connection()
+
+        conn.execute("""
+        INSERT INTO deployment_metrics (
+
+            deployment_id,
+            cpu,
+            ram,
+            network_rx,
+            network_tx,
+            health
+
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """, (
+
+            deployment_id,
+            metrics["cpu"],
+            metrics["ram"],
+            metrics["network_rx"],
+            metrics["network_tx"],
+            metrics["health"]
+
+        ))
+
+        # Keep only latest 100 metric rows
+        conn.execute("""
+        DELETE FROM deployment_metrics
+
+        WHERE id NOT IN (
+
+            SELECT id
+            FROM deployment_metrics
+            WHERE deployment_id=?
+            ORDER BY id DESC
+            LIMIT 100
+
+        )
+
+        AND deployment_id=?
+        """, (
+            deployment_id,
+            deployment_id
+        ))
+
+        conn.commit()
+        conn.close()
+
+    except Exception as e:
+
+        print(
+            "Metrics Save Error:",
+            str(e)
+        )
 
 def monitor_container(
     deployment_id,
@@ -105,7 +167,7 @@ def monitor_container(
             container_id
         )
 
-        while True:
+        while deployment_id in monitor_threads:
 
             container.reload()
 
@@ -120,6 +182,11 @@ def monitor_container(
                         "network_tx": 0,
                         "health": "offline"
                     }
+                )
+
+                monitor_threads.pop(
+                    deployment_id,
+                    None
                 )
 
                 break
@@ -152,6 +219,11 @@ def monitor_container(
                 "health": health
             }
 
+            save_metrics(
+                deployment_id,
+                metrics
+            )
+
             emit_monitoring_update(
                 deployment_id,
                 metrics
@@ -160,6 +232,11 @@ def monitor_container(
             time.sleep(2)
 
     except Exception as e:
+
+        monitor_threads.pop(
+            deployment_id,
+            None
+        )
 
         print(
             "Monitoring Error:",
@@ -189,3 +266,12 @@ def start_monitoring(
     ] = thread
 
     thread.start()
+    
+def stop_monitoring(
+    deployment_id
+):
+
+    monitor_threads.pop(
+        deployment_id,
+        None
+    )
