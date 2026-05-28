@@ -16,7 +16,8 @@ Inspired by platforms like Vercel, Railway, Render, and Grafana .
 
 # 🌌 Overview
 
-DeployX is a modern full-stack DevOps deployment platform built to simplify application deployment, infrastructure automation, realtime monitoring, and container orchestration.
+DeployX is a modern full-stack DevOps deployment platform designed to simplify application deployment, infrastructure automation, realtime monitoring, and container orchestration. Inspired by platforms like Render, Railway, and Vercel, DeployX provides an intuitive deployment experience with automated GitHub integration, Docker-based runtime management, live deployment pipelines, realtime logs, infrastructure monitoring, and deployment lifecycle controls. The platform combines powerful backend orchestration with a sleek modern frontend to deliver a professional cloud deployment experience for developers and teams.
+
 
 It provides developers with a complete deployment ecosystem where applications can be:
 
