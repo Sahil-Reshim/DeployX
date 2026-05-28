@@ -8,9 +8,11 @@ function Navbar({
   const [mobileOpen, setMobileOpen] =
     useState(false);
 
-  /* ─────────────────────────────────────────────
-     NAVIGATION ITEMS
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  NAVIGATION ITEMS
+  ─────────────────────────────────────────────
+  */
 
   const navItems = [
 
@@ -36,9 +38,11 @@ function Navbar({
 
   ];
 
-  /* ─────────────────────────────────────────────
-     HANDLE NAVIGATION
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  HANDLE NAVIGATION
+  ─────────────────────────────────────────────
+  */
 
   const handleNavigation =
     useCallback((pageKey) => {
@@ -60,9 +64,11 @@ function Navbar({
       setActivePage
     ]);
 
-  /* ─────────────────────────────────────────────
-     MOBILE TOGGLE
-  ───────────────────────────────────────────── */
+  /*
+  ─────────────────────────────────────────────
+  MOBILE TOGGLE
+  ─────────────────────────────────────────────
+  */
 
   const toggleMobileMenu = () => {
 
@@ -80,8 +86,6 @@ function Navbar({
 
       <div className="navbar-left">
 
-        {/* LOGO */}
-
         <div
           className="navbar-logo"
           onClick={() =>
@@ -91,10 +95,12 @@ function Navbar({
           }
         >
 
-          <span className="logo-text">
+          <span className="logo-main">
+            Deploy
+          </span>
 
-            Deploy<span>X</span>
-
+          <span className="logo-accent">
+            X
           </span>
 
         </div>
@@ -122,13 +128,11 @@ function Navbar({
 
               <li
                 key={item.key}
-                className={`nav-item
-                  ${
-                    isActive
-                      ? "active"
-                      : ""
-                  }
-                `}
+                className={`nav-item ${
+                  isActive
+                    ? "active"
+                    : ""
+                }`}
                 onClick={() =>
                   handleNavigation(
                     item.key
@@ -162,14 +166,10 @@ function Navbar({
 
       <div className="navbar-right">
 
-        {/* STATUS */}
-
         <div className="navbar-status">
 
-          <span className="navbar-status-dot"></span>
-
-          <span>
-            All Systems Operational
+          <span className="status-text">
+            SYSTEM ONLINE
           </span>
 
         </div>

@@ -1,313 +1,547 @@
 /* ═══════════════════════════════════════════════════════════════
-   DEPLOYX — navbar.css
-   Premium sticky navigation · Glassmorphism · Futuristic
+   DEPLOYX — PREMIUM NAVBAR
 ═══════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 
-/* ─── VARIABLES ──────────────────────────────────────────────────────────── */
+/* ───────────────── VARIABLES ───────────────── */
 
 :root {
-  --nav-height:        72px;
-  --nav-bg:            rgba(5, 5, 5, 0.78);
-  --nav-border:        rgba(255, 255, 255, 0.055);
-  --nav-hover-bg:      rgba(255, 255, 255, 0.055);
-  --nav-active-bg:     rgba(220, 38, 38, 0.10);
-  --nav-active-border: rgba(220, 38, 38, 0.20);
-  --nav-px:            52px;
+
+  --navbar-height: 78px;
+
+  --navbar-bg:
+    rgba(7, 7, 10, 0.78);
+
+  --navbar-border:
+    rgba(255, 255, 255, 0.06);
+
+  --red-primary:
+    #ef4444;
+
+  --red-secondary:
+    #dc2626;
+
+  --white:
+    #ffffff;
+
+  --text-muted:
+    rgba(255, 255, 255, 0.62);
+
+  --card-bg:
+    rgba(255, 255, 255, 0.04);
+
 }
 
-/* ─── NAVBAR SHELL ───────────────────────────────────────────────────────── */
+/* ───────────────── NAVBAR ───────────────── */
 
 .navbar {
+
   position: sticky;
   top: 0;
-  z-index: 500;
+  z-index: 999;
 
   width: 100%;
-  height: var(--nav-height);
+  height: var(--navbar-height);
 
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  padding: 0 var(--nav-px);
+  padding: 0 42px;
 
-  background: var(--nav-bg);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  background:
+    var(--navbar-bg);
 
-  border-bottom: 1px solid var(--nav-border);
+  backdrop-filter:
+    blur(30px)
+    saturate(180%);
+
+  -webkit-backdrop-filter:
+    blur(30px)
+    saturate(180%);
+
+  border-bottom:
+    1px solid var(--navbar-border);
 
   overflow: hidden;
+
 }
 
-/* Top glass highlight */
+/* TOP LIGHT */
+
 .navbar::before {
+
   content: "";
+
   position: absolute;
   top: 0;
   left: 0;
+
   width: 100%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.06);
-  pointer-events: none;
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
 }
 
-/* Bottom red shimmer line */
+/* BOTTOM RED FLOW */
+
 .navbar::after {
+
   content: "";
+
   position: absolute;
   bottom: 0;
-  left: 0;
-  width: 100%;
+  left: -50%;
+
+  width: 200%;
   height: 1px;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(220, 38, 38, 0.55) 35%,
-    rgba(220, 38, 38, 0.85) 50%,
-    rgba(220, 38, 38, 0.55) 65%,
-    transparent 100%
-  );
-  background-size: 200% 100%;
-  animation: navbarShimmer 8s linear infinite;
-  pointer-events: none;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(239, 68, 68, 0.7),
+      transparent
+    );
+
+  animation:
+    navbarFlow 8s linear infinite;
+
 }
 
-/* ─── LOGO ───────────────────────────────────────────────────────────────── */
+/* ───────────────── LOGO ───────────────── */
 
 .navbar-logo {
+
   display: flex;
   align-items: center;
-  gap: 1px;
 
-  text-decoration: none;
-  font-family: "Syne", sans-serif;
-  font-size: 27px;
+  font-family:
+    "Inter",
+    sans-serif;
+
+  font-size: 30px;
   font-weight: 800;
-  letter-spacing: -1.2px;
 
-  color: #ffffff;
+  letter-spacing: -1.5px;
+
   cursor: pointer;
 
-  transition: opacity 0.24s ease, transform 0.24s ease;
-  will-change: transform;
+  user-select: none;
+
+  transition:
+    transform 0.25s ease,
+    opacity 0.25s ease;
+
 }
 
 .navbar-logo:hover {
-  opacity: 0.90;
-  transform: translateY(-1px);
+
+  transform:
+    translateY(-1px);
+
+  opacity: 0.92;
+
 }
 
-.navbar-logo span {
-  color: var(--red-primary);
-  transition: text-shadow 0.3s ease;
+.logo-main {
+
+  color: white;
+
 }
 
-.navbar-logo:hover span {
-  text-shadow: 0 0 22px rgba(220, 38, 38, 0.70);
+.logo-accent {
+
+  color:
+    var(--red-primary);
+
+  margin-left: 2px;
+
+  text-shadow:
+    0 0 20px
+    rgba(239, 68, 68, 0.7);
+
 }
 
-.navbar-logo sup {
-  font-size: 9.5px;
-  font-family: "JetBrains Mono", monospace;
-  color: rgba(220, 38, 38, 0.55);
-  margin-left: 3px;
-  letter-spacing: 0.08em;
-  font-weight: 400;
-  vertical-align: super;
-}
+/* ───────────────── NAV LINKS ───────────────── */
 
-/* ─── NAV LINKS ──────────────────────────────────────────────────────────── */
+.navbar-center {
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+}
 
 .nav-links {
+
   display: flex;
   align-items: center;
-  gap: 4px;
+
+  gap: 8px;
+
   list-style: none;
-  margin: 0;
+
   padding: 0;
+  margin: 0;
+
 }
 
-.nav-links li {
+.nav-item {
+
   position: relative;
 
-  padding: 10px 17px;
-  border-radius: 12px;
+  padding:
+    12px 18px;
 
-  font-family: "JetBrains Mono", monospace;
+  border-radius: 14px;
+
+  color:
+    var(--text-muted);
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
   font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
 
-  color: rgba(255, 255, 255, 0.52);
+  letter-spacing: 0.04em;
 
   cursor: pointer;
-  border: 1px solid transparent;
-  user-select: none;
 
-  transition: color 0.24s ease, transform 0.24s ease, background 0.24s ease, border-color 0.24s ease;
-  will-change: transform;
   overflow: hidden;
+
+  transition:
+    all 0.25s ease;
+
+  border:
+    1px solid transparent;
+
 }
 
-/* Hover */
-.nav-links li:hover {
-  color: rgba(255, 255, 255, 0.92);
-  background: var(--nav-hover-bg);
-  transform: translateY(-1px);
+.nav-item:hover {
+
+  color: white;
+
+  background:
+    rgba(255, 255, 255, 0.05);
+
+  transform:
+    translateY(-1px);
+
 }
 
-/* Active */
-.nav-links li.active {
-  color: #ffffff;
-  background: var(--nav-active-bg);
-  border-color: var(--nav-active-border);
-  box-shadow: inset 0 0 20px rgba(220, 38, 38, 0.06);
+.nav-item.active {
+
+  color: white;
+
+  background:
+    rgba(239, 68, 68, 0.12);
+
+  border:
+    1px solid
+    rgba(239, 68, 68, 0.22);
+
+  box-shadow:
+    inset 0 0 25px
+    rgba(239, 68, 68, 0.08);
+
 }
 
-/* Active underline dot */
-.nav-links li.active::after {
-  content: "";
+.nav-active-glow {
+
   position: absolute;
-  bottom: 7px;
+
   left: 50%;
-  transform: translateX(-50%);
-  width: 18px;
-  height: 2px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, transparent, var(--red-primary), transparent);
-  animation: glowPulse 2.5s ease-in-out infinite;
-}
+  bottom: 0;
 
-/* ─── COMING SOON BADGE ──────────────────────────────────────────────────── */
+  transform:
+    translateX(-50%);
 
-.nav-coming-soon {
-  position: relative;
-}
+  width: 24px;
+  height: 3px;
 
-.coming-soon-badge {
-  position: absolute;
-  top: -7px;
-  right: -5px;
-
-  padding: 2px 6px;
   border-radius: 999px;
 
-  background: rgba(220, 38, 38, 0.10);
-  border: 1px solid rgba(220, 38, 38, 0.24);
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      var(--red-primary),
+      transparent
+    );
 
-  color: #f87171;
-  font-size: 7.5px;
-  font-family: "JetBrains Mono", monospace;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  animation:
+    glowPulse 2s ease-in-out infinite;
 
-  pointer-events: none;
-  white-space: nowrap;
 }
 
-/* ─── SYSTEM STATUS PILL ─────────────────────────────────────────────────── */
+/* ───────────────── STATUS ───────────────── */
 
-.navbar-status {
+.navbar-right {
+
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 18px;
 
-  padding: 8px 16px;
+}
+
+.navbar-status {
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding:
+    10px 18px;
+
   border-radius: 999px;
 
-  background: rgba(34, 197, 94, 0.07);
-  border: 1px solid rgba(34, 197, 94, 0.18);
+  background:
+    rgba(34, 197, 94, 0.08);
 
-  color: rgba(134, 239, 172, 0.92);
-  font-family: "JetBrains Mono", monospace;
+  border:
+    1px solid
+    rgba(34, 197, 94, 0.18);
+
+  backdrop-filter:
+    blur(20px);
+
+}
+
+.status-text {
+
+  color:
+    #86efac;
+
+  font-family:
+    "JetBrains Mono",
+    monospace;
+
   font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-weight: 700;
 
-  transition: background 0.25s ease, border-color 0.25s ease;
-  cursor: default;
+  letter-spacing: 0.08em;
+
 }
 
-.navbar-status:hover {
-  background: rgba(34, 197, 94, 0.11);
-  border-color: rgba(34, 197, 94, 0.28);
+/* ───────────────── HAMBURGER ───────────────── */
+
+.navbar-hamburger {
+
+  display: none;
+
+  width: 46px;
+  height: 46px;
+
+  border: none;
+  outline: none;
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.05);
+
+  cursor: pointer;
+
+  transition:
+    all 0.25s ease;
+
 }
 
-/* Pulsing green dot */
-.navbar-status-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: #22c55e;
-  flex-shrink: 0;
-  position: relative;
-  animation: pulseDot 2.2s ease-in-out infinite;
+.navbar-hamburger:hover {
+
+  background:
+    rgba(255, 255, 255, 0.08);
+
 }
 
-/* Ripple ring around dot */
-.navbar-status-dot::after {
-  content: "";
-  position: absolute;
-  inset: -4px;
-  border-radius: 50%;
-  border: 1px solid rgba(34, 197, 94, 0.38);
-  animation: ripple 2.2s ease-out infinite;
+.navbar-hamburger span {
+
+  display: block;
+
+  width: 20px;
+  height: 2px;
+
+  margin: 5px auto;
+
+  border-radius: 999px;
+
+  background: white;
+
+  transition:
+    all 0.25s ease;
+
 }
 
-/* ─── RESPONSIVE ─────────────────────────────────────────────────────────── */
+.navbar-hamburger.active span:nth-child(1) {
 
-@media (max-width: 1080px) {
+  transform:
+    translateY(7px)
+    rotate(45deg);
+
+}
+
+.navbar-hamburger.active span:nth-child(2) {
+
+  opacity: 0;
+
+}
+
+.navbar-hamburger.active span:nth-child(3) {
+
+  transform:
+    translateY(-7px)
+    rotate(-45deg);
+
+}
+
+/* ───────────────── ANIMATIONS ───────────────── */
+
+@keyframes navbarFlow {
+
+  from {
+
+    transform:
+      translateX(0);
+
+  }
+
+  to {
+
+    transform:
+      translateX(50%);
+
+  }
+
+}
+
+@keyframes glowPulse {
+
+  0% {
+
+    opacity: 0.5;
+
+    transform:
+      translateX(-50%)
+      scaleX(0.8);
+
+  }
+
+  50% {
+
+    opacity: 1;
+
+    transform:
+      translateX(-50%)
+      scaleX(1.2);
+
+  }
+
+  100% {
+
+    opacity: 0.5;
+
+    transform:
+      translateX(-50%)
+      scaleX(0.8);
+
+  }
+
+}
+
+/* ───────────────── RESPONSIVE ───────────────── */
+
+@media (max-width: 980px) {
+
   .navbar {
-    padding: 0 28px;
+
+    padding:
+      0 22px;
+
   }
 
   .navbar-status {
+
     display: none;
+
   }
 
-  .nav-links li {
-    padding: 9px 13px;
-    font-size: 11px;
-  }
 }
 
 @media (max-width: 768px) {
+
   .navbar {
+
     height: auto;
+
     flex-wrap: wrap;
-    gap: 12px;
-    padding: 14px 18px;
+
+    padding:
+      18px;
+
+  }
+
+  .navbar-center {
+
+    width: 100%;
+
+    order: 3;
+
   }
 
   .nav-links {
+
     width: 100%;
+
     justify-content: center;
+
     flex-wrap: wrap;
-    gap: 4px;
+
+    margin-top: 12px;
+
+  }
+
+  .navbar-hamburger {
+
+    display: block;
+
   }
 
   .navbar-logo {
-    font-size: 23px;
+
+    font-size: 26px;
+
   }
 
-  .nav-links li {
-    font-size: 10.5px;
-    padding: 8px 12px;
-    border-radius: 10px;
-  }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 480px) {
+
   .navbar {
-    padding: 12px 14px;
+
+    padding:
+      16px 14px;
+
   }
 
-  .nav-links li {
-    padding: 7px 10px;
-    font-size: 10px;
+  .nav-item {
+
+    padding:
+      10px 14px;
+
+    font-size: 11px;
+
   }
+
+  .navbar-logo {
+
+    font-size: 24px;
+
+  }
+
 }
