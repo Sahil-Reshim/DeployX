@@ -1,10 +1,5 @@
 import threading
 import sqlite3
-from database import get_db_connection
-from database import (
-    init_db,
-    get_db_connection
-)
 
 from flask import (
     Flask,
@@ -13,6 +8,15 @@ from flask import (
 )
 
 from flask_cors import CORS
+
+from database import (
+    init_db,
+    get_db_connection
+)
+
+from services.runtime_recovery import (
+    restore_runtime_states
+)
 
 from sockets.socket_manager import (
     socketio,
@@ -23,7 +27,9 @@ from sockets.socket_manager import (
 import sockets.deployment_socket
 import sockets.logs_socket
 
-from services.git_service import clone_repository
+from services.git_service import (
+    clone_repository
+)
 
 from services.framework_detector import (
     detect_framework
@@ -81,7 +87,17 @@ socketio.init_app(
     cors_allowed_origins="*"
 )
 
+# =========================================================
+# DATABASE INIT
+# =========================================================
+
 init_db()
+
+# =========================================================
+# RUNTIME RECOVERY
+# =========================================================
+
+restore_runtime_states()
 
 # =========================================================
 # HOME
@@ -91,8 +107,11 @@ init_db()
 def home():
 
     return jsonify({
+
         "success": True,
+
         "message": "DeployX Backend Running 🚀"
+
     })
 
 
@@ -111,11 +130,13 @@ def run_deployment_job(
 
     try:
 
-        print("\n========== DEPLOYMENT STARTED ==========")
+        print(
+            "\n========== DEPLOYMENT STARTED =========="
+        )
 
-        # -------------------------------------------------
-        # CLONE
-        # -------------------------------------------------
+        # =================================================
+        # CLONE REPOSITORY
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -149,6 +170,7 @@ def run_deployment_job(
             )
 
             if repo_path:
+
                 remove_repo_folder(
                     repo_path
                 )
@@ -159,9 +181,9 @@ def run_deployment_job(
             "repo_path"
         ]
 
-        # -------------------------------------------------
-        # FRAMEWORK DETECTION
-        # -------------------------------------------------
+        # =================================================
+        # DETECT FRAMEWORK
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -191,9 +213,9 @@ def run_deployment_job(
 
             return
 
-        # -------------------------------------------------
-        # DOCKERFILE
-        # -------------------------------------------------
+        # =================================================
+        # GENERATE DOCKERFILE
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -224,9 +246,9 @@ def run_deployment_job(
 
             return
 
-        # -------------------------------------------------
+        # =================================================
         # BUILD IMAGE
-        # -------------------------------------------------
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -261,9 +283,9 @@ def run_deployment_job(
             "image_name"
         ]
 
-        # -------------------------------------------------
+        # =================================================
         # RUN CONTAINER
-        # -------------------------------------------------
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -303,9 +325,9 @@ def run_deployment_job(
             "container_id"
         ]
 
-        # -------------------------------------------------
+        # =================================================
         # RUNNING
-        # -------------------------------------------------
+        # =================================================
 
         update_deployment_step(
             deployment_id,
@@ -370,16 +392,19 @@ def run_deployment_job(
         )
 
         if container_id:
+
             remove_container(
                 container_id
             )
 
         if image_name:
+
             remove_image(
                 image_name
             )
 
         if repo_path:
+
             remove_repo_folder(
                 repo_path
             )
@@ -402,8 +427,11 @@ def deploy():
         if not data:
 
             return jsonify({
+
                 "success": False,
+
                 "error": "No JSON data received"
+
             }), 400
 
         repo_url = data.get(
@@ -413,8 +441,11 @@ def deploy():
         if not repo_url:
 
             return jsonify({
+
                 "success": False,
+
                 "error": "GitHub repo URL required"
+
             }), 400
 
         deployment = create_deployment(
@@ -439,17 +470,25 @@ def deploy():
         deployment_thread.start()
 
         return jsonify({
+
             "success": True,
+
             "message": "Deployment started",
+
             "deployment_id": deployment_id,
+
             "status": "queued"
+
         }), 202
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
 
 
@@ -468,16 +507,23 @@ def get_deployments():
         deployments = get_all_deployments()
 
         return jsonify({
+
             "success": True,
+
             "count": len(deployments),
+
             "deployments": deployments
+
         })
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
 
 
@@ -489,17 +535,15 @@ def get_deployments():
     "/deployments/<int:deployment_id>",
     methods=["DELETE"]
 )
-def delete_deployment(deployment_id):
+def delete_deployment(
+    deployment_id
+):
 
     try:
 
-        conn =  get_db_connection()
+        conn = get_db_connection()
 
         cursor = conn.cursor()
-
-        # =================================================
-        # CHECK DEPLOYMENT EXISTS
-        # =================================================
 
         cursor.execute(
             """
@@ -519,6 +563,7 @@ def delete_deployment(deployment_id):
             return jsonify({
 
                 "success": False,
+
                 "message": "Deployment not found"
 
             }), 404
@@ -535,17 +580,9 @@ def delete_deployment(deployment_id):
                 cleanup_result
             ), 400
 
-        # =================================================
-        # STOP ACTIVE MONITORING
-        # =================================================
-
         stop_monitoring(
             deployment_id
         )
-
-        # =================================================
-        # DELETE BUILD LOGS
-        # =================================================
 
         cursor.execute(
             """
@@ -555,10 +592,6 @@ def delete_deployment(deployment_id):
             (deployment_id,)
         )
 
-        # =================================================
-        # DELETE CONTAINER LOGS
-        # =================================================
-
         cursor.execute(
             """
             DELETE FROM container_logs
@@ -567,10 +600,6 @@ def delete_deployment(deployment_id):
             (deployment_id,)
         )
 
-        # =================================================
-        # DELETE METRICS
-        # =================================================
-
         cursor.execute(
             """
             DELETE FROM deployment_metrics
@@ -578,10 +607,6 @@ def delete_deployment(deployment_id):
             """,
             (deployment_id,)
         )
-
-        # =================================================
-        # DELETE DEPLOYMENT
-        # =================================================
 
         cursor.execute(
             """
@@ -598,20 +623,26 @@ def delete_deployment(deployment_id):
         return jsonify({
 
             "success": True,
+
             "message": "Deployment deleted successfully"
 
         }), 200
 
     except Exception as e:
 
-        print("DELETE ERROR:", str(e))
+        print(
+            "DELETE ERROR:",
+            str(e)
+        )
 
         return jsonify({
 
             "success": False,
+
             "error": str(e)
 
         }), 500
+
 
 # =========================================================
 # DEPLOYMENT STATUS
@@ -634,21 +665,31 @@ def get_deployment_status(
         if not deployment:
 
             return jsonify({
+
                 "success": False,
+
                 "message": "Deployment not found"
+
             }), 404
 
         return jsonify({
+
             "success": True,
+
             "deployment": deployment
+
         })
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
+
 
 # =========================================================
 # STOP DEPLOYMENT
@@ -675,9 +716,13 @@ def stop_deployment_route(
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
+
 
 # =========================================================
 # START DEPLOYMENT
@@ -704,9 +749,13 @@ def start_deployment_route(
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
+
 
 # =========================================================
 # RESTART DEPLOYMENT
@@ -733,9 +782,13 @@ def restart_deployment_route(
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
+
 
 # =========================================================
 # METRICS HISTORY
@@ -790,6 +843,7 @@ def get_metrics_history(
         return jsonify({
 
             "success": False,
+
             "error": str(e)
 
         }), 500
@@ -837,6 +891,7 @@ def get_latest_metrics(
             return jsonify({
 
                 "success": True,
+
                 "metrics": dict(metric)
 
             })
@@ -844,6 +899,7 @@ def get_latest_metrics(
         return jsonify({
 
             "success": False,
+
             "metrics": None
 
         })
@@ -853,9 +909,11 @@ def get_latest_metrics(
         return jsonify({
 
             "success": False,
+
             "error": str(e)
 
         }), 500
+
 
 # =========================================================
 # BUILD LOGS
@@ -882,8 +940,11 @@ def deployment_logs(
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
 
 
@@ -912,13 +973,16 @@ def deployment_container_logs(
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "error": str(e)
+
         }), 500
 
 
 # =========================================================
-# CLEANUP ROUTES
+# CLEANUP CONTAINER
 # =========================================================
 
 @app.route(
@@ -939,15 +1003,24 @@ def cleanup_container():
             container_id
         )
 
-        return jsonify(result)
+        return jsonify(
+            result
+        )
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "message": str(e)
+
         }), 500
 
+
+# =========================================================
+# CLEANUP IMAGE
+# =========================================================
 
 @app.route(
     "/cleanup/image",
@@ -967,15 +1040,24 @@ def cleanup_image():
             image_name
         )
 
-        return jsonify(result)
+        return jsonify(
+            result
+        )
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "message": str(e)
+
         }), 500
 
+
+# =========================================================
+# CLEANUP REPOSITORY
+# =========================================================
 
 @app.route(
     "/cleanup/repo",
@@ -995,13 +1077,18 @@ def cleanup_repo():
             repo_path
         )
 
-        return jsonify(result)
+        return jsonify(
+            result
+        )
 
     except Exception as e:
 
         return jsonify({
+
             "success": False,
+
             "message": str(e)
+
         }), 500
 
 
