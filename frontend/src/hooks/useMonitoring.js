@@ -1,11 +1,6 @@
-import {
-  useEffect,
-  useState
-} from "react";
+import { useEffect, useState } from "react";
 
-function useMonitoring(
-  statusData
-) {
+function useMonitoring(statusData) {
 
   const [metrics, setMetrics] =
     useState({
@@ -13,7 +8,7 @@ function useMonitoring(
       ram: 0,
       network_rx: 0,
       network_tx: 0,
-      health: "healthy"
+      health: "healthy",
     });
 
   const [cpuHistory, setCpuHistory] =
@@ -22,125 +17,74 @@ function useMonitoring(
   const [ramHistory, setRamHistory] =
     useState([]);
 
-  const [
-    networkHistory,
-    setNetworkHistory
-  ] = useState([]);
-
-  /*
-  ─────────────────────────────────────────────
-  LIVE MONITORING
-  ─────────────────────────────────────────────
-  */
+  const [networkHistory, setNetworkHistory] =
+    useState([]);
 
   useEffect(() => {
 
-    if (
-      !statusData ||
-      !statusData.metrics
-    ) {
-      return;
-    }
-
     const liveMetrics =
-      statusData.metrics;
+      statusData?.metrics;
 
-    /*
-    SET METRICS
-    */
+    if (!liveMetrics)
+      return;
+
+    const cpu =
+      Number(liveMetrics.cpu || 0);
+
+    const ram =
+      Number(liveMetrics.ram || 0);
+
+    const network_rx =
+      Number(liveMetrics.network_rx || 0);
+
+    const network_tx =
+      Number(liveMetrics.network_tx || 0);
 
     setMetrics({
-
-      cpu:
-        liveMetrics.cpu || 0,
-
-      ram:
-        liveMetrics.ram || 0,
-
-      network_rx:
-        liveMetrics.network_rx || 0,
-
-      network_tx:
-        liveMetrics.network_tx || 0,
-
+      cpu,
+      ram,
+      network_rx,
+      network_tx,
       health:
         liveMetrics.health ||
-        "healthy"
-
+        "healthy",
     });
 
-    /*
-    CPU HISTORY
-    */
+    const timestamp =
+      new Date().toLocaleTimeString();
 
     setCpuHistory((prev) => [
-
-      ...prev.slice(-20),
-
+      ...prev.slice(-29),
       {
-        time:
-          new Date()
-            .toLocaleTimeString(),
-
-        value:
-          liveMetrics.cpu || 0
-      }
-
+        time: timestamp,
+        value: cpu,
+      },
     ]);
-
-    /*
-    RAM HISTORY
-    */
 
     setRamHistory((prev) => [
-
-      ...prev.slice(-20),
-
+      ...prev.slice(-29),
       {
-        time:
-          new Date()
-            .toLocaleTimeString(),
-
-        value:
-          liveMetrics.ram || 0
-      }
-
+        time: timestamp,
+        value: ram,
+      },
     ]);
 
-    /*
-    NETWORK HISTORY
-    */
-
     setNetworkHistory((prev) => [
-
-      ...prev.slice(-20),
-
+      ...prev.slice(-29),
       {
-        time:
-          new Date()
-            .toLocaleTimeString(),
-
-        rx:
-          liveMetrics.network_rx || 0,
-
-        tx:
-          liveMetrics.network_tx || 0
-      }
-
+        time: timestamp,
+        rx: network_rx,
+        tx: network_tx,
+      },
     ]);
 
   }, [statusData]);
 
   return {
-
     metrics,
-
     cpuHistory,
-
     ramHistory,
-
-    networkHistory
-
+    networkHistory,
   };
 
 }
