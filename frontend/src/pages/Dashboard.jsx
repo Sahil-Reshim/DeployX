@@ -124,6 +124,12 @@ function Dashboard() {
 
   } = useMonitoring(statusData);
 
+  const monitoringAvailable =
+  (metrics?.cpu || 0) > 0 ||
+  (metrics?.ram || 0) > 0 ||
+  (metrics?.network_rx || 0) > 0 ||
+  (metrics?.network_tx || 0) > 0;
+
   /*
   ─────────────────────────────────────────────
   LIVE STATUS UPDATE
@@ -132,50 +138,62 @@ function Dashboard() {
   */
 
   useEffect(() => {
+  if (!statusData) return;
 
-    if (!statusData)
-      return;
+  setLatestDeployment((prev) => {
+    if (!prev) return prev;
 
-    setLatestDeployment((prev) => ({
-
-      ...(prev || {}),
-
+    return {
+      ...prev,
       status:
-        statusData.status ||
-        prev?.status,
+        statusData.status ??
+        prev.status,
 
       url:
-        statusData.url ||
-        prev?.url,
+        statusData.url ??
+        prev.url,
 
       logs:
-        statusData.logs ||
-        prev?.logs,
+        statusData.logs ??
+        prev.logs,
 
-    }));
+      metrics:
+        statusData.metrics ??
+        prev.metrics,
 
-    setActiveDeployment((prev) => ({
+      container_id:
+        statusData.container_id ??
+        prev.container_id,
+    };
+  });
 
-      ...(prev || {}),
+  setActiveDeployment((prev) => {
+    if (!prev) return prev;
 
+    return {
+      ...prev,
       status:
-        statusData.status ||
-        prev?.status,
+        statusData.status ??
+        prev.status,
 
       url:
-        statusData.url ||
-        prev?.url,
+        statusData.url ??
+        prev.url,
 
-    }));
+      metrics:
+        statusData.metrics ??
+        prev.metrics,
 
-  }, [
+      container_id:
+        statusData.container_id ??
+        prev.container_id,
+    };
+  });
 
-    statusData,
-
-    setLatestDeployment
-
-  ]);
-
+}, [
+  statusData,
+  setLatestDeployment
+]);
   /*
   ─────────────────────────────────────────────
   DEPLOYMENT PROGRESS
@@ -184,6 +202,7 @@ function Dashboard() {
 
   const deploymentProgress =
     useMemo(() => {
+
 
       if (!latestDeployment)
         return 0;
@@ -248,7 +267,6 @@ function Dashboard() {
   ACTIVE DEPLOYMENT NAME
   ─────────────────────────────────────────────
   */
-
   const deploymentName =
     useMemo(() => {
 
@@ -527,13 +545,19 @@ function Dashboard() {
 
                       </div>
 
-                      <div className="monitoring-live">
+                      <div
+                      className={`monitoring-live ${
+                        monitoringAvailable
+                          ? "live"
+                          : "offline"
+                      }`}
+                    >
+                      <span className="live-dot"></span>
 
-                        <span className="live-dot"></span>
-
-                        LIVE
-
-                      </div>
+                      {monitoringAvailable
+                        ? "LIVE"
+                        : "WAITING"}
+                    </div>
 
                     </div>
 
@@ -618,6 +642,36 @@ function Dashboard() {
                       </div>
 
                     </div>
+                    <div className="runtime-status-card">
+
+                        <div className="runtime-item">
+
+                          <span>
+                            Deployment
+                          </span>
+
+                          <strong>
+                            {latestDeployment?.status ||
+                              "offline"}
+                          </strong>
+
+                        </div>
+
+                        <div className="runtime-item">
+
+                          <span>
+                            Container
+                          </span>
+
+                          <strong>
+                            {latestDeployment?.container_id
+                              ? "Attached"
+                              : "Detached"}
+                          </strong>
+
+                        </div>
+
+                      </div>
 
                     {/* HEALTH */}
 
@@ -632,7 +686,9 @@ function Dashboard() {
                         </span>
 
                         <h2>
-                          {metrics?.health || "Healthy"}
+                          {monitoringAvailable
+                            ? metrics?.health
+                            : "Waiting for Metrics"}
                         </h2>
 
                       </div>
@@ -793,8 +849,10 @@ function Dashboard() {
               deploymentStatus={
                 latestDeployment?.status
               }
+              deploymentId={
+                latestDeployment?.id
+              }
             />
-
           </section>
 
         );
