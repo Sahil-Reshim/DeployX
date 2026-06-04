@@ -264,7 +264,7 @@ function Dashboard() {
 
   /*
   ─────────────────────────────────────────────
-  ACTIVE DEPLOYMENT NAME
+  ACTIVE DEPLOYMENT NAME EXTRACTION
   ─────────────────────────────────────────────
   */
   const deploymentName =
