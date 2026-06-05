@@ -10,48 +10,72 @@ from sockets.socket_manager import emit_log
 client = docker.from_env()
 
 
+# =========================================================
+# DETECT EXPOSED PORT
+# =========================================================
+
 def detect_exposed_port(repo_path):
-    """Read Dockerfile to find the EXPOSE port."""
-    dockerfile_path = os.path.join(repo_path, "Dockerfile")
+
+    dockerfile_path = os.path.join(
+        repo_path,
+        "Dockerfile"
+    )
+
     if not os.path.exists(dockerfile_path):
         return None
+
     try:
-        with open(dockerfile_path, "r", encoding="utf-8") as f:
+
+        with open(
+            dockerfile_path,
+            "r",
+            encoding="utf-8"
+        ) as f:
+
             content = f.read()
-        matches = re.findall(r"EXPOSE\s+(\d+)", content, re.IGNORECASE)
+
+        matches = re.findall(
+            r"EXPOSE\s+(\d+)",
+            content,
+            re.IGNORECASE
+        )
+
         if matches:
             return int(matches[-1])
+
     except Exception:
         pass
+
     return None
 
 
-def get_container_url(container, internal_port):
-    """Reliably extract the host-mapped port from a running container."""
-    try:
-        container.reload()
-        port_key = f"{internal_port}/tcp"
-        port_bindings = container.attrs["NetworkSettings"]["Ports"].get(port_key)
-        if port_bindings and len(port_bindings) > 0:
-            host_port = port_bindings[0]["HostPort"]
-            return host_port
-    except Exception:
-        pass
-    return None
+# =========================================================
+# BUILD IMAGE
+# =========================================================
 
+def build_docker_image(
+    repo_path,
+    deployment_id
+):
 
-def build_docker_image(repo_path, deployment_id):
-    dockerfile_path = os.path.join(repo_path, "Dockerfile")
+    dockerfile_path = os.path.join(
+        repo_path,
+        "Dockerfile"
+    )
 
     if not os.path.exists(dockerfile_path):
+
         return {
             "success": False,
             "message": "Dockerfile not found."
         }
 
-    image_name = f"deployx-app-{uuid.uuid4().hex[:8]}"
+    image_name = (
+        f"deployx-app-{uuid.uuid4().hex[:8]}"
+    )
 
     try:
+
         build_logs = client.api.build(
             path=repo_path,
             tag=image_name,
@@ -71,7 +95,6 @@ def build_docker_image(repo_path, deployment_id):
 
                     logs.append(line)
 
-                    # Real-time socket event
                     emit_log(
                         deployment_id,
                         line
@@ -79,7 +102,9 @@ def build_docker_image(repo_path, deployment_id):
 
             elif "error" in log:
 
-                error_line = f"ERROR: {log['error'].strip()}"
+                error_line = (
+                    f"ERROR: {log['error']}"
+                )
 
                 logs.append(error_line)
 
@@ -88,8 +113,6 @@ def build_docker_image(repo_path, deployment_id):
                     error_line
                 )
 
-
-        # Get image object after build
         image = client.images.get(
             image_name
         )
@@ -103,12 +126,18 @@ def build_docker_image(repo_path, deployment_id):
         }
 
     except Exception as e:
+
         return {
             "success": False,
             "message": "Docker image build failed",
             "error": str(e),
             "logs": []
         }
+
+
+# =========================================================
+# LOG STREAMING
+# =========================================================
 
 def stream_container_logs(
     container,
@@ -140,58 +169,80 @@ def stream_container_logs(
             f"Log stream error: {str(e)}"
         )
 
+
+# =========================================================
+# RUN CONTAINER
+# =========================================================
+
 def run_docker_container(
     image_name,
     deployment_id,
+    assigned_port,
     repo_path=None
 ):
+
     try:
-        # Detect exposed port from Dockerfile
-        internal_port = 3000  # fallback
+
+        internal_port = 3000
+
         if repo_path:
-            detected = detect_exposed_port(repo_path)
+
+            detected = detect_exposed_port(
+                repo_path
+            )
+
             if detected:
                 internal_port = detected
-
-        # Try multiple candidate ports if detection fails
-        candidate_ports = []
-
-        for port in [
-            internal_port,
-            80,
-            5000,
-            3000,
-            5173,
-            8000,
-            8080
-        ]:
-            if port not in candidate_ports:
-                candidate_ports.append(port)
 
         container = client.containers.run(
             image=image_name,
             detach=True,
-            ports={f"{internal_port}/tcp": None},
-            environment={"PORT": str(internal_port)},
+
+            ports={
+                f"{internal_port}/tcp":
+                assigned_port
+            },
+
+            environment={
+                "PORT": str(
+                    internal_port
+                )
+            }
         )
 
-        # Wait for container to initialize
+        # Wait for startup
+
         for _ in range(10):
+
             time.sleep(1)
+
             container.reload()
+
             if container.status == "running":
                 break
 
         if container.status != "running":
-            raw_logs = container.logs(stdout=True, stderr=True, tail=50)
-            logs = raw_logs.decode("utf-8", errors="ignore").splitlines()
+
+            raw_logs = container.logs(
+                stdout=True,
+                stderr=True,
+                tail=50
+            )
+
+            logs = raw_logs.decode(
+                "utf-8",
+                errors="ignore"
+            ).splitlines()
+
             return {
                 "success": False,
                 "message": f"Container exited with status: {container.status}",
-                "error": "\n".join(logs[-10:]),
+                "error": "\n".join(
+                    logs[-10:]
+                ),
                 "logs": logs
             }
-            
+
         threading.Thread(
             target=stream_container_logs,
             args=(
@@ -201,61 +252,67 @@ def run_docker_container(
             daemon=True
         ).start()
 
-        # Find the mapped host port
-        host_port = get_container_url(
-            container,
-            internal_port
+        local_url = (
+            f"http://localhost:{assigned_port}"
         )
 
-        if not host_port:
-            container.remove(force=True)
+        raw_logs = container.logs(
+            stdout=True,
+            stderr=True,
+            tail=100
+        )
 
-            return {
-                "success": False,
-                "message": f"Could not determine port mapping for {internal_port}",
-                "logs": []
-            }
-    
-        if not host_port:
-            container.remove(force=True)
-            return {
-                "success": False,
-                "message": "Could not determine container port mapping",
-                "logs": []
-            }
-
-        local_url = f"http://localhost:{host_port}"
-
-        raw_logs = container.logs(stdout=True, stderr=True, tail=100)
-        logs = raw_logs.decode("utf-8", errors="ignore").splitlines()
+        logs = raw_logs.decode(
+            "utf-8",
+            errors="ignore"
+        ).splitlines()
 
         return {
             "success": True,
-            "message": "Container started successfully",
-            "container_id": container.short_id,
 
-            "port": host_port,
-            "internal_port": internal_port,
+            "message":
+            "Container started successfully",
 
-            "url": local_url,
-            "local_url": local_url,
-            "logs": logs
+            "container_id":
+            container.id,
+
+            "port":
+            assigned_port,
+
+            "assigned_port":
+            assigned_port,
+
+            "internal_port":
+            internal_port,
+
+            "url":
+            local_url,
+
+            "local_url":
+            local_url,
+
+            "logs":
+            logs
         }
 
     except Exception as e:
+
         return {
             "success": False,
-            "message": "Container failed to start",
+            "message":
+            "Container failed to start",
             "error": str(e),
             "logs": []
         }
-        
-import docker
-
-client = docker.from_env()
 
 
-def stop_container(container_id):
+# =========================================================
+# STOP CONTAINER
+# =========================================================
+
+def stop_container(
+    container_id
+):
 
     try:
 
@@ -276,8 +333,15 @@ def stop_container(container_id):
             "success": False,
             "message": str(e)
         }
-        
-def start_container(container_id):
+
+
+# =========================================================
+# START CONTAINER
+# =========================================================
+
+def start_container(
+    container_id
+):
 
     try:
 
