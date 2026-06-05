@@ -71,9 +71,23 @@ from services.monitor_service import (
 from services.cleanup_service import (
     remove_container,
     remove_image,
-    remove_repo_folder
+    remove_repo_folder,
+    cleanup_proxy_route
 )
 
+from services.port_allocator import (
+    allocate_port
+)
+
+from services.domain_service import (
+    generate_subdomain,
+    build_custom_url
+)
+
+from services.proxy_manager import (
+    create_route,
+    reload_proxy
+)
 # =========================================================
 # APP CONFIG
 # =========================================================
@@ -283,6 +297,34 @@ def run_deployment_job(
             "image_name"
         ]
 
+
+        
+        # =================================================
+        # PHASE 7 DOMAIN + PORT SETUP
+        # =================================================
+
+        repo_name = repo_url.rstrip("/").split("/")[-1]
+
+        if repo_name.endswith(".git"):
+            repo_name = repo_name[:-4]
+
+        assigned_port = allocate_port()
+
+        subdomain = generate_subdomain(
+            repo_name
+        )
+
+        custom_url = build_custom_url(
+            subdomain
+        )
+
+        create_route(
+            subdomain,
+            assigned_port
+        )
+
+        reload_proxy()
+
         # =================================================
         # RUN CONTAINER
         # =================================================
@@ -301,14 +343,19 @@ def run_deployment_job(
         container_result = run_docker_container(
             image_name,
             deployment_id,
+            assigned_port,
             repo_path
-        )
+        ) 
 
         if not container_result["success"]:
 
             fail_deployment(
                 deployment_id,
                 "failed"
+            )
+
+            cleanup_proxy_route(
+                subdomain
             )
 
             remove_image(
@@ -339,6 +386,12 @@ def run_deployment_job(
             "running",
             "Container running"
         )
+
+        container_result["assigned_port"] = assigned_port
+
+        container_result["subdomain"] = subdomain
+
+        container_result["custom_url"] = custom_url
 
         complete_deployment(
             deployment_id,
@@ -408,6 +461,9 @@ def run_deployment_job(
             remove_repo_folder(
                 repo_path
             )
+
+        if 'subdomain' in locals():
+            cleanup_proxy_route(subdomain)
 
 
 # =========================================================
