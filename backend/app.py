@@ -393,6 +393,8 @@ def run_deployment_job(
 
         container_result["custom_url"] = custom_url
 
+        container_result["url"] = custom_url
+
         complete_deployment(
             deployment_id,
             framework_result,
