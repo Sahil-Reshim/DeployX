@@ -326,7 +326,7 @@ def run_deployment_job(
         reload_proxy()
 
         # =================================================
-        # RUN CONTAINER
+        # RUN CONTAINER - THIS ALSO MARKS THE END OF THE DEPLOYMENT PROCESS
         # =================================================
 
         update_deployment_step(
@@ -373,7 +373,7 @@ def run_deployment_job(
         ]
 
         # =================================================
-        # RUNNING
+        # RUNNING STATE - UPDATE IN-MEMORY STATE AND DB
         # =================================================
 
         update_deployment_step(
