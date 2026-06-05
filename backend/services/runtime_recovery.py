@@ -39,11 +39,9 @@ def restore_runtime_states():
                 "container_id"
             )
 
-            port = deployment.get(
-                "port"
-            )
-
+            # Only restore active deployments
             if status not in [
+                "live",
                 "running"
             ]:
                 continue
@@ -51,9 +49,19 @@ def restore_runtime_states():
             if not container_id:
                 continue
 
-            container = client.containers.get(
-                container_id
-            )
+            try:
+
+                container = client.containers.get(
+                    container_id
+                )
+
+            except Exception:
+
+                print(
+                    f"[SKIPPED] Deployment {deployment_id} container missing"
+                )
+
+                continue
 
             container.reload()
 
@@ -66,7 +74,7 @@ def restore_runtime_states():
                 continue
 
             # =========================================
-            # RESTORE MEMORY STATE
+            # RESTORE IN-MEMORY STATE
             # =========================================
 
             set_state(
@@ -78,7 +86,21 @@ def restore_runtime_states():
 
                     "internal_port": None,
 
-                    "public_port": port,
+                    "public_port": deployment.get(
+                        "assigned_port"
+                    ),
+
+                    "assigned_port": deployment.get(
+                        "assigned_port"
+                    ),
+
+                    "subdomain": deployment.get(
+                        "subdomain"
+                    ),
+
+                    "custom_url": deployment.get(
+                        "custom_url"
+                    ),
 
                     "monitoring_active": True,
 

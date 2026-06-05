@@ -1,7 +1,11 @@
 from datetime import datetime
+
 from database import get_db_connection
-from services.monitor_service import start_monitoring
+
 from managers.state_manager import (
+    set_state,
+    get_state,
+    update_state,
     remove_state
 )
 
@@ -9,10 +13,6 @@ from sockets.socket_manager import (
     emit_deployment_started,
     emit_deployment_stopped,
     emit_deployment_restarted
-)
-
-from services.docker_service import (
-    stop_container
 )
 
 from services.monitor_service import (
@@ -25,16 +25,19 @@ from services.cleanup_service import (
     remove_image
 )
 
-from managers.state_manager import (
-    set_state,
-    get_state,
-    update_state
-)
-
 from services.docker_service import (
     stop_container,
     start_container
 )
+
+from services.proxy_manager import (
+    delete_route,
+    reload_proxy
+)
+
+# =========================================================
+# CREATE DEPLOYMENT
+# =========================================================
 
 def create_deployment(repo_url):
 
@@ -45,18 +48,21 @@ def create_deployment(repo_url):
         "%Y-%m-%d %H:%M:%S"
     )
 
-    cursor.execute("""
-    INSERT INTO deployments (
-        repo_url,
-        status,
-        created_at
+    cursor.execute(
+        """
+        INSERT INTO deployments (
+            repo_url,
+            status,
+            created_at
+        )
+        VALUES (?, ?, ?)
+        """,
+        (
+            repo_url,
+            "queued",
+            created_at
+        )
     )
-    VALUES (?, ?, ?)
-    """, (
-        repo_url,
-        "queued",
-        created_at
-    ))
 
     conn.commit()
 
@@ -67,87 +73,65 @@ def create_deployment(repo_url):
     return {
         "id": deployment_id
     }
-    
-def create_pending_deployment(repo_url):
 
+
+# =========================================================
+# UPDATE STATUS
+# =========================================================
+
+def update_deployment_status(
+    deployment_id,
+    status
+):
     conn = get_db_connection()
-    cursor = conn.cursor()
 
-    created_at = datetime.now().strftime(
-        "%Y-%m-%d %H:%M:%S"
-    )
-
-    cursor.execute("""
-    INSERT INTO deployments (
-        repo_url,
-        framework,
-        image_name,
-        image_id,
-        container_id,
-        port,
-        url,
-        status,
-        created_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        repo_url,
-        None,
-        None,
-        None,
-        None,
-        None,
-        None,
-        "queued",
-        created_at
-    ))
-
-    conn.commit()
-
-    deployment_id = cursor.lastrowid
-
-    conn.close()
-
-    return deployment_id
-
-
-def update_deployment_status(deployment_id, status):
-
-    conn = get_db_connection()
-    cursor = conn.cursor()
-
-    cursor.execute("""
+    conn.execute(
+        """
         UPDATE deployments
-        SET status = ?
-        WHERE id = ?
-    """, (
-        status,
-        deployment_id
-    ))
+        SET status=?
+        WHERE id=?
+        """,
+        (
+            status,
+            deployment_id
+        )
+    )
 
     conn.commit()
     conn.close()
 
+
+# =========================================================
+# UPDATE STEP
+# =========================================================
 
 def update_deployment_step(
     deployment_id,
     status
 ):
-
     conn = get_db_connection()
 
-    conn.execute("""
-    UPDATE deployments
-    SET status = ?
-    WHERE id = ?
-    """, (
-        status,
-        deployment_id
-    ))
+    conn.execute(
+        """
+        UPDATE deployments
+        SET current_step=?,
+            status=?
+        WHERE id=?
+        """,
+        (
+            status,
+            status,
+            deployment_id
+        )
+    )
 
     conn.commit()
     conn.close()
 
+
+# =========================================================
+# COMPLETE DEPLOYMENT
+# =========================================================
 
 def complete_deployment(
     deployment_id,
@@ -158,56 +142,116 @@ def complete_deployment(
 
     conn = get_db_connection()
 
-    conn.execute("""
-    UPDATE deployments
-    SET
-        framework = ?,
-        image_name = ?,
-        image_id = ?,
-        container_id = ?,
-        port = ?,
-        url = ?,
-        status = ?
-    WHERE id = ?
-    """, (
-        framework_result.get("framework"),
-        docker_result.get("image_name"),
-        docker_result.get("image_id"),
-        container_result.get("container_id"),
-        container_result.get("port"),
-        container_result.get("url"),
-        "live",
-        deployment_id
-    ))
+    conn.execute(
+        """
+        UPDATE deployments
+        SET
+            framework=?,
+            image_name=?,
+            image_id=?,
+            container_id=?,
+
+            port=?,
+            assigned_port=?,
+
+            subdomain=?,
+            custom_url=?,
+
+            url=?,
+            local_url=?,
+
+            status=?,
+            current_step=?
+
+        WHERE id=?
+        """,
+        (
+            framework_result.get(
+                "framework"
+            ),
+
+            docker_result.get(
+                "image_name"
+            ),
+
+            docker_result.get(
+                "image_id"
+            ),
+
+            container_result.get(
+                "container_id"
+            ),
+
+            container_result.get(
+                "port"
+            ),
+
+            container_result.get(
+                "assigned_port"
+            ),
+
+            container_result.get(
+                "subdomain"
+            ),
+
+            container_result.get(
+                "custom_url"
+            ),
+
+            container_result.get(
+                "url"
+            ),
+
+            container_result.get(
+                "local_url"
+            ),
+
+            "running",
+            "running",
+
+            deployment_id
+        )
+    )
 
     conn.commit()
     conn.close()
 
-    # NEW: Register runtime state
+    # Runtime state
 
     set_state(
-        str(deployment_id),
-        {
-            "container_id": container_result.get(
-                "container_id"
-            ),
+    str(deployment_id),
+    {
+        "container_id": container_result.get(
+            "container_id"
+        ),
 
-            "status": "running",
+        "status": "running",
 
-            "internal_port":
-            container_result.get(
-                "internal_port"
-            ),
-            "public_port": container_result.get(
-                "port"
-            ),
+        "internal_port": container_result.get(
+            "internal_port"
+        ),
 
-            "monitoring_active": True,
-            "log_streaming": True
-        }
-    )
+        "public_port": container_result.get(
+            "assigned_port"
+        ),
 
-    # Existing monitoring
+        "assigned_port": container_result.get(
+            "assigned_port"
+        ),
+
+        "subdomain": container_result.get(
+            "subdomain"
+        ),
+
+        "custom_url": container_result.get(
+            "custom_url"
+        ),
+
+        "monitoring_active": True,
+
+        "log_streaming": True
+    }
+)
 
     start_monitoring(
         deployment_id,
@@ -216,52 +260,77 @@ def complete_deployment(
         )
     )
 
+
+# =========================================================
+# FAIL DEPLOYMENT
+# =========================================================
+
 def fail_deployment(
     deployment_id,
     status="failed"
 ):
-
     conn = get_db_connection()
 
-    conn.execute("""
-    UPDATE deployments
-    SET status = ?
-    WHERE id = ?
-    """, (
-        status,
-        deployment_id
-    ))
+    conn.execute(
+        """
+        UPDATE deployments
+        SET status=?
+        WHERE id=?
+        """,
+        (
+            status,
+            deployment_id
+        )
+    )
 
     conn.commit()
     conn.close()
 
 
+# =========================================================
+# GET ALL DEPLOYMENTS
+# =========================================================
+
 def get_all_deployments():
 
     conn = get_db_connection()
 
-    deployments = conn.execute("""
-        SELECT * FROM deployments
+    deployments = conn.execute(
+        """
+        SELECT *
+        FROM deployments
         ORDER BY id DESC
-    """).fetchall()
+        """
+    ).fetchall()
 
     conn.close()
 
     return [
-        dict(deployment)
-        for deployment in deployments
+        dict(row)
+        for row in deployments
     ]
-    
-def get_deployment_by_id(deployment_id):
+
+
+# =========================================================
+# GET ONE DEPLOYMENT
+# =========================================================
+
+def get_deployment_by_id(
+    deployment_id
+):
 
     conn = get_db_connection()
 
-    deployment = conn.execute("""
-        SELECT * FROM deployments
-        WHERE id = ?
-    """, (
-        deployment_id,
-    )).fetchone()
+    deployment = conn.execute(
+        """
+        SELECT *
+        FROM deployments
+        WHERE id=?
+        """,
+        (
+            deployment_id,
+        )
+    ).fetchone()
 
     conn.close()
 
@@ -269,6 +338,11 @@ def get_deployment_by_id(deployment_id):
         return dict(deployment)
 
     return None
+
+
+# =========================================================
+# STOP
+# =========================================================
 
 def stop_deployment(
     deployment_id
@@ -279,7 +353,6 @@ def stop_deployment(
     )
 
     if not state:
-
         return {
             "success": False,
             "message": "Deployment not found"
@@ -290,13 +363,16 @@ def stop_deployment(
     )
 
     if not result["success"]:
-
         return result
 
-    update_deployment_status(
+    update_deployment_step(
         deployment_id,
         "stopped"
     )
+
+    stop_monitoring(
+    deployment_id
+)
 
     update_state(
         str(deployment_id),
@@ -315,7 +391,12 @@ def stop_deployment(
         "success": True,
         "message": "Deployment stopped"
     }
-    
+
+
+# =========================================================
+# START
+# =========================================================
+
 def start_deployment(
     deployment_id
 ):
@@ -325,7 +406,6 @@ def start_deployment(
     )
 
     if not state:
-
         return {
             "success": False,
             "message": "Deployment not found"
@@ -336,10 +416,9 @@ def start_deployment(
     )
 
     if not result["success"]:
-
         return result
 
-    update_deployment_status(
+    update_deployment_step(
         deployment_id,
         "running"
     )
@@ -367,21 +446,12 @@ def start_deployment(
         "message": "Deployment started"
     }
 
-def restart_deployment(
-    deployment_id
-):
 
-    update_deployment_status(
-        deployment_id,
-        "restarting"
-    )
+# =========================================================
+# RESTART
+# =========================================================
 
-    update_state(
-        str(deployment_id),
-        {
-            "status":"restarting"
-        }
-    )
+def restart_deployment(deployment_id):
 
     stop_result = stop_deployment(
         deployment_id
@@ -405,7 +475,21 @@ def restart_deployment(
         "success": True,
         "message": "Deployment restarted"
     }
-    
+
+# =========================================================
+# DELETE LIFECYCLE
+# =========================================================
+
+from services.proxy_manager import (
+    delete_route,
+    reload_proxy
+)
+
+from services.port_allocator import (
+    release_port
+)
+
+
 def delete_deployment_lifecycle(
     deployment_id
 ):
@@ -421,35 +505,95 @@ def delete_deployment_lifecycle(
             "message": "Deployment not found"
         }
 
-    stop_monitoring(
-        deployment_id
-    )
+    try:
 
-    container_id = deployment.get(
-        "container_id"
-    )
+        # =====================================
+        # STOP MONITORING
+        # =====================================
 
-    image_name = deployment.get(
-        "image_name"
-    )
-
-    if container_id:
-
-        remove_container(
-            container_id
+        stop_monitoring(
+            deployment_id
         )
 
-    if image_name:
+        # =====================================
+        # GET RESOURCES
+        # =====================================
 
-        remove_image(
-            image_name
+        container_id = deployment.get(
+            "container_id"
         )
 
-    remove_state(
-        str(deployment_id)
-    )
+        image_name = deployment.get(
+            "image_name"
+        )
 
-    return {
-        "success": True,
-        "message":"Lifecycle cleanup completed"
-    }
+        assigned_port = deployment.get(
+            "assigned_port"
+        )
+
+        subdomain = deployment.get(
+            "subdomain"
+        )
+
+        # =====================================
+        # REMOVE CONTAINER
+        # =====================================
+
+        if container_id:
+
+            remove_container(
+                container_id
+            )
+
+        # =====================================
+        # REMOVE IMAGE
+        # =====================================
+
+        if image_name:
+
+            remove_image(
+                image_name
+            )
+
+        # =====================================
+        # REMOVE PROXY ROUTE
+        # =====================================
+
+        if subdomain:
+
+            delete_route(
+                subdomain
+            )
+
+            reload_proxy()
+
+        # =====================================
+        # RELEASE PORT
+        # =====================================
+
+        if assigned_port:
+
+            release_port(
+                assigned_port
+            )
+
+        # =====================================
+        # REMOVE RUNTIME STATE
+        # =====================================
+
+        remove_state(
+            str(deployment_id)
+        )
+
+        return {
+            "success": True,
+            "message":
+                "Lifecycle cleanup completed"
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
