@@ -44,6 +44,7 @@ DeployX allows developers to:
 * Redeploy updated codebases
 * View deployment status in realtime
 * Generate deployment URLs
+* monitor the usage
 
 ### Supported Workflows
 
