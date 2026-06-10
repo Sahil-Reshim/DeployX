@@ -39,7 +39,15 @@ function ProductionLink({
     ).toLowerCase();
 
   const deploymentUrl =
-    deployment.url || "";
+    deployment.local_url ||
+    deployment.url ||
+    "";
+
+  const displayUrl =
+    deployment.custom_url ||
+    deployment.url ||
+    deployment.local_url ||
+    "";
 
   const isRunning =
     deploymentStatus ===
@@ -172,7 +180,7 @@ function ProductionLink({
           }`}
         >
 
-          {deploymentUrl ||
+          {displayUrl ||
             "Waiting for deployment URL..."}
 
         </div>
