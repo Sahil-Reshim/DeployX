@@ -1,6 +1,12 @@
+from urllib import response
+
 import requests
 import time
 
+from services.deployment_service import (
+    save_jenkins_build_number,
+    update_jenkins_status
+)
 
 JENKINS_URL = "http://localhost:8081"
 JOB_NAME = "flask-docker-build"
@@ -86,6 +92,10 @@ def get_build_number(queue_id):
         auth=(JENKINS_USER, JENKINS_API_TOKEN)
     )
 
+    print("BUILD NUMBER URL:", endpoint)
+    print("STATUS CODE:", response.status_code)
+    print("RAW RESPONSE:", response.text)
+
     data = response.json()
 
     # build started
@@ -116,6 +126,10 @@ def get_build_status(build_number):
         auth=(JENKINS_USER, JENKINS_API_TOKEN)
     )
 
+    print("BUILD STATUS URL:", endpoint)
+    print("STATUS CODE:", response.status_code)
+    print("RAW RESPONSE:", response.text)
+
     data = response.json()
 
     # still running
@@ -142,7 +156,7 @@ def get_build_status(build_number):
         "status": result
     }
     
-def wait_for_pipeline(queue_id):
+def wait_for_pipeline(deployment_id,queue_id):
 
     print("\n===== WAITING FOR PIPELINE =====")
     print("Queue ID:", queue_id)
@@ -161,12 +175,22 @@ def wait_for_pipeline(queue_id):
 
     build_number = build_result["build_number"]
 
+    save_jenkins_build_number(
+        deployment_id,
+        build_number
+    )
+
     print("Build Number:", build_number)
 
     # wait until build finishes
     while True:
 
         status_result = get_build_status(build_number)
+        
+        update_jenkins_status(
+            deployment_id,
+            status_result["status"]
+        )
 
         print("Build Status:", status_result)
 

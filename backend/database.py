@@ -63,6 +63,10 @@ def init_db():
 
         status TEXT,
         current_step TEXT,
+        
+        jenkins_queue_id INTEGER,
+        jenkins_build_number INTEGER,
+        jenkins_status TEXT,
 
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
@@ -93,7 +97,10 @@ def init_db():
         "container_id": "ALTER TABLE deployments ADD COLUMN container_id TEXT",
         "port": "ALTER TABLE deployments ADD COLUMN port TEXT",
         "url": "ALTER TABLE deployments ADD COLUMN url TEXT",
-        "status": "ALTER TABLE deployments ADD COLUMN status TEXT"
+        "status": "ALTER TABLE deployments ADD COLUMN status TEXT",
+        "jenkins_queue_id": "ALTER TABLE deployments ADD COLUMN jenkins_queue_id INTEGER",
+        "jenkins_build_number": "ALTER TABLE deployments ADD COLUMN jenkins_build_number INTEGER",
+        "jenkins_status": "ALTER TABLE deployments ADD COLUMN jenkins_status TEXT"
     }
 
     for column, query in migrations.items():

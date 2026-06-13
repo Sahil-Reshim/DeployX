@@ -60,6 +60,11 @@ from services.deployment_service import (
     update_deployment_step,
     complete_deployment,
     fail_deployment,
+
+    save_jenkins_queue,
+    save_jenkins_build_number,
+    update_jenkins_status,
+
     get_all_deployments,
     get_deployment_by_id,
     stop_deployment,
@@ -270,12 +275,12 @@ def run_deployment_job(
 
         update_deployment_step(
             deployment_id,
-            "building"
+            "ci_pipeline"
         )
 
         emit_deployment_update(
             deployment_id,
-            "building",
+            "ci_pipeline",
             "Running Jenkins CI pipeline..."
         )
 
@@ -303,8 +308,13 @@ def run_deployment_job(
         queue_id = jenkins_result["queue_id"]
         print("DEBUG QUEUE ID:", queue_id)
 
+        save_jenkins_queue(
+            deployment_id,
+            queue_id
+        )
 
         pipeline_result = wait_for_pipeline(
+            deployment_id,
             queue_id
         )
         print("DEBUG PIPELINE RESULT:", pipeline_result)
@@ -336,12 +346,12 @@ def run_deployment_job(
 
         update_deployment_step(
             deployment_id,
-            "building"
+            "docker_build"
         )
 
         emit_deployment_update(
             deployment_id,
-            "building",
+            "docker_build",
             "Building Docker image..."
         )
 
