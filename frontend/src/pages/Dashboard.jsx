@@ -140,6 +140,8 @@ function Dashboard() {
   useEffect(() => {
   if (!statusData) return;
 
+  console.log("SOCKET STATUS:", statusData);
+
   setLatestDeployment((prev) => {
     if (!prev) return prev;
 
@@ -212,28 +214,44 @@ function Dashboard() {
           ?.toLowerCase();
 
       switch (status) {
-
         case "queued":
           return 10;
 
         case "cloning":
-          return 25;
+          return 20;
 
         case "detecting":
-          return 40;
+          return 30;
 
         case "dockerfile_generating":
+          return 40;
+
+        case "ci_pipeline":
+          return 50;
+
+        // Jenkins stages
+        case "clone_repository":
           return 55;
 
-        case "building":
-          return 72;
+        case "verify_files":
+          return 60;
+
+        case "build_docker_image":
+          return 70;
+
+        case "verify_image":
+          return 80;
+
+        // backend docker build
+        case "docker_build":
+          return 85;
 
         case "deploying":
-          return 90;
+          return 95;
 
         case "running":
-        case "live":
         case "completed":
+        case "live":
           return 100;
 
         case "failed":
@@ -241,7 +259,6 @@ function Dashboard() {
 
         default:
           return 0;
-
       }
 
     }, [latestDeployment]);
