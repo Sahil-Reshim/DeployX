@@ -8,6 +8,10 @@ from services.deployment_service import (
     update_jenkins_status
 )
 
+from sockets.socket_manager import (
+    emit_deployment_update
+)
+
 JENKINS_URL = "http://localhost:8081"
 JOB_NAME = "flask-docker-build"
 
@@ -26,7 +30,8 @@ def get_jenkins_crumb():
         endpoint,
         auth=(JENKINS_USER, JENKINS_API_TOKEN)
     )
-
+    
+    print("CRUMB RESPONSE:", response.text)
     data = response.json()
 
     return {
@@ -94,8 +99,9 @@ def get_build_number(queue_id):
 
     print("BUILD NUMBER URL:", endpoint)
     print("STATUS CODE:", response.status_code)
-    print("RAW RESPONSE:", response.text)
+#   print("RAW RESPONSE:", response.text)
 
+    print("QUEUE RESPONSE:", response.text)
     data = response.json()
 
     # build started
@@ -128,8 +134,9 @@ def get_build_status(build_number):
 
     print("BUILD STATUS URL:", endpoint)
     print("STATUS CODE:", response.status_code)
-    print("RAW RESPONSE:", response.text)
+#   print("RAW RESPONSE:", response.text)
 
+    print("BUILD STATUS RESPONSE:", response.text)
     data = response.json()
 
     # still running
@@ -156,6 +163,27 @@ def get_build_status(build_number):
         "status": result
     }
     
+def get_pipeline_stages(build_number):
+
+    endpoint = (
+        f"{JENKINS_URL}/job/"
+        f"{JOB_NAME}/"
+        f"{build_number}/wfapi/describe"
+    )
+
+    response = requests.get(
+        endpoint,
+        auth=(JENKINS_USER, JENKINS_API_TOKEN)
+    )
+
+    print("PIPELINE API:", endpoint)
+    print("STATUS:", response.status_code)
+    print("RAW:", response.text)
+
+    data = response.json()
+
+    return data.get("stages", [])
+
 def wait_for_pipeline(deployment_id,queue_id):
 
     print("\n===== WAITING FOR PIPELINE =====")
@@ -181,18 +209,60 @@ def wait_for_pipeline(deployment_id,queue_id):
     )
 
     print("Build Number:", build_number)
+    
+    last_stage = None
 
     # wait until build finishes
     while True:
 
-        status_result = get_build_status(build_number)
-        
+        # get current build status
+        status_result = get_build_status(
+            build_number
+        )
+
         update_jenkins_status(
             deployment_id,
             status_result["status"]
         )
 
-        print("Build Status:", status_result)
+        # get pipeline stages
+        stages = get_pipeline_stages(
+            build_number
+        )
+
+        # find active stage
+        active_stage = None
+
+        for stage in stages:
+
+            if stage["status"] in [
+                "IN_PROGRESS",
+                "PAUSED_PENDING_INPUT"
+            ]:
+
+                active_stage = stage["name"]
+                break
+
+
+        if active_stage and active_stage != last_stage:
+
+            last_stage = active_stage
+
+            emit_deployment_update(
+                deployment_id,
+                active_stage.lower().replace(" ", "_"),
+                active_stage
+            )
+
+            print(
+                "Current Stage:",
+                active_stage
+            )
+
+        print(
+            "Build Status:",
+            status_result
+        )
 
         if status_result["status"] != "BUILDING":
             break
@@ -205,3 +275,4 @@ def wait_for_pipeline(deployment_id,queue_id):
         "build_number": build_number,
         "status": status_result["status"]
     }
+    
