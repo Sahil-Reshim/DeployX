@@ -128,6 +128,88 @@ def update_deployment_step(
     conn.commit()
     conn.close()
 
+# =========================================================
+# SAVE JENKINS QUEUE
+# =========================================================
+
+def save_jenkins_queue(
+    deployment_id,
+    queue_id
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET
+            jenkins_queue_id=?,
+            jenkins_status=?
+        WHERE id=?
+        """,
+        (
+            queue_id,
+            "QUEUED",
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# SAVE JENKINS BUILD NUMBER
+# =========================================================
+
+def save_jenkins_build_number(
+    deployment_id,
+    build_number
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET
+            jenkins_build_number=?,
+            jenkins_status=?
+        WHERE id=?
+        """,
+        (
+            build_number,
+            "BUILDING",
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# UPDATE JENKINS STATUS
+# =========================================================
+
+def update_jenkins_status(
+    deployment_id,
+    status
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET jenkins_status=?
+        WHERE id=?
+        """,
+        (
+            status,
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
 
 # =========================================================
 # COMPLETE DEPLOYMENT

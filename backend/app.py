@@ -1,5 +1,9 @@
 import threading
 import sqlite3
+from services.jenkins_service import (
+    trigger_jenkins_job,
+    wait_for_pipeline
+)
 
 from flask import (
     Flask,
@@ -56,6 +60,11 @@ from services.deployment_service import (
     update_deployment_step,
     complete_deployment,
     fail_deployment,
+
+    save_jenkins_queue,
+    save_jenkins_build_number,
+    update_jenkins_status,
+
     get_all_deployments,
     get_deployment_by_id,
     stop_deployment,
@@ -260,18 +269,89 @@ def run_deployment_job(
 
             return
 
+        # ==========================================
+        # JENKINS CI PIPELINE
+        # ==========================================
+
+        update_deployment_step(
+            deployment_id,
+            "ci_pipeline"
+        )
+
+        emit_deployment_update(
+            deployment_id,
+            "ci_pipeline",
+            "Running Jenkins CI pipeline..."
+        )
+
+
+        jenkins_result = trigger_jenkins_job(
+            repo_url
+        )
+        print("DEBUG JENKINS RESULT:", jenkins_result)
+
+
+        if not jenkins_result["success"]:
+
+            fail_deployment(
+                deployment_id,
+                "Jenkins pipeline trigger failed"
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
+            return
+
+
+        queue_id = jenkins_result["queue_id"]
+        print("DEBUG QUEUE ID:", queue_id)
+
+        save_jenkins_queue(
+            deployment_id,
+            queue_id
+        )
+
+        pipeline_result = wait_for_pipeline(
+            deployment_id,
+            queue_id
+        )
+        print("DEBUG PIPELINE RESULT:", pipeline_result)
+
+
+        if pipeline_result["status"] != "SUCCESS":
+
+            fail_deployment(
+                deployment_id,
+                "Jenkins pipeline failed"
+            )
+
+            remove_repo_folder(
+                repo_path
+            )
+
+            return
+
+
+        emit_deployment_update(
+            deployment_id,
+            "ci_pipeline",
+            "Jenkins pipeline successful"
+        )
+
         # =================================================
         # BUILD IMAGE
         # =================================================
 
         update_deployment_step(
             deployment_id,
-            "building"
+            "docker_build"
         )
 
         emit_deployment_update(
             deployment_id,
-            "building",
+            "docker_build",
             "Building Docker image..."
         )
 
@@ -279,6 +359,7 @@ def run_deployment_job(
             repo_path,
             deployment_id
         )
+        print("DEBUG DOCKER RESULT:", docker_result)
 
         if not docker_result["success"]:
 

@@ -11,6 +11,7 @@ import ProductionLink from "../components/ProductionLink";
 import LogsViewer from "../components/LogsViewer";
 import DeploymentPipeline from "../components/DeploymentPipeline";
 import MonitoringPanel from "../components/monitoring/MonitoringPanel";
+import JenkinsPipeline from "../components/JenkinsPipeline";
 
 import "../styles/dashboard.css";
 import "../styles/navbar.css";
@@ -18,31 +19,7 @@ import "../styles/deployment.css";
 import "../styles/logs.css";
 import "../styles/animations.css";
 
-function ComingSoon({ title }) {
 
-  return (
-
-    <div className="coming-soon-page">
-
-      <div className="coming-soon-card">
-
-        <span className="coming-soon-badge-large">
-          Coming Soon
-        </span>
-
-        <h1>{title}</h1>
-
-        <p>
-          This feature is under active development.
-        </p>
-
-      </div>
-
-    </div>
-
-  );
-
-}
 
 function Dashboard() {
 
@@ -54,6 +31,11 @@ function Dashboard() {
 
   const [activePage, setActivePage] =
     useState("dashboard");
+
+
+  const [jenkinsData, setJenkinsData] =
+    useState(null);
+
 
   /*
   ─────────────────────────────────────────────
@@ -140,6 +122,8 @@ function Dashboard() {
   useEffect(() => {
   if (!statusData) return;
 
+  console.log("SOCKET STATUS:", statusData);
+
   setLatestDeployment((prev) => {
     if (!prev) return prev;
 
@@ -212,28 +196,44 @@ function Dashboard() {
           ?.toLowerCase();
 
       switch (status) {
-
         case "queued":
           return 10;
 
         case "cloning":
-          return 25;
+          return 20;
 
         case "detecting":
-          return 40;
+          return 30;
 
         case "dockerfile_generating":
+          return 40;
+
+        case "ci_pipeline":
+          return 50;
+
+        // Jenkins stages
+        case "clone_repository":
           return 55;
 
-        case "building":
-          return 72;
+        case "verify_files":
+          return 60;
+
+        case "build_docker_image":
+          return 70;
+
+        case "verify_image":
+          return 80;
+
+        // backend docker build
+        case "docker_build":
+          return 85;
 
         case "deploying":
-          return 90;
+          return 95;
 
         case "running":
-        case "live":
         case "completed":
+        case "live":
           return 100;
 
         case "failed":
@@ -241,7 +241,6 @@ function Dashboard() {
 
         default:
           return 0;
-
       }
 
     }, [latestDeployment]);
@@ -489,40 +488,66 @@ function Dashboard() {
 
               <div className="dashboard-grid">
 
-                {/* LEFT */}
+ {/* LEFT COLUMN */}
 
-                <div className="grid-left">
+<div className="grid-left">
 
-                  {/* PRODUCTION */}
+  {/* Deployment Pipeline */}
 
-                  <div className="section-block">
+  <div className="section-block">
 
-                    <p className="section-title">
-                      Production Deployment
-                    </p>
+    <p className="section-title">
+      Deployment Pipeline
+    </p>
 
-                    <ProductionLink
-                      deployment={latestDeployment}
-                    />
+    <DeploymentPipeline
+      status={latestDeployment?.status}
+    />
 
-                  </div>
+  </div>
 
-                  {/* PIPELINE */}
+  {/* Jenkins Pipeline */}
 
-                  <div className="section-block">
+  <div className="section-block jenkins-card">
 
-                    <p className="section-title">
-                      Deployment Pipeline
-                    </p>
+    <div className="jenkins-card-header">
 
-                    <DeploymentPipeline
-                      status={latestDeployment?.status}
-                    />
+      <div className="jenkins-header-left">
 
-                  </div>
+        <span className="jenkins-mini">
+          Continuous Integration
+        </span>
 
-                </div>
+        <h2 className="jenkins-title">
+          Build #{jenkinsData?.build_number || "--"}
+        </h2>
 
+        <p className="jenkins-subtitle">
+          Automated Jenkins CI/CD Execution
+        </p>
+
+      </div>
+
+      <div
+        className={`jenkins-status ${
+          jenkinsData?.status?.toLowerCase() || "pending"
+        }`}
+      >
+        {jenkinsData?.status || "PENDING"}
+      </div>
+
+    </div>
+
+    <JenkinsPipeline
+      stages={jenkinsData?.stages || []}
+      buildNumber={jenkinsData?.build_number}
+      status={jenkinsData?.status}
+      currentStage={jenkinsData?.current_stage}
+    />
+
+  </div>
+
+</div>
                 {/* RIGHT */}
 
                 <div className="grid-right">
@@ -754,7 +779,7 @@ function Dashboard() {
 
           </>
 
-        );
+        );  
 
       /*
       ─────────────────────────────────────────
@@ -799,6 +824,7 @@ function Dashboard() {
 
         );
 
+        
       /*
       ─────────────────────────────────────────
       LOGS PAGE
