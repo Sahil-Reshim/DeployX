@@ -824,61 +824,48 @@ function Dashboard() {
 
         );
 
-      /*
-      ─────────────────────────────────────────
-      MONITORING PAGE
-      ─────────────────────────────────────────
-      */
-
       case "monitoring":
 
-        return (
+  return (
 
-          <section className="deployment-ui page-spacing">
+    <section className="deployment-ui page-spacing">
 
-            <MonitoringPanel
-              metrics={metrics}
-              cpuHistory={cpuHistory}
-              ramHistory={ramHistory}
-              networkHistory={networkHistory}
-              deploymentStatus={
-                latestDeployment?.status
-              }
-              deploymentId={
-                latestDeployment?.id
-              }
-            />
-          </section>
+      <MonitoringPanel
+        metrics={metrics}
+        cpuHistory={cpuHistory}
+        ramHistory={ramHistory}
+        networkHistory={networkHistory}
+        deploymentStatus={
+          latestDeployment?.status
+        }
+        deploymentId={
+          latestDeployment?.id
+        }
+      />
 
-        );
+    </section>
 
-      /*
-      ─────────────────────────────────────────
-      ANALYTICS
-      ─────────────────────────────────────────
-      */
+  );
 
-      case "analytics":
+case "analytics":
 
-        return (
-          <ComingSoon title="Analytics Dashboard" />
-        );
+  return (
+    <ComingSoon
+      title="Analytics Dashboard"
+    />
+  );
 
-      /*
-      ─────────────────────────────────────────
-      SETTINGS
-      ─────────────────────────────────────────
-      */
+case "settings":
 
-      case "settings":
+  return (
+    <ComingSoon
+      title="Project Settings"
+    />
+  );
 
-        return (
-          <ComingSoon title="Project Settings" />
-        );
+default:
 
-      default:
-
-        return null;
+  return null;
 
     }
 
