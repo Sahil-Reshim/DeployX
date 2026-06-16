@@ -486,231 +486,231 @@ function Dashboard() {
 
              <div className="dashboard-grid">
 
-  {/* LEFT COLUMN */}
-  <div className="grid-left">
+        {/* LEFT COLUMN */}
+        <div className="grid-left">
 
-    {/* Deployment Pipeline */}
-    <div className="section-block">
+          {/* Deployment Pipeline */}
+          <div className="section-block">
 
-      <p className="section-title">
-        Deployment Pipeline
-      </p>
+            <p className="section-title">
+              Deployment Pipeline
+            </p>
 
-      <DeploymentPipeline
-        status={latestDeployment?.status}
-      />
+            <DeploymentPipeline
+              status={latestDeployment?.status}
+            />
 
-    </div>
+          </div>
 
-    {/* Jenkins Pipeline */}
-    <div className="section-block jenkins-card">
+          {/* Jenkins Pipeline */}
+          <div className="section-block jenkins-card">
 
-      <div className="jenkins-card-header">
+            <div className="jenkins-card-header">
 
-        <div className="jenkins-header-left">
+              <div className="jenkins-header-left">
 
-          <span className="jenkins-mini">
-            Continuous Integration
-          </span>
+                <span className="jenkins-mini">
+                  Continuous Integration
+                </span>
 
-          <h2 className="jenkins-title">
-            Build #{jenkinsData?.build_number || "--"}
-          </h2>
+                <h2 className="jenkins-title">
+                  Build #{jenkinsData?.build_number || "--"}
+                </h2>
 
-          <p className="jenkins-subtitle">
-            Automated Jenkins CI/CD Execution
-          </p>
+                <p className="jenkins-subtitle">
+                  Automated Jenkins CI/CD Execution
+                </p>
+
+              </div>
+
+              <div
+                className={`jenkins-status ${
+                  jenkinsData?.status?.toLowerCase() ||
+                  "pending"
+                }`}
+              >
+                {jenkinsData?.status || "PENDING"}
+              </div>
+
+            </div>
+
+            <JenkinsPipeline
+              stages={jenkinsData?.stages || []}
+              buildNumber={jenkinsData?.build_number}
+              status={jenkinsData?.status}
+              currentStage={jenkinsData?.current_stage}
+            />
+
+          </div>
 
         </div>
 
-        <div
-          className={`jenkins-status ${
-            jenkinsData?.status?.toLowerCase() ||
-            "pending"
-          }`}
-        >
-          {jenkinsData?.status || "PENDING"}
+        {/* RIGHT COLUMN */}
+        <div className="grid-right">
+
+          {/* Production URL */}
+          <div className="section-block">
+
+            <p className="section-title">
+              Production Deployment
+            </p>
+
+            <ProductionLink
+              deployment={latestDeployment}
+            />
+
+          </div>
+
+          {/* Monitoring */}
+          <div className="section-block monitoring-preview-card">
+
+            <div className="monitoring-header">
+
+              <div>
+
+                <p className="section-title">
+                  Live Infrastructure Monitoring
+                </p>
+
+                <h2 className="monitoring-title">
+                  DeployX Runtime Metrics
+                </h2>
+
+              </div>
+
+              <div
+                className={`monitoring-live ${
+                  monitoringAvailable
+                    ? "live"
+                    : "offline"
+                }`}
+              >
+
+                <span className="live-dot"></span>
+
+                {monitoringAvailable
+                  ? "LIVE"
+                  : "WAITING"}
+
+              </div>
+
+            </div>
+
+            <div className="monitoring-stats-grid">
+
+              <div className="monitor-stat-card">
+
+                <span className="monitor-stat-label">
+                  CPU Usage
+                </span>
+
+                <h1>{metrics?.cpu || 0}%</h1>
+
+              </div>
+
+              <div className="monitor-stat-card">
+
+                <span className="monitor-stat-label">
+                  RAM Usage
+                </span>
+
+                <h1>{metrics?.ram || 0}%</h1>
+
+              </div>
+
+            </div>
+
+            <div className="network-activity">
+
+              <div className="network-box">
+
+                <span>Network RX</span>
+
+                <h3>
+                  {metrics?.network_rx || 0}
+                  {" "}KB/s
+                </h3>
+
+              </div>
+
+              <div className="network-box">
+
+                <span>Network TX</span>
+
+                <h3>
+                  {metrics?.network_tx || 0}
+                  {" "}KB/s
+                </h3>
+
+              </div>
+
+            </div>
+
+            <div className="runtime-status-card">
+
+              <div className="runtime-item">
+
+                <span>Deployment</span>
+
+                <strong>
+                  {latestDeployment?.status ||
+                    "offline"}
+                </strong>
+
+              </div>
+
+              <div className="runtime-item">
+
+                <span>Container</span>
+
+                <strong>
+                  {latestDeployment?.container_id
+                    ? "Attached"
+                    : "Detached"}
+                </strong>
+
+              </div>
+
+            </div>
+
+            <div className="health-card">
+
+              <div className="health-pulse"></div>
+
+              <div>
+
+                <span className="health-label">
+                  System Health
+                </span>
+
+                <h2>
+                  {monitoringAvailable
+                    ? metrics?.health
+                    : "Waiting for Metrics"}
+                </h2>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Logs */}
+          <div className="section-block">
+
+            <p className="section-title">
+              Live Deployment Logs
+            </p>
+
+            <LogsViewer
+              deploymentId={latestDeployment?.id}
+            />
+
+          </div>
+
         </div>
 
       </div>
-
-      <JenkinsPipeline
-        stages={jenkinsData?.stages || []}
-        buildNumber={jenkinsData?.build_number}
-        status={jenkinsData?.status}
-        currentStage={jenkinsData?.current_stage}
-      />
-
-    </div>
-
-  </div>
-
-  {/* RIGHT COLUMN */}
-  <div className="grid-right">
-
-    {/* Production URL */}
-    <div className="section-block">
-
-      <p className="section-title">
-        Production Deployment
-      </p>
-
-      <ProductionLink
-        deployment={latestDeployment}
-      />
-
-    </div>
-
-    {/* Monitoring */}
-    <div className="section-block monitoring-preview-card">
-
-      <div className="monitoring-header">
-
-        <div>
-
-          <p className="section-title">
-            Live Infrastructure Monitoring
-          </p>
-
-          <h2 className="monitoring-title">
-            DeployX Runtime Metrics
-          </h2>
-
-        </div>
-
-        <div
-          className={`monitoring-live ${
-            monitoringAvailable
-              ? "live"
-              : "offline"
-          }`}
-        >
-
-          <span className="live-dot"></span>
-
-          {monitoringAvailable
-            ? "LIVE"
-            : "WAITING"}
-
-        </div>
-
-      </div>
-
-      <div className="monitoring-stats-grid">
-
-        <div className="monitor-stat-card">
-
-          <span className="monitor-stat-label">
-            CPU Usage
-          </span>
-
-          <h1>{metrics?.cpu || 0}%</h1>
-
-        </div>
-
-        <div className="monitor-stat-card">
-
-          <span className="monitor-stat-label">
-            RAM Usage
-          </span>
-
-          <h1>{metrics?.ram || 0}%</h1>
-
-        </div>
-
-      </div>
-
-      <div className="network-activity">
-
-        <div className="network-box">
-
-          <span>Network RX</span>
-
-          <h3>
-            {metrics?.network_rx || 0}
-            {" "}KB/s
-          </h3>
-
-        </div>
-
-        <div className="network-box">
-
-          <span>Network TX</span>
-
-          <h3>
-            {metrics?.network_tx || 0}
-            {" "}KB/s
-          </h3>
-
-        </div>
-
-      </div>
-
-      <div className="runtime-status-card">
-
-        <div className="runtime-item">
-
-          <span>Deployment</span>
-
-          <strong>
-            {latestDeployment?.status ||
-              "offline"}
-          </strong>
-
-        </div>
-
-        <div className="runtime-item">
-
-          <span>Container</span>
-
-          <strong>
-            {latestDeployment?.container_id
-              ? "Attached"
-              : "Detached"}
-          </strong>
-
-        </div>
-
-      </div>
-
-      <div className="health-card">
-
-        <div className="health-pulse"></div>
-
-        <div>
-
-          <span className="health-label">
-            System Health
-          </span>
-
-          <h2>
-            {monitoringAvailable
-              ? metrics?.health
-              : "Waiting for Metrics"}
-          </h2>
-
-        </div>
-
-      </div>
-
-    </div>
-
-    {/* Logs */}
-    <div className="section-block">
-
-      <p className="section-title">
-        Live Deployment Logs
-      </p>
-
-      <LogsViewer
-        deploymentId={latestDeployment?.id}
-      />
-
-    </div>
-
-  </div>
-
-</div>
               {/* HISTORY */}
 
               <div className="history-section">
