@@ -5,6 +5,7 @@ import Loader from "./Loader";
 function RepoForm({
   refreshDeployments,
   setActiveDeployment,
+  upsertLatestDeployment,
 }) {
 
   const [repoUrl, setRepoUrl] = useState("");
@@ -79,6 +80,8 @@ function RepoForm({
           id:
             deployment.id ||
             deployment.deployment_id,
+          jenkins_stages:
+            deployment.jenkins_stages || [],
         };
 
         const status = (
@@ -86,6 +89,10 @@ function RepoForm({
         ).toLowerCase();
 
         setActiveDeployment(
+          normalizedDeployment
+        );
+
+        upsertLatestDeployment?.(
           normalizedDeployment
         );
 
@@ -212,13 +219,18 @@ function RepoForm({
 
       /* ACTIVE DEPLOYMENT */
 
-      setActiveDeployment({
+      const newDeployment = {
         id: deploymentId,
         deployment_id: deploymentId,
         repo_url: repoUrl.trim(),
         status: "queued",
         logs: [],
-      });
+        jenkins_stages: [],
+      };
+
+      setActiveDeployment(newDeployment);
+
+      upsertLatestDeployment?.(newDeployment);
 
       /* START POLLING */
 
