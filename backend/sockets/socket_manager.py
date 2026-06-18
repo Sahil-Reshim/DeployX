@@ -7,103 +7,110 @@ socketio = SocketIO(
 
 
 def get_deployment_room(deployment_id):
-
-    return f"deployment_{deployment_id}"
+    return f"deployment_{int(deployment_id)}"
 
 
 def emit_deployment_update(
     deployment_id,
     status,
-    message
+    message,
+    jenkins_status=None,
+    jenkins_build_number=None,
+    current_step=None,
+    jenkins_stages=None,
+    url=None,
+    container_id=None,
+    metrics=None,
 ):
+    room = get_deployment_room(deployment_id)
 
-    room = get_deployment_room(
-        deployment_id
-    )
+    payload = {
+        "deployment_id": deployment_id,
+        "status": status,
+        "message": message,
+    }
+
+    if jenkins_status is not None:
+        payload["jenkins_status"] = jenkins_status
+
+    if jenkins_build_number is not None:
+        payload["jenkins_build_number"] = jenkins_build_number
+
+    if current_step is not None:
+        payload["current_step"] = current_step
+
+    if jenkins_stages is not None and len(jenkins_stages) > 0:
+        payload["jenkins_stages"] = jenkins_stages
+
+    if url is not None:
+        payload["url"] = url
+
+    if container_id is not None:
+        payload["container_id"] = container_id
+
+    if metrics is not None:
+        payload["metrics"] = metrics
 
     socketio.emit(
         "deployment_update",
-        {
-            "deployment_id": deployment_id,
-            "status": status,
-            "message": message
-        },
+        payload,
         room=room
     )
 
 
-def emit_log(
-    deployment_id,
-    log
-):
-
-    room = get_deployment_room(
-        deployment_id
-    )
+def emit_log(deployment_id, log):
+    room = get_deployment_room(deployment_id)
 
     socketio.emit(
         "log_update",
         {
             "deployment_id": deployment_id,
-            "log": log
+            "log": log,
         },
         room=room
     )
 
 
-def emit_monitoring_update(
-    deployment_id,
-    metrics
-):
-
-    room = get_deployment_room(
-        deployment_id
-    )
+def emit_monitoring_update(deployment_id, metrics):
+    room = get_deployment_room(deployment_id)
 
     socketio.emit(
         "deployment_update",
         {
             "deployment_id": deployment_id,
             "status": "running",
-            "metrics": metrics
+            "message": "Monitoring update",
+            "metrics": metrics,
         },
         room=room
     )
-    
-def emit_deployment_started(
-    deployment_id
-):
 
+
+def emit_deployment_started(deployment_id):
     socketio.emit(
         "deployment_started",
         {
             "deployment_id": deployment_id,
-            "status": "running"
+            "status": "running",
         }
     )
 
 
-def emit_deployment_stopped(
-    deployment_id
-):
-
+def emit_deployment_stopped(deployment_id):
     socketio.emit(
         "deployment_stopped",
         {
             "deployment_id": deployment_id,
-            "status": "stopped"
+            "status": "stopped",
         }
     )
 
 
-def emit_deployment_restarted(
-    deployment_id
-):
-
+def emit_deployment_restarted(deployment_id):
     socketio.emit(
         "deployment_restarted",
         {
             "deployment_id": deployment_id,
-            "status": "running"
+            "status": "running",
         }
     )

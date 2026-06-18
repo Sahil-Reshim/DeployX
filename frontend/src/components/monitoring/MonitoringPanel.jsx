@@ -15,7 +15,9 @@ function MonitoringPanel({
 
   const isInactive =
     !deploymentStatus ||
-    deploymentStatus === "queued";
+    ["queued", "cloning", "detecting", "dockerfile_generating", "ci_pipeline", "docker_build", "deploying", "failed"].includes(
+      deploymentStatus?.toLowerCase?.()
+    );
 
   if (isInactive) {
 
