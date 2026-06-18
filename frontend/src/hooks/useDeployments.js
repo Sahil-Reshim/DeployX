@@ -22,6 +22,14 @@ function useDeployments() {
     latestDeploymentRef.current = latestDeployment;
   }, [latestDeployment]);
 
+
+  // Temporary debug: log latestDeployment whenever it changes
+  useEffect(() => {
+    try {
+      console.log("Latest deployment:", latestDeployment);
+    } catch (e) {}
+  }, [latestDeployment]);
+
   const fetchDeployments = useCallback(async () => {
     try {
       const response = await API.get("/deployments");
@@ -29,6 +37,17 @@ function useDeployments() {
       const deploymentData = Array.isArray(response.data)
         ? response.data
         : response.data.deployments || [];
+
+
+
+  const fetchDeployments = useCallback(async () => {
+    try {
+      const response = await API.get("/deployments");
+
+      const deploymentData = Array.isArray(response.data)
+        ? response.data
+        : response.data.deployments || [];
+
 
       const sortedDeployments = deploymentData.sort(
         (a, b) =>

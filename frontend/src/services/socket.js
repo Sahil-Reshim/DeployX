@@ -9,7 +9,7 @@ const SOCKET_URL =
 const socket = io(
   SOCKET_URL,
   {
-    transports: ["websocket"],
+    transports: ["polling"],
 
     autoConnect: true,
 
