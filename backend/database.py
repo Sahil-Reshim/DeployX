@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS deployments (
     jenkins_queue_id INTEGER,
     jenkins_build_number INTEGER,
     jenkins_status TEXT,
+    jenkins_stages TEXT,
 
     test_count INTEGER DEFAULT 0,
     passed_tests INTEGER DEFAULT 0,
@@ -95,34 +96,32 @@ CREATE TABLE IF NOT EXISTS deployments (
     ]
 
     migrations = {
-    "assigned_port": "ALTER TABLE deployments ADD COLUMN assigned_port INTEGER",
-    "subdomain": "ALTER TABLE deployments ADD COLUMN subdomain TEXT",
-    "custom_url": "ALTER TABLE deployments ADD COLUMN custom_url TEXT",
-    "local_url": "ALTER TABLE deployments ADD COLUMN local_url TEXT",
-    "current_step": "ALTER TABLE deployments ADD COLUMN current_step TEXT",
-    "repo_name": "ALTER TABLE deployments ADD COLUMN repo_name TEXT",
-    "framework": "ALTER TABLE deployments ADD COLUMN framework TEXT",
-    "image_name": "ALTER TABLE deployments ADD COLUMN image_name TEXT",
-    "image_id": "ALTER TABLE deployments ADD COLUMN image_id TEXT",
-    "container_id": "ALTER TABLE deployments ADD COLUMN container_id TEXT",
-    "port": "ALTER TABLE deployments ADD COLUMN port TEXT",
-    "url": "ALTER TABLE deployments ADD COLUMN url TEXT",
-    "status": "ALTER TABLE deployments ADD COLUMN status TEXT",
-
-    "jenkins_queue_id": "ALTER TABLE deployments ADD COLUMN jenkins_queue_id INTEGER",
-    "jenkins_build_number": "ALTER TABLE deployments ADD COLUMN jenkins_build_number INTEGER",
-    "jenkins_status": "ALTER TABLE deployments ADD COLUMN jenkins_status TEXT",
-
-    "test_count": "ALTER TABLE deployments ADD COLUMN test_count INTEGER DEFAULT 0",
-    "passed_tests": "ALTER TABLE deployments ADD COLUMN passed_tests INTEGER DEFAULT 0",
-    "failed_tests": "ALTER TABLE deployments ADD COLUMN failed_tests INTEGER DEFAULT 0",
-    "test_coverage": "ALTER TABLE deployments ADD COLUMN test_coverage REAL DEFAULT 0",
-
-    "jenkins_console_log": "ALTER TABLE deployments ADD COLUMN jenkins_console_log TEXT",
-
-    "pipeline_started_at": "ALTER TABLE deployments ADD COLUMN pipeline_started_at TIMESTAMP",
-    "pipeline_finished_at": "ALTER TABLE deployments ADD COLUMN pipeline_finished_at TIMESTAMP"
-}
+        "assigned_port":         "ALTER TABLE deployments ADD COLUMN assigned_port INTEGER",
+        "subdomain":             "ALTER TABLE deployments ADD COLUMN subdomain TEXT",
+        "custom_url":            "ALTER TABLE deployments ADD COLUMN custom_url TEXT",
+        "local_url":             "ALTER TABLE deployments ADD COLUMN local_url TEXT",
+        "current_step":          "ALTER TABLE deployments ADD COLUMN current_step TEXT",
+        "repo_name":             "ALTER TABLE deployments ADD COLUMN repo_name TEXT",
+        "framework":             "ALTER TABLE deployments ADD COLUMN framework TEXT",
+        "image_name":            "ALTER TABLE deployments ADD COLUMN image_name TEXT",
+        "image_id":              "ALTER TABLE deployments ADD COLUMN image_id TEXT",
+        "container_id":          "ALTER TABLE deployments ADD COLUMN container_id TEXT",
+        "port":                  "ALTER TABLE deployments ADD COLUMN port TEXT",
+        "url":                   "ALTER TABLE deployments ADD COLUMN url TEXT",
+        "status":                "ALTER TABLE deployments ADD COLUMN status TEXT",
+        "jenkins_queue_id":      "ALTER TABLE deployments ADD COLUMN jenkins_queue_id INTEGER",
+        "jenkins_build_number":  "ALTER TABLE deployments ADD COLUMN jenkins_build_number INTEGER",
+        "jenkins_status":        "ALTER TABLE deployments ADD COLUMN jenkins_status TEXT",
+        # ← NEW: stores JSON array of pipeline stages
+        "jenkins_stages":        "ALTER TABLE deployments ADD COLUMN jenkins_stages TEXT",
+        "test_count":            "ALTER TABLE deployments ADD COLUMN test_count INTEGER DEFAULT 0",
+        "passed_tests":          "ALTER TABLE deployments ADD COLUMN passed_tests INTEGER DEFAULT 0",
+        "failed_tests":          "ALTER TABLE deployments ADD COLUMN failed_tests INTEGER DEFAULT 0",
+        "test_coverage":         "ALTER TABLE deployments ADD COLUMN test_coverage REAL DEFAULT 0",
+        "jenkins_console_log":   "ALTER TABLE deployments ADD COLUMN jenkins_console_log TEXT",
+        "pipeline_started_at":   "ALTER TABLE deployments ADD COLUMN pipeline_started_at TIMESTAMP",
+        "pipeline_finished_at":  "ALTER TABLE deployments ADD COLUMN pipeline_finished_at TIMESTAMP",
+    }
 
     for column, query in migrations.items():
         if column not in columns:

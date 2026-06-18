@@ -14,31 +14,36 @@ monitor_threads = {}
 
 def calculate_cpu_percent(stats):
 
-    cpu_delta = (
-        stats["cpu_stats"]["cpu_usage"]["total_usage"]
-        -
-        stats["precpu_stats"]["cpu_usage"]["total_usage"]
-    )
+    try:
 
-    system_delta = (
-        stats["cpu_stats"]["system_cpu_usage"]
-        -
-        stats["precpu_stats"]["system_cpu_usage"]
-    )
-
-    online_cpus = stats["cpu_stats"].get(
-        "online_cpus",
-        1
-    )
-
-    if system_delta > 0:
-
-        return round(
-            (cpu_delta / system_delta)
-            * online_cpus
-            * 100.0,
-            2
+        cpu_delta = (
+            stats["cpu_stats"]["cpu_usage"]["total_usage"]
+            -
+            stats["precpu_stats"]["cpu_usage"]["total_usage"]
         )
+
+        system_delta = (
+            stats["cpu_stats"]["system_cpu_usage"]
+            -
+            stats["precpu_stats"]["system_cpu_usage"]
+        )
+
+        online_cpus = stats["cpu_stats"].get(
+            "online_cpus",
+            1
+        )
+
+        if system_delta > 0:
+
+            return round(
+                (cpu_delta / system_delta)
+                * online_cpus
+                * 100.0,
+                2
+            )
+
+    except (KeyError, TypeError, ZeroDivisionError):
+        pass
 
     return 0
 
@@ -249,29 +254,30 @@ def start_monitoring(
     container_id
 ):
 
-    if deployment_id in monitor_threads:
+    deployment_key = int(deployment_id)
+
+    if deployment_key in monitor_threads:
         return
 
     thread = threading.Thread(
         target=monitor_container,
         args=(
-            deployment_id,
+            deployment_key,
             container_id
         ),
         daemon=True
     )
 
-    monitor_threads[
-        deployment_id
-    ] = thread
+    monitor_threads[deployment_key] = thread
 
     thread.start()
-    
+
+
 def stop_monitoring(
     deployment_id
 ):
 
     monitor_threads.pop(
-        deployment_id,
+        int(deployment_id),
         None
     )

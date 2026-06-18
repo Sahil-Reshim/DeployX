@@ -29,8 +29,11 @@ def join_deployment(data):
         "deployment_id"
     )
 
+    if deployment_id is None:
+        return
+
     room = get_deployment_room(
-        deployment_id
+        int(deployment_id)
     )
 
     join_room(room)
@@ -47,8 +50,11 @@ def leave_deployment(data):
         "deployment_id"
     )
 
+    if deployment_id is None:
+        return
+
     room = get_deployment_room(
-        deployment_id
+        int(deployment_id)
     )
 
     leave_room(room)

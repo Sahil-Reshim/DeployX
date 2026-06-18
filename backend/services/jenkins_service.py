@@ -4,7 +4,8 @@ import requests
 
 from services.deployment_service import (
     save_jenkins_build_number,
-    update_jenkins_status
+    update_jenkins_status,
+    save_jenkins_stages
 )
 
 from sockets.socket_manager import (
@@ -27,6 +28,9 @@ JENKINS_API_TOKEN = os.getenv(
 )
 
 REQUEST_TIMEOUT = 15
+QUEUE_WAIT_TIMEOUT = 600
+BUILD_WAIT_TIMEOUT = 3600
+POLL_INTERVAL = 3
 
 
 # =========================================================
@@ -132,7 +136,19 @@ def trigger_jenkins_job(repo_url):
                 "Location"
             )
 
-            queue_id = queue_url.split("/")[-2]
+            if not queue_url:
+                return {
+                    "success": False,
+                    "message": "Jenkins did not return queue Location header"
+                }
+
+            queue_id = queue_url.rstrip("/").split("/")[-1]
+
+            if not queue_id.isdigit():
+                return {
+                    "success": False,
+                    "message": f"Invalid Jenkins queue id from URL: {queue_url}"
+                }
 
             print(
                 "Queue ID:",
@@ -306,6 +322,32 @@ def get_pipeline_stages(build_number):
 
 
 # =========================================================
+# NORMALIZE STAGES FOR FRONTEND
+# =========================================================
+
+def normalize_stages(raw_stages):
+    """
+    Jenkins' wfapi returns stages with lots of extra fields
+    (durations, links, ids...). The frontend only cares about
+    name + status, so trim it down to exactly what
+    JenkinsPipeline.jsx expects:
+
+        [{"name": ..., "status": ...}, ...]
+    """
+
+    normalized = []
+
+    for stage in raw_stages:
+
+        normalized.append({
+            "name": stage.get("name", "Unknown Stage"),
+            "status": stage.get("status", "UNKNOWN")
+        })
+
+    return normalized
+
+
+# =========================================================
 # CONSOLE LOG
 # =========================================================
 
@@ -349,13 +391,53 @@ def wait_for_pipeline(
 
     print("Queue:", queue_id)
 
+    # Let the frontend light up the CI step and show "queued"
+    # immediately, instead of sitting on "Waiting" with no
+    # jenkins_status at all until the first build-number poll
+    # resolves.
+
+    update_jenkins_status(
+        deployment_id,
+        "QUEUED"
+    )
+
+    emit_deployment_update(
+        deployment_id,
+        "ci_pipeline",
+        "Waiting in Jenkins queue...",
+        jenkins_status="QUEUED",
+        current_step="queued_in_jenkins",
+    )
+
     build_number = None
+    queue_started = time.time()
 
     # -----------------------------------------
     # WAIT FOR BUILD NUMBER
     # -----------------------------------------
 
     while True:
+
+        if time.time() - queue_started > QUEUE_WAIT_TIMEOUT:
+            update_jenkins_status(
+                deployment_id,
+                "TIMEOUT"
+            )
+
+            emit_deployment_update(
+                deployment_id,
+                "ci_pipeline",
+                "Timed out waiting for Jenkins build number",
+                jenkins_status="TIMEOUT",
+                current_step="queue_timeout",
+            )
+
+            return {
+                "success": False,
+                "build_number": None,
+                "status": "TIMEOUT",
+                "message": "Timed out waiting in Jenkins queue"
+            }
 
         result = get_build_number(
             queue_id
@@ -369,7 +451,7 @@ def wait_for_pipeline(
 
             break
 
-        time.sleep(3)
+        time.sleep(POLL_INTERVAL)
 
     save_jenkins_build_number(
         deployment_id,
@@ -381,13 +463,45 @@ def wait_for_pipeline(
         build_number
     )
 
+    emit_deployment_update(
+        deployment_id,
+        "ci_pipeline",
+        f"Jenkins build #{build_number} started",
+        jenkins_status="BUILDING",
+        jenkins_build_number=build_number,
+        current_step="build_started",
+    )
+
     last_stage = None
+    build_started = time.time()
 
     # -----------------------------------------
     # WAIT FOR BUILD
     # -----------------------------------------
 
     while True:
+
+        if time.time() - build_started > BUILD_WAIT_TIMEOUT:
+            update_jenkins_status(
+                deployment_id,
+                "TIMEOUT"
+            )
+
+            emit_deployment_update(
+                deployment_id,
+                "ci_pipeline",
+                "Timed out waiting for Jenkins pipeline",
+                jenkins_status="TIMEOUT",
+                jenkins_build_number=build_number,
+                current_step="build_timeout",
+            )
+
+            return {
+                "success": False,
+                "build_number": build_number,
+                "status": "TIMEOUT",
+                "message": "Timed out waiting for Jenkins pipeline"
+            }
 
         status_result = get_build_status(
             build_number
@@ -398,13 +512,17 @@ def wait_for_pipeline(
             status_result["status"]
         )
 
-        stages = get_pipeline_stages(
+        raw_stages = get_pipeline_stages(
             build_number
+        )
+
+        stages = normalize_stages(
+            raw_stages
         )
 
         active_stage = None
 
-        for stage in stages:
+        for stage in raw_stages:
 
             if stage.get("status") in [
                 "IN_PROGRESS",
@@ -417,20 +535,40 @@ def wait_for_pipeline(
 
                 break
 
+        current_step_slug = (
+            active_stage.lower().replace(" ", "_")
+            if active_stage else None
+        )
+        # the DB (and therefore REST GET /deployments) always
+        # reflects what Jenkins is doing right now, not just the
+        # last stage transition.
+
+        save_jenkins_stages(
+            deployment_id,
+            stages,
+            current_stage=current_step_slug
+        )
+
+        # Emit a full CI payload on every poll (not just on stage
+        # change) so jenkins_status / build number / stage list
+        # stay live even while the same stage is still running.
+
+        emit_deployment_update(
+            deployment_id,
+            "ci_pipeline",
+            active_stage or "Running Jenkins pipeline...",
+            jenkins_status=status_result["status"],
+            jenkins_build_number=build_number,
+            current_step=current_step_slug,
+            jenkins_stages=stages
+        )
+
         if (
             active_stage and
             active_stage != last_stage
         ):
 
             last_stage = active_stage
-
-            emit_deployment_update(
-                deployment_id,
-                active_stage
-                    .lower()
-                    .replace(" ", "_"),
-                active_stage
-            )
 
             print(
                 "Current Stage:",
@@ -443,16 +581,46 @@ def wait_for_pipeline(
         ):
             break
 
-        time.sleep(3)
+        time.sleep(POLL_INTERVAL)
 
     print(
         "Pipeline Finished:",
         status_result["status"]
     )
 
+    # Final stage snapshot once the build leaves BUILDING, so the
+    # frontend gets a last update with the terminal jenkins_status
+    # (SUCCESS/FAILED/ABORTED) and the final stage list.
+
+    final_raw_stages = get_pipeline_stages(build_number)
+    final_stages = normalize_stages(final_raw_stages)
+
+    save_jenkins_stages(
+        deployment_id,
+        final_stages,
+        current_stage=None
+    )
+
+    emit_deployment_update(
+        deployment_id,
+        "ci_pipeline",
+        f"Jenkins pipeline finished: {status_result['status']}",
+        jenkins_status=status_result["status"],
+        jenkins_build_number=build_number,
+        jenkins_stages=final_stages
+    )
+
+    pipeline_success = (
+        status_result["status"] == "SUCCESS"
+    )
+
     return {
-        "success": True,
+        "success": pipeline_success,
         "build_number": build_number,
-        "status":
-            status_result["status"]
+        "status": status_result["status"],
+        "message": (
+            "Jenkins pipeline completed successfully"
+            if pipeline_success
+            else f"Jenkins pipeline ended with status {status_result['status']}"
+        )
     }
