@@ -1,8 +1,14 @@
 from flask_socketio import SocketIO
 
+import os
+
+_debug = os.getenv("SOCKETIO_DEBUG", "false").lower() in ("1", "true", "yes")
+
 socketio = SocketIO(
     cors_allowed_origins="*",
-    async_mode="threading"
+    async_mode="threading",
+    logger=_debug,
+    engineio_logger=_debug
 )
 
 
@@ -39,7 +45,9 @@ def emit_deployment_update(
     if current_step is not None:
         payload["current_step"] = current_step
 
-    if jenkins_stages is not None and len(jenkins_stages) > 0:
+    # Include jenkins_stages when explicitly provided (even empty list)
+    # so the frontend can clear previous stage data when appropriate.
+    if jenkins_stages is not None:
         payload["jenkins_stages"] = jenkins_stages
 
     if url is not None:
@@ -50,6 +58,10 @@ def emit_deployment_update(
 
     if metrics is not None:
         payload["metrics"] = metrics
+
+    # Temporary debug: print the payload being emitted so backend logs
+    # show exactly what the frontend will receive.
+    print("emit_deployment_update payload:", payload)
 
     socketio.emit(
         "deployment_update",

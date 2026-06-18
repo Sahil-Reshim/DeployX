@@ -22,6 +22,13 @@ function useDeployments() {
     latestDeploymentRef.current = latestDeployment;
   }, [latestDeployment]);
 
+  // Temporary debug: log latestDeployment whenever it changes
+  useEffect(() => {
+    try {
+      console.log("Latest deployment:", latestDeployment);
+    } catch (e) {}
+  }, [latestDeployment]);
+
   const fetchDeployments = useCallback(async () => {
     try {
       const response = await API.get("/deployments");
