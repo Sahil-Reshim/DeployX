@@ -45,9 +45,11 @@ def emit_deployment_update(
     if current_step is not None:
         payload["current_step"] = current_step
 
+
     # Include jenkins_stages when explicitly provided (even empty list)
     # so the frontend can clear previous stage data when appropriate.
-    if jenkins_stages is not None:
+    if jenkins_stages is not None
+    if jenkins_stages is not None and len(jenkins_stages) >
         payload["jenkins_stages"] = jenkins_stages
 
     if url is not None:
@@ -62,6 +64,7 @@ def emit_deployment_update(
     # Temporary debug: print the payload being emitted so backend logs
     # show exactly what the frontend will receive.
     print("emit_deployment_update payload:", payload)
+
 
     socketio.emit(
         "deployment_update",

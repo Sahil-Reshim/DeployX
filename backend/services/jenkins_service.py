@@ -32,6 +32,7 @@ BUILD_WAIT_TIMEOUT = 3600
 POLL_INTERVAL = 3
 
 
+
 # Create a requests Session with simple retry/backoff for transient errors
 def _make_session():
     s = requests.Session()
@@ -55,6 +56,7 @@ def _get_session():
     # create a fresh session each time to ensure env vars (loaded at runtime)
     # are honored even if .env was loaded after module import
     return _make_session()
+
 
 
 # =========================================================
@@ -188,9 +190,25 @@ def trigger_jenkins_job(repo_url):
             if not queue_url:
                 return {"success": False, "message": "Jenkins did not return queue Location header"}
 
+
             queue_id = queue_url.rstrip("/").split("/")[-1]
             if not queue_id.isdigit():
                 return {"success": False, "message": f"Invalid Jenkins queue id from URL: {queue_url}"}
+
+            if not queue_url:
+                return {
+                    "success": False,
+                    "message": "Jenkins did not return queue Location header"
+                }
+
+            queue_id = queue_url.rstrip("/").split("/")[-1]
+
+            if not queue_id.isdigit():
+                return {
+                    "success": False,
+                    "message": f"Invalid Jenkins queue id from URL: {queue_url}"
+                }
+
 
             print("Queue ID:", queue_id)
             return {"success": True, "queue_id": int(queue_id)}
@@ -615,7 +633,11 @@ def wait_for_pipeline(
         status_result["status"] == "SUCCESS"
     )
 
+
     result = {
+
+    return {
+
         "success": pipeline_success,
         "build_number": build_number,
         "status": status_result["status"],
@@ -624,6 +646,7 @@ def wait_for_pipeline(
             if pipeline_success
             else f"Jenkins pipeline ended with status {status_result['status']}"
         )
+
     }
 
     if not pipeline_success:
@@ -632,3 +655,6 @@ def wait_for_pipeline(
         result["console_log"] = console[:8000]
 
     return result
+
+    }
+

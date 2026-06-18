@@ -15,10 +15,12 @@ function useDeploymentSocket(deploymentId) {
 
   const handleDeploymentUpdate = useCallback(
     (data) => {
+
       // Temporary debug: log incoming socket payload
       try {
         console.log("Socket payload:", data);
       } catch (e) {}
+
       if (!deploymentId) {
         return;
       }
@@ -51,6 +53,7 @@ function useDeploymentSocket(deploymentId) {
 
     const handleConnect = () => {
       setConnectionStatus("connected");
+
       try {
         console.log("Socket connected:", socket.id, socket.connected);
       } catch (e) {}
@@ -67,6 +70,12 @@ function useDeploymentSocket(deploymentId) {
     const handleConnectError = (error) => {
       console.error("Socket connect_error:", error);
       setConnectionStatus("error");
+      joinRoom();
+    };
+
+    const handleDisconnect = () => {
+      setConnectionStatus("disconnected");
+
     };
 
     const handleLogUpdate = (data) => {
