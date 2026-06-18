@@ -37,41 +37,51 @@ def init_db():
     # =====================================================
 
     cursor.execute("""
-    CREATE TABLE IF NOT EXISTS deployments (
+CREATE TABLE IF NOT EXISTS deployments (
 
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
 
-        repo_url TEXT,
-        repo_name TEXT,
+    repo_url TEXT,
+    repo_name TEXT,
 
-        framework TEXT,
+    framework TEXT,
 
-        image_name TEXT,
-        image_id TEXT,
+    image_name TEXT,
+    image_id TEXT,
 
-        container_id TEXT,
+    container_id TEXT,
 
-        port TEXT,
+    port TEXT,
 
-        assigned_port INTEGER,
+    assigned_port INTEGER,
 
-        subdomain TEXT,
-        custom_url TEXT,
+    subdomain TEXT,
+    custom_url TEXT,
 
-        url TEXT,
-        local_url TEXT,
+    url TEXT,
+    local_url TEXT,
 
-        status TEXT,
-        current_step TEXT,
-        
-        jenkins_queue_id INTEGER,
-        jenkins_build_number INTEGER,
-        jenkins_status TEXT,
+    status TEXT,
+    current_step TEXT,
 
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    jenkins_queue_id INTEGER,
+    jenkins_build_number INTEGER,
+    jenkins_status TEXT,
 
-    )
-    """)
+    test_count INTEGER DEFAULT 0,
+    passed_tests INTEGER DEFAULT 0,
+    failed_tests INTEGER DEFAULT 0,
+    test_coverage REAL DEFAULT 0,
+
+    jenkins_console_log TEXT,
+
+    pipeline_started_at TIMESTAMP,
+    pipeline_finished_at TIMESTAMP,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+)
+""")
 
     # =====================================================
     # MIGRATION SUPPORT
@@ -85,23 +95,34 @@ def init_db():
     ]
 
     migrations = {
-        "assigned_port": "ALTER TABLE deployments ADD COLUMN assigned_port INTEGER",
-        "subdomain": "ALTER TABLE deployments ADD COLUMN subdomain TEXT",
-        "custom_url": "ALTER TABLE deployments ADD COLUMN custom_url TEXT",
-        "local_url": "ALTER TABLE deployments ADD COLUMN local_url TEXT",
-        "current_step": "ALTER TABLE deployments ADD COLUMN current_step TEXT",
-        "repo_name": "ALTER TABLE deployments ADD COLUMN repo_name TEXT",
-        "framework": "ALTER TABLE deployments ADD COLUMN framework TEXT",
-        "image_name": "ALTER TABLE deployments ADD COLUMN image_name TEXT",
-        "image_id": "ALTER TABLE deployments ADD COLUMN image_id TEXT",
-        "container_id": "ALTER TABLE deployments ADD COLUMN container_id TEXT",
-        "port": "ALTER TABLE deployments ADD COLUMN port TEXT",
-        "url": "ALTER TABLE deployments ADD COLUMN url TEXT",
-        "status": "ALTER TABLE deployments ADD COLUMN status TEXT",
-        "jenkins_queue_id": "ALTER TABLE deployments ADD COLUMN jenkins_queue_id INTEGER",
-        "jenkins_build_number": "ALTER TABLE deployments ADD COLUMN jenkins_build_number INTEGER",
-        "jenkins_status": "ALTER TABLE deployments ADD COLUMN jenkins_status TEXT"
-    }
+    "assigned_port": "ALTER TABLE deployments ADD COLUMN assigned_port INTEGER",
+    "subdomain": "ALTER TABLE deployments ADD COLUMN subdomain TEXT",
+    "custom_url": "ALTER TABLE deployments ADD COLUMN custom_url TEXT",
+    "local_url": "ALTER TABLE deployments ADD COLUMN local_url TEXT",
+    "current_step": "ALTER TABLE deployments ADD COLUMN current_step TEXT",
+    "repo_name": "ALTER TABLE deployments ADD COLUMN repo_name TEXT",
+    "framework": "ALTER TABLE deployments ADD COLUMN framework TEXT",
+    "image_name": "ALTER TABLE deployments ADD COLUMN image_name TEXT",
+    "image_id": "ALTER TABLE deployments ADD COLUMN image_id TEXT",
+    "container_id": "ALTER TABLE deployments ADD COLUMN container_id TEXT",
+    "port": "ALTER TABLE deployments ADD COLUMN port TEXT",
+    "url": "ALTER TABLE deployments ADD COLUMN url TEXT",
+    "status": "ALTER TABLE deployments ADD COLUMN status TEXT",
+
+    "jenkins_queue_id": "ALTER TABLE deployments ADD COLUMN jenkins_queue_id INTEGER",
+    "jenkins_build_number": "ALTER TABLE deployments ADD COLUMN jenkins_build_number INTEGER",
+    "jenkins_status": "ALTER TABLE deployments ADD COLUMN jenkins_status TEXT",
+
+    "test_count": "ALTER TABLE deployments ADD COLUMN test_count INTEGER DEFAULT 0",
+    "passed_tests": "ALTER TABLE deployments ADD COLUMN passed_tests INTEGER DEFAULT 0",
+    "failed_tests": "ALTER TABLE deployments ADD COLUMN failed_tests INTEGER DEFAULT 0",
+    "test_coverage": "ALTER TABLE deployments ADD COLUMN test_coverage REAL DEFAULT 0",
+
+    "jenkins_console_log": "ALTER TABLE deployments ADD COLUMN jenkins_console_log TEXT",
+
+    "pipeline_started_at": "ALTER TABLE deployments ADD COLUMN pipeline_started_at TIMESTAMP",
+    "pipeline_finished_at": "ALTER TABLE deployments ADD COLUMN pipeline_finished_at TIMESTAMP"
+}
 
     for column, query in migrations.items():
         if column not in columns:
