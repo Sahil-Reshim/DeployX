@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from database import get_db_connection
@@ -13,7 +14,8 @@ from managers.state_manager import (
 from sockets.socket_manager import (
     emit_deployment_started,
     emit_deployment_stopped,
-    emit_deployment_restarted
+    emit_deployment_restarted,
+    emit_deployment_update,
 )
 
 from services.monitor_service import (
@@ -36,9 +38,40 @@ from services.proxy_manager import (
     reload_proxy
 )
 
-# =========================================================
-# CREATE DEPLOYMENT
-# =========================================================
+from services.port_allocator import (
+    release_port
+)
+
+
+def serialize_deployment(row):
+    """
+    Normalize a deployment row dict for API responses and sockets.
+    Ensures Jenkins fields are always present with safe defaults.
+    """
+
+    if not row:
+        return None
+
+    d = dict(row)
+
+    raw_stages = d.get("jenkins_stages")
+    if isinstance(raw_stages, str) and raw_stages:
+        try:
+            d["jenkins_stages"] = json.loads(raw_stages)
+        except (TypeError, json.JSONDecodeError):
+            d["jenkins_stages"] = []
+    elif not isinstance(d.get("jenkins_stages"), list):
+        d["jenkins_stages"] = []
+
+    d.setdefault("jenkins_status", None)
+    d.setdefault("jenkins_build_number", None)
+    d.setdefault("current_step", None)
+    d.setdefault("status", "queued")
+    d.setdefault("url", None)
+    d.setdefault("container_id", None)
+
+    return d
+
 
 def create_deployment(repo_url):
 
@@ -212,7 +245,59 @@ def update_jenkins_status(
     conn.commit()
     conn.close()
 
-    # =========================================================
+
+# =========================================================
+# SAVE JENKINS STAGES   ← NEW
+# =========================================================
+
+def save_jenkins_stages(
+    deployment_id,
+    stages,
+    current_stage=None
+):
+    """
+    Persists the latest Jenkins stage list and active stage
+    to the database so the API can return them on page reload.
+
+    stages   : list of dicts  [{"name": ..., "status": ...}, ...]
+    current_stage : str | None  — the stage currently IN_PROGRESS
+    """
+
+    conn = get_db_connection()
+
+    if stages:
+        conn.execute(
+            """
+            UPDATE deployments
+            SET
+                jenkins_stages=?,
+                current_step=?
+            WHERE id=?
+            """,
+            (
+                json.dumps(stages),
+                current_stage,
+                deployment_id
+            )
+        )
+    elif current_stage is not None:
+        conn.execute(
+            """
+            UPDATE deployments
+            SET current_step=?
+            WHERE id=?
+            """,
+            (
+                current_stage,
+                deployment_id
+            )
+        )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
 # SAVE TEST RESULTS
 # =========================================================
 
@@ -440,39 +525,39 @@ def complete_deployment(
     # Runtime state
 
     set_state(
-    str(deployment_id),
-    {
-        "container_id": container_result.get(
-            "container_id"
-        ),
+        str(deployment_id),
+        {
+            "container_id": container_result.get(
+                "container_id"
+            ),
 
-        "status": "running",
+            "status": "running",
 
-        "internal_port": container_result.get(
-            "internal_port"
-        ),
+            "internal_port": container_result.get(
+                "internal_port"
+            ),
 
-        "public_port": container_result.get(
-            "assigned_port"
-        ),
+            "public_port": container_result.get(
+                "assigned_port"
+            ),
 
-        "assigned_port": container_result.get(
-            "assigned_port"
-        ),
+            "assigned_port": container_result.get(
+                "assigned_port"
+            ),
 
-        "subdomain": container_result.get(
-            "subdomain"
-        ),
+            "subdomain": container_result.get(
+                "subdomain"
+            ),
 
-        "custom_url": container_result.get(
-            "custom_url"
-        ),
+            "custom_url": container_result.get(
+                "custom_url"
+            ),
 
-        "monitoring_active": True,
+            "monitoring_active": True,
 
-        "log_streaming": True
-    }
-)
+            "log_streaming": True
+        }
+    )
 
     start_monitoring(
         deployment_id,
@@ -495,10 +580,13 @@ def fail_deployment(
     conn.execute(
         """
         UPDATE deployments
-        SET status=?
+        SET
+            status=?,
+            current_step=?
         WHERE id=?
         """,
         (
+            status,
             status,
             deployment_id
         )
@@ -526,10 +614,12 @@ def get_all_deployments():
 
     conn.close()
 
-    return [
-        dict(row)
-        for row in deployments
-    ]
+    result = []
+
+    for row in deployments:
+        result.append(serialize_deployment(row))
+
+    return result
 
 
 # =========================================================
@@ -555,10 +645,10 @@ def get_deployment_by_id(
 
     conn.close()
 
-    if deployment:
-        return dict(deployment)
+    if not deployment:
+        return None
 
-    return None
+    return serialize_deployment(deployment)
 
 
 # =========================================================
@@ -574,10 +664,52 @@ def stop_deployment(
     )
 
     if not state:
-        return {
-            "success": False,
-            "message": "Deployment not found"
-        }
+
+        deployment = get_deployment_by_id(
+            deployment_id
+        )
+
+        if (
+            deployment and
+            deployment.get("container_id")
+        ):
+
+            state = {
+                "container_id": deployment.get(
+                    "container_id"
+                ),
+                "status": deployment.get(
+                    "status",
+                    "running"
+                ),
+                "internal_port": None,
+                "public_port": deployment.get(
+                    "assigned_port"
+                ),
+                "assigned_port": deployment.get(
+                    "assigned_port"
+                ),
+                "subdomain": deployment.get(
+                    "subdomain"
+                ),
+                "custom_url": deployment.get(
+                    "custom_url"
+                ),
+                "monitoring_active": True,
+                "log_streaming": True,
+            }
+
+            set_state(
+                str(deployment_id),
+                state
+            )
+
+        else:
+
+            return {
+                "success": False,
+                "message": "Deployment not found"
+            }
 
     result = stop_container(
         state["container_id"]
@@ -592,8 +724,8 @@ def stop_deployment(
     )
 
     stop_monitoring(
-    deployment_id
-)
+        deployment_id
+    )
 
     update_state(
         str(deployment_id),
@@ -606,6 +738,12 @@ def stop_deployment(
 
     emit_deployment_stopped(
         deployment_id
+    )
+
+    emit_deployment_update(
+        deployment_id,
+        "stopped",
+        "Deployment stopped"
     )
 
     return {
@@ -627,10 +765,52 @@ def start_deployment(
     )
 
     if not state:
-        return {
-            "success": False,
-            "message": "Deployment not found"
-        }
+
+        deployment = get_deployment_by_id(
+            deployment_id
+        )
+
+        if (
+            deployment and
+            deployment.get("container_id")
+        ):
+
+            state = {
+                "container_id": deployment.get(
+                    "container_id"
+                ),
+                "status": deployment.get(
+                    "status",
+                    "stopped"
+                ),
+                "internal_port": None,
+                "public_port": deployment.get(
+                    "assigned_port"
+                ),
+                "assigned_port": deployment.get(
+                    "assigned_port"
+                ),
+                "subdomain": deployment.get(
+                    "subdomain"
+                ),
+                "custom_url": deployment.get(
+                    "custom_url"
+                ),
+                "monitoring_active": False,
+                "log_streaming": False,
+            }
+
+            set_state(
+                str(deployment_id),
+                state
+            )
+
+        else:
+
+            return {
+                "success": False,
+                "message": "Deployment not found"
+            }
 
     result = start_container(
         state["container_id"]
@@ -660,6 +840,12 @@ def start_deployment(
 
     emit_deployment_started(
         deployment_id
+    )
+
+    emit_deployment_update(
+        deployment_id,
+        "running",
+        "Deployment started"
     )
 
     return {
@@ -692,6 +878,12 @@ def restart_deployment(deployment_id):
         deployment_id
     )
 
+    emit_deployment_update(
+        deployment_id,
+        "running",
+        "Deployment restarted"
+    )
+
     return {
         "success": True,
         "message": "Deployment restarted"
@@ -700,16 +892,6 @@ def restart_deployment(deployment_id):
 # =========================================================
 # DELETE LIFECYCLE
 # =========================================================
-
-from services.proxy_manager import (
-    delete_route,
-    reload_proxy
-)
-
-from services.port_allocator import (
-    release_port
-)
-
 
 def delete_deployment_lifecycle(
     deployment_id

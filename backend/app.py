@@ -139,6 +139,30 @@ init_db()
 restore_runtime_states()
 
 # =========================================================
+# DEPLOYMENT FAILURE HELPER
+# =========================================================
+
+def mark_deployment_failed(
+    deployment_id,
+    message
+):
+    fail_deployment(
+        deployment_id,
+        "failed"
+    )
+
+    emit_deployment_update(
+        deployment_id,
+        "failed",
+        message
+    )
+
+    emit_log(
+        deployment_id,
+        f"ERROR: {message}"
+    )
+
+# =========================================================
 # HOME
 # =========================================================
 
@@ -199,9 +223,12 @@ def run_deployment_job(
 
         if not clone_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "failed"
+                clone_result.get(
+                    "message",
+                    "Repository clone failed"
+                )
             )
 
             repo_path = clone_result.get(
@@ -241,9 +268,12 @@ def run_deployment_job(
 
         if not framework_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "failed"
+                framework_result.get(
+                    "message",
+                    "Framework detection failed"
+                )
             )
 
             remove_repo_folder(
@@ -274,9 +304,12 @@ def run_deployment_job(
 
         if not dockerfile_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "failed"
+                dockerfile_result.get(
+                    "message",
+                    "Dockerfile generation failed"
+                )
             )
 
             remove_repo_folder(
@@ -297,21 +330,24 @@ def run_deployment_job(
         emit_deployment_update(
             deployment_id,
             "ci_pipeline",
-            "Running Jenkins CI pipeline..."
+            "Running Jenkins CI pipeline...",
+            jenkins_status="TRIGGERED",
+            current_step="triggering_jenkins",
         )
 
 
         jenkins_result = trigger_jenkins_job(
             repo_url
         )
-        print("DEBUG JENKINS RESULT:", jenkins_result)
-
 
         if not jenkins_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "Jenkins pipeline trigger failed"
+                jenkins_result.get(
+                    "message",
+                    "Jenkins pipeline trigger failed"
+                )
             )
 
             remove_repo_folder(
@@ -322,7 +358,6 @@ def run_deployment_job(
 
 
         queue_id = jenkins_result["queue_id"]
-        print("DEBUG QUEUE ID:", queue_id)
 
         save_jenkins_queue(
             deployment_id,
@@ -333,14 +368,15 @@ def run_deployment_job(
             deployment_id,
             queue_id
         )
-        print("DEBUG PIPELINE RESULT:", pipeline_result)
 
+        if not pipeline_result.get("success"):
 
-        if pipeline_result["status"] != "SUCCESS":
-
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "Jenkins pipeline failed"
+                pipeline_result.get(
+                    "message",
+                    "Jenkins pipeline failed"
+                )
             )
 
             remove_repo_folder(
@@ -375,13 +411,15 @@ def run_deployment_job(
             repo_path,
             deployment_id
         )
-        print("DEBUG DOCKER RESULT:", docker_result)
 
         if not docker_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "failed"
+                docker_result.get(
+                    "message",
+                    "Docker image build failed"
+                )
             )
 
             remove_repo_folder(
@@ -446,9 +484,12 @@ def run_deployment_job(
 
         if not container_result["success"]:
 
-            fail_deployment(
+            mark_deployment_failed(
                 deployment_id,
-                "failed"
+                container_result.get(
+                    "message",
+                    "Container failed to start"
+                )
             )
 
             cleanup_proxy_route(
@@ -481,7 +522,9 @@ def run_deployment_job(
         emit_deployment_update(
             deployment_id,
             "running",
-            "Container running"
+            "Container running",
+            url=custom_url,
+            container_id=container_id
         )
 
         container_result["assigned_port"] = assigned_port
@@ -527,20 +570,9 @@ def run_deployment_job(
 
         print(str(e))
 
-        emit_deployment_update(
+        mark_deployment_failed(
             deployment_id,
-            "failed",
             str(e)
-        )
-
-        emit_log(
-            deployment_id,
-            f"ERROR: {str(e)}"
-        )
-
-        fail_deployment(
-            deployment_id,
-            "failed"
         )
 
         if container_id:
@@ -623,6 +655,12 @@ def deploy():
         )
 
         deployment_thread.start()
+
+        emit_deployment_update(
+            deployment_id,
+            "queued",
+            "Deployment queued"
+        )
 
         return jsonify({
 
@@ -1253,9 +1291,14 @@ def cleanup_repo():
 
 if __name__ == "__main__":
 
+    debug_mode = (
+        os.getenv("FLASK_DEBUG", "false").lower()
+        in ("1", "true", "yes")
+    )
+
     socketio.run(
         app,
         host="0.0.0.0",
-        port=5000,
-        debug=True
+        port=int(os.getenv("PORT", "5000")),
+        debug=debug_mode
     )

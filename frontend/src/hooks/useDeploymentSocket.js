@@ -1,197 +1,103 @@
 import {
   useEffect,
-  useState
+  useState,
+  useCallback,
 } from "react";
 
 import socket from "../services/socket";
+import { mergeSocketUpdate } from "../utils/deploymentMerge";
 
-function useDeploymentSocket(
-  deploymentId
-) {
+function useDeploymentSocket(deploymentId) {
+  const [statusData, setStatusData] = useState(null);
+  const [logs, setLogs] = useState([]);
+  const [connectionStatus, setConnectionStatus] =
+    useState("connecting");
 
-  const [statusData, setStatusData] =
-    useState(null);
+  const handleDeploymentUpdate = useCallback(
+    (data) => {
+      if (!deploymentId) {
+        return;
+      }
 
-  const [logs, setLogs] =
-    useState([]);
+      if (
+        data?.deployment_id != null &&
+        Number(data.deployment_id) !== Number(deploymentId)
+      ) {
+        return;
+      }
 
-  const [
-    connectionStatus,
-    setConnectionStatus
-  ] = useState("connecting");
+      setStatusData((prev) =>
+        mergeSocketUpdate(prev, data)
+      );
+    },
+    [deploymentId]
+  );
 
   useEffect(() => {
-
-    if (!deploymentId)
+    if (!deploymentId) {
+      setStatusData(null);
       return;
-
-    const joinRoom = () => {
-
-      socket.emit(
-        "join_deployment",
-        {
-          deployment_id:
-            deploymentId
-        }
-      );
-
-    };
-
-    /*
-      CONNECT
-    */
-
-    const handleConnect =
-      () => {
-
-        console.log(
-          "Socket connected"
-        );
-
-        setConnectionStatus(
-          "connected"
-        );
-
-        joinRoom();
-      };
-
-    /*
-      DISCONNECT
-    */
-
-    const handleDisconnect =
-      () => {
-
-        console.log(
-          "Socket disconnected"
-        );
-
-        setConnectionStatus(
-          "disconnected"
-        );
-      };
-
-    /*
-      DEPLOYMENT UPDATE
-    */
-
-    const handleDeploymentUpdate =
-      (data) => {
-
-        setStatusData(data);
-      };
-
-    /*
-      LOG UPDATE
-    */
-
-    const handleLogUpdate =
-      (data) => {
-
-        setLogs((prev) => {
-
-          if (
-            prev[
-              prev.length - 1
-            ] === data.log
-          ) {
-
-            return prev;
-          }
-
-          return [
-            ...prev,
-            data.log
-          ];
-
-        });
-      };
-
-    /*
-      REGISTER EVENTS
-    */
-
-    socket.on(
-      "connect",
-      handleConnect
-    );
-
-    socket.on(
-      "disconnect",
-      handleDisconnect
-    );
-
-    socket.on(
-      "deployment_update",
-      handleDeploymentUpdate
-    );
-
-    socket.on(
-      "log_update",
-      handleLogUpdate
-    );
-
-    /*
-      IF ALREADY CONNECTED
-    */
-
-    if (socket.connected) {
-
-      joinRoom();
-
-      setConnectionStatus(
-        "connected"
-      );
-
     }
 
-    /*
-      CLEANUP
-    */
-
-    return () => {
-
-      socket.emit(
-        "leave_deployment",
-        {
-          deployment_id:
-            deploymentId
-        }
-      );
-
-      socket.off(
-        "connect",
-        handleConnect
-      );
-
-      socket.off(
-        "disconnect",
-        handleDisconnect
-      );
-
-      socket.off(
-        "deployment_update",
-        handleDeploymentUpdate
-      );
-
-      socket.off(
-        "log_update",
-        handleLogUpdate
-      );
+    const joinRoom = () => {
+      socket.emit("join_deployment", {
+        deployment_id: deploymentId,
+      });
     };
 
-  }, [deploymentId]);
+    const handleConnect = () => {
+      setConnectionStatus("connected");
+      joinRoom();
+    };
+
+    const handleDisconnect = () => {
+      setConnectionStatus("disconnected");
+    };
+
+    const handleLogUpdate = (data) => {
+      if (
+        data?.deployment_id != null &&
+        Number(data.deployment_id) !== Number(deploymentId)
+      ) {
+        return;
+      }
+
+      setLogs((prev) => {
+        if (prev[prev.length - 1] === data.log) {
+          return prev;
+        }
+
+        return [...prev, data.log];
+      });
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("disconnect", handleDisconnect);
+    socket.on("deployment_update", handleDeploymentUpdate);
+    socket.on("log_update", handleLogUpdate);
+
+    if (socket.connected) {
+      joinRoom();
+      setConnectionStatus("connected");
+    }
+
+    return () => {
+      socket.emit("leave_deployment", {
+        deployment_id: deploymentId,
+      });
+
+      socket.off("connect", handleConnect);
+      socket.off("disconnect", handleDisconnect);
+      socket.off("deployment_update", handleDeploymentUpdate);
+      socket.off("log_update", handleLogUpdate);
+    };
+  }, [deploymentId, handleDeploymentUpdate]);
 
   return {
-
     statusData,
-
     logs,
-
-    connectionStatus
-
+    connectionStatus,
   };
-
 }
 
 export default useDeploymentSocket;
