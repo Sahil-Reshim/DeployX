@@ -2,6 +2,7 @@ from datetime import datetime
 
 from database import get_db_connection
 
+
 from managers.state_manager import (
     set_state,
     get_state,
@@ -204,6 +205,144 @@ def update_jenkins_status(
         """,
         (
             status,
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+    # =========================================================
+# SAVE TEST RESULTS
+# =========================================================
+
+def save_test_results(
+    deployment_id,
+    total,
+    passed,
+    failed
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET
+            test_count=?,
+            passed_tests=?,
+            failed_tests=?
+        WHERE id=?
+        """,
+        (
+            total,
+            passed,
+            failed,
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# SAVE JENKINS CONSOLE LOG
+# =========================================================
+
+def save_console_log(
+    deployment_id,
+    log_text
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET jenkins_console_log=?
+        WHERE id=?
+        """,
+        (
+            log_text,
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# PIPELINE STARTED
+# =========================================================
+
+def mark_pipeline_started(
+    deployment_id
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET pipeline_started_at=?
+        WHERE id=?
+        """,
+        (
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# PIPELINE FINISHED
+# =========================================================
+
+def mark_pipeline_finished(
+    deployment_id
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET pipeline_finished_at=?
+        WHERE id=?
+        """,
+        (
+            datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"
+            ),
+            deployment_id
+        )
+    )
+
+    conn.commit()
+    conn.close()
+
+
+# =========================================================
+# UPDATE PIPELINE STAGE
+# =========================================================
+
+def update_pipeline_stage(
+    deployment_id,
+    stage
+):
+    conn = get_db_connection()
+
+    conn.execute(
+        """
+        UPDATE deployments
+        SET current_step=?
+        WHERE id=?
+        """,
+        (
+            stage,
             deployment_id
         )
     )

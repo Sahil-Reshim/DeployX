@@ -1,7 +1,6 @@
-from urllib import response
-
-import requests
+import os
 import time
+import requests
 
 from services.deployment_service import (
     save_jenkins_build_number,
@@ -12,26 +11,70 @@ from sockets.socket_manager import (
     emit_deployment_update
 )
 
-JENKINS_URL = "http://localhost:8081"
-JOB_NAME = "flask-docker-build"
+# =========================================================
+# ENVIRONMENT VARIABLES
+# =========================================================
 
-JENKINS_USER = "sahil-reshim"
-JENKINS_API_TOKEN = "11ebabcad133524570f87bbedb04dd8fe5"
+JENKINS_URL = os.getenv("JENKINS_URL")
+JENKINS_JOB_NAME = os.getenv(
+    "JENKINS_JOB_NAME",
+    "flask-docker-build"
+)
 
+JENKINS_USER = os.getenv("JENKINS_USER")
+JENKINS_API_TOKEN = os.getenv(
+    "JENKINS_API_TOKEN"
+)
+
+REQUEST_TIMEOUT = 15
+
+
+# =========================================================
+# VALIDATE CONFIG
+# =========================================================
+
+def validate_jenkins_config():
+
+    missing = []
+
+    if not JENKINS_URL:
+        missing.append("JENKINS_URL")
+
+    if not JENKINS_USER:
+        missing.append("JENKINS_USER")
+
+    if not JENKINS_API_TOKEN:
+        missing.append("JENKINS_API_TOKEN")
+
+    if missing:
+        raise Exception(
+            f"Missing Jenkins env vars: {', '.join(missing)}"
+        )
+
+
+# =========================================================
+# GET CRUMB
+# =========================================================
 
 def get_jenkins_crumb():
-    """
-    Get Jenkins CSRF crumb token
-    """
 
-    endpoint = f"{JENKINS_URL}/crumbIssuer/api/json"
+    validate_jenkins_config()
+
+    endpoint = (
+        f"{JENKINS_URL}/crumbIssuer/api/json"
+    )
 
     response = requests.get(
         endpoint,
-        auth=(JENKINS_USER, JENKINS_API_TOKEN)
+        auth=(
+            JENKINS_USER,
+            JENKINS_API_TOKEN
+        ),
+        timeout=REQUEST_TIMEOUT
     )
-    
-    print("CRUMB RESPONSE:", response.text)
+
+    response.raise_for_status()
+
     data = response.json()
 
     return {
@@ -40,182 +83,312 @@ def get_jenkins_crumb():
     }
 
 
+# =========================================================
+# TRIGGER JOB
+# =========================================================
+
 def trigger_jenkins_job(repo_url):
 
     print("\n===== TRIGGERING JENKINS =====")
     print("Repo URL:", repo_url)
 
-    crumb_data = get_jenkins_crumb()
+    try:
 
-    endpoint = f"{JENKINS_URL}/job/{JOB_NAME}/buildWithParameters"
+        crumb_data = get_jenkins_crumb()
 
-    params = {
-        "REPO_URL": repo_url
-    }
+        endpoint = (
+            f"{JENKINS_URL}/job/"
+            f"{JENKINS_JOB_NAME}/buildWithParameters"
+        )
 
-    headers = {
-        crumb_data["field"]: crumb_data["crumb"]
-    }
-
-    response = requests.post(
-        endpoint,
-        params=params,
-        headers=headers,
-        auth=(JENKINS_USER, JENKINS_API_TOKEN)
-    )
-
-    print("Jenkins response code:", response.status_code)
-
-    if response.status_code == 201:
-
-        queue_url = response.headers["Location"]
-        queue_id = queue_url.split("/")[-2]
-
-        print("Queue ID:", queue_id)
-
-        return {
-            "success": True,
-            "queue_id": int(queue_id)
+        params = {
+            "REPO_URL": repo_url
         }
 
-    print("Trigger failed:", response.text)
+        headers = {
+            crumb_data["field"]:
+            crumb_data["crumb"]
+        }
 
-    return {
-        "success": False,
-        "message": response.text
-    }
-    
+        response = requests.post(
+            endpoint,
+            params=params,
+            headers=headers,
+            auth=(
+                JENKINS_USER,
+                JENKINS_API_TOKEN
+            ),
+            timeout=REQUEST_TIMEOUT
+        )
+
+        print(
+            "Jenkins Status:",
+            response.status_code
+        )
+
+        if response.status_code == 201:
+
+            queue_url = response.headers.get(
+                "Location"
+            )
+
+            queue_id = queue_url.split("/")[-2]
+
+            print(
+                "Queue ID:",
+                queue_id
+            )
+
+            return {
+                "success": True,
+                "queue_id": int(queue_id)
+            }
+
+        return {
+            "success": False,
+            "message": response.text
+        }
+
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+# =========================================================
+# GET BUILD NUMBER
+# =========================================================
+
 def get_build_number(queue_id):
-    """
-    Convert queue id into actual Jenkins build number
-    """
 
-    endpoint = f"{JENKINS_URL}/queue/item/{queue_id}/api/json"
+    try:
 
-    response = requests.get(
-        endpoint,
-        auth=(JENKINS_USER, JENKINS_API_TOKEN)
-    )
+        endpoint = (
+            f"{JENKINS_URL}/queue/item/"
+            f"{queue_id}/api/json"
+        )
 
-    print("BUILD NUMBER URL:", endpoint)
-    print("STATUS CODE:", response.status_code)
-#   print("RAW RESPONSE:", response.text)
+        response = requests.get(
+            endpoint,
+            auth=(
+                JENKINS_USER,
+                JENKINS_API_TOKEN
+            ),
+            timeout=REQUEST_TIMEOUT
+        )
 
-    print("QUEUE RESPONSE:", response.text)
-    data = response.json()
+        response.raise_for_status()
 
-    # build started
-    if "executable" in data:
+        data = response.json()
 
-        build_number = data["executable"]["number"]
+        if "executable" in data:
+
+            return {
+                "success": True,
+                "build_number":
+                data["executable"]["number"]
+            }
 
         return {
-            "success": True,
-            "build_number": build_number
+            "success": False,
+            "message": "Still queued"
         }
 
-    # still waiting in queue
-    return {
-        "success": False,
-        "message": "Build still in queue"
-    }
-    
+    except Exception as e:
+
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+# =========================================================
+# BUILD STATUS
+# =========================================================
+
 def get_build_status(build_number):
-    """
-    Get Jenkins build status
-    """
 
-    endpoint = f"{JENKINS_URL}/job/{JOB_NAME}/{build_number}/api/json"
+    try:
 
-    response = requests.get(
-        endpoint,
-        auth=(JENKINS_USER, JENKINS_API_TOKEN)
-    )
+        endpoint = (
+            f"{JENKINS_URL}/job/"
+            f"{JENKINS_JOB_NAME}/"
+            f"{build_number}/api/json"
+        )
 
-    print("BUILD STATUS URL:", endpoint)
-    print("STATUS CODE:", response.status_code)
-#   print("RAW RESPONSE:", response.text)
+        response = requests.get(
+            endpoint,
+            auth=(
+                JENKINS_USER,
+                JENKINS_API_TOKEN
+            ),
+            timeout=REQUEST_TIMEOUT
+        )
 
-    print("BUILD STATUS RESPONSE:", response.text)
-    data = response.json()
+        response.raise_for_status()
 
-    # still running
-    if data["building"]:
+        data = response.json()
+
+        if data.get("building"):
+
+            return {
+                "status": "BUILDING"
+            }
+
+        result = data.get("result")
+
+        if result == "SUCCESS":
+
+            return {
+                "status": "SUCCESS"
+            }
+
+        if result == "FAILURE":
+
+            return {
+                "status": "FAILED"
+            }
+
+        if result == "ABORTED":
+
+            return {
+                "status": "ABORTED"
+            }
 
         return {
-            "status": "BUILDING"
+            "status": result
         }
 
-    # finished
-    result = data["result"]
+    except Exception:
 
-    if result == "SUCCESS":
         return {
-            "status": "SUCCESS"
+            "status": "UNKNOWN"
         }
 
-    if result == "FAILURE":
-        return {
-            "status": "FAILED"
-        }
 
-    return {
-        "status": result
-    }
-    
+# =========================================================
+# PIPELINE STAGES
+# =========================================================
+
 def get_pipeline_stages(build_number):
 
-    endpoint = (
-        f"{JENKINS_URL}/job/"
-        f"{JOB_NAME}/"
-        f"{build_number}/wfapi/describe"
+    try:
+
+        endpoint = (
+            f"{JENKINS_URL}/job/"
+            f"{JENKINS_JOB_NAME}/"
+            f"{build_number}/wfapi/describe"
+        )
+
+        response = requests.get(
+            endpoint,
+            auth=(
+                JENKINS_USER,
+                JENKINS_API_TOKEN
+            ),
+            timeout=REQUEST_TIMEOUT
+        )
+
+        if response.status_code != 200:
+            return []
+
+        data = response.json()
+
+        return data.get(
+            "stages",
+            []
+        )
+
+    except Exception:
+        return []
+
+
+# =========================================================
+# CONSOLE LOG
+# =========================================================
+
+def get_console_log(build_number):
+
+    try:
+
+        endpoint = (
+            f"{JENKINS_URL}/job/"
+            f"{JENKINS_JOB_NAME}/"
+            f"{build_number}/consoleText"
+        )
+
+        response = requests.get(
+            endpoint,
+            auth=(
+                JENKINS_USER,
+                JENKINS_API_TOKEN
+            ),
+            timeout=REQUEST_TIMEOUT
+        )
+
+        return response.text
+
+    except Exception:
+        return ""
+
+
+# =========================================================
+# WAIT FOR PIPELINE
+# =========================================================
+
+def wait_for_pipeline(
+    deployment_id,
+    queue_id
+):
+
+    print(
+        "\n===== WAITING FOR PIPELINE ====="
     )
 
-    response = requests.get(
-        endpoint,
-        auth=(JENKINS_USER, JENKINS_API_TOKEN)
-    )
+    print("Queue:", queue_id)
 
-    print("PIPELINE API:", endpoint)
-    print("STATUS:", response.status_code)
-    print("RAW:", response.text)
+    build_number = None
 
-    data = response.json()
+    # -----------------------------------------
+    # WAIT FOR BUILD NUMBER
+    # -----------------------------------------
 
-    return data.get("stages", [])
-
-def wait_for_pipeline(deployment_id,queue_id):
-
-    print("\n===== WAITING FOR PIPELINE =====")
-    print("Queue ID:", queue_id)
-
-    # wait for build number
     while True:
 
-        build_result = get_build_number(queue_id)
+        result = get_build_number(
+            queue_id
+        )
 
-        print("Build Result:", build_result)
+        if result["success"]:
 
-        if build_result["success"]:
+            build_number = result[
+                "build_number"
+            ]
+
             break
 
         time.sleep(3)
-
-    build_number = build_result["build_number"]
 
     save_jenkins_build_number(
         deployment_id,
         build_number
     )
 
-    print("Build Number:", build_number)
-    
+    print(
+        "Build Number:",
+        build_number
+    )
+
     last_stage = None
 
-    # wait until build finishes
+    # -----------------------------------------
+    # WAIT FOR BUILD
+    # -----------------------------------------
+
     while True:
 
-        # get current build status
         status_result = get_build_status(
             build_number
         )
@@ -225,32 +398,37 @@ def wait_for_pipeline(deployment_id,queue_id):
             status_result["status"]
         )
 
-        # get pipeline stages
         stages = get_pipeline_stages(
             build_number
         )
 
-        # find active stage
         active_stage = None
 
         for stage in stages:
 
-            if stage["status"] in [
+            if stage.get("status") in [
                 "IN_PROGRESS",
                 "PAUSED_PENDING_INPUT"
             ]:
 
-                active_stage = stage["name"]
+                active_stage = stage.get(
+                    "name"
+                )
+
                 break
 
-
-        if active_stage and active_stage != last_stage:
+        if (
+            active_stage and
+            active_stage != last_stage
+        ):
 
             last_stage = active_stage
 
             emit_deployment_update(
                 deployment_id,
-                active_stage.lower().replace(" ", "_"),
+                active_stage
+                    .lower()
+                    .replace(" ", "_"),
                 active_stage
             )
 
@@ -259,20 +437,22 @@ def wait_for_pipeline(deployment_id,queue_id):
                 active_stage
             )
 
-        print(
-            "Build Status:",
-            status_result
-        )
-
-        if status_result["status"] != "BUILDING":
+        if (
+            status_result["status"]
+            != "BUILDING"
+        ):
             break
 
         time.sleep(3)
 
-    print("Final Pipeline Status:", status_result["status"])
+    print(
+        "Pipeline Finished:",
+        status_result["status"]
+    )
 
     return {
+        "success": True,
         "build_number": build_number,
-        "status": status_result["status"]
+        "status":
+            status_result["status"]
     }
-    

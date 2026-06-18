@@ -1,5 +1,21 @@
 import threading
 import sqlite3
+from dotenv import load_dotenv
+
+load_dotenv()
+
+import os
+
+print("=" * 50)
+print("DEPLOYX ENVIRONMENT")
+print("=" * 50)
+
+print("JENKINS_URL =", os.getenv("JENKINS_URL"))
+print("JENKINS_USER =", os.getenv("JENKINS_USER"))
+print("JENKINS_JOB_NAME =", os.getenv("JENKINS_JOB_NAME"))
+
+print("=" * 50)
+
 from services.jenkins_service import (
     trigger_jenkins_job,
     wait_for_pipeline
