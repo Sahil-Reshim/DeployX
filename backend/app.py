@@ -13,6 +13,15 @@ print("=" * 50)
 print("JENKINS_URL =", os.getenv("JENKINS_URL"))
 print("JENKINS_USER =", os.getenv("JENKINS_USER"))
 print("JENKINS_JOB_NAME =", os.getenv("JENKINS_JOB_NAME"))
+def _mask(token):
+    if not token:
+        return None
+    t = str(token)
+    if len(t) <= 8:
+        return "****"
+    return t[:4] + "..." + t[-4:]
+
+print("JENKINS_API_TOKEN =", _mask(os.getenv("JENKINS_API_TOKEN")))
 
 print("=" * 50)
 
@@ -123,7 +132,8 @@ CORS(app)
 
 socketio.init_app(
     app,
-    cors_allowed_origins="*"
+    cors_allowed_origins="*",
+    async_mode="threading"
 )
 
 # =========================================================
