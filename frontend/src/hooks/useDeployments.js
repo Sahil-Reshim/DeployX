@@ -10,8 +10,7 @@ import { mergeDeploymentRecord } from "../utils/deploymentMerge";
 
 function useDeployments() {
   const [deployments, setDeployments] = useState([]);
-  const [latestDeployment, setLatestDeployment] =
-    useState(null);
+  const [latestDeployment, setLatestDeployment] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
 
@@ -22,12 +21,12 @@ function useDeployments() {
     latestDeploymentRef.current = latestDeployment;
   }, [latestDeployment]);
 
-
-  // Temporary debug: log latestDeployment whenever it changes
   useEffect(() => {
     try {
       console.log("Latest deployment:", latestDeployment);
-    } catch (e) {}
+    } catch (e) {
+      console.error(e);
+    }
   }, [latestDeployment]);
 
   const fetchDeployments = useCallback(async () => {
@@ -36,18 +35,7 @@ function useDeployments() {
 
       const deploymentData = Array.isArray(response.data)
         ? response.data
-        : response.data.deployments || [];
-
-
-
-  const fetchDeployments = useCallback(async () => {
-    try {
-      const response = await API.get("/deployments");
-
-      const deploymentData = Array.isArray(response.data)
-        ? response.data
-        : response.data.deployments || [];
-
+        : response.data?.deployments || [];
 
       const sortedDeployments = deploymentData.sort(
         (a, b) =>
@@ -59,10 +47,7 @@ function useDeployments() {
 
       if (sortedDeployments.length > 0) {
         setLatestDeployment((prev) =>
-          mergeDeploymentRecord(
-            prev,
-            sortedDeployments[0]
-          )
+          mergeDeploymentRecord(prev, sortedDeployments[0])
         );
       } else {
         setLatestDeployment(null);
@@ -77,64 +62,65 @@ function useDeployments() {
     }
   }, []);
 
-  const upsertLatestDeployment = useCallback((deploymentOrUpdater) => {
-    setLatestDeployment((prev) => {
-      const deployment =
-        typeof deploymentOrUpdater === "function"
-          ? deploymentOrUpdater(prev)
-          : deploymentOrUpdater;
+  const upsertLatestDeployment = useCallback(
+    (deploymentOrUpdater) => {
+      setLatestDeployment((prev) => {
+        const deployment =
+          typeof deploymentOrUpdater === "function"
+            ? deploymentOrUpdater(prev)
+            : deploymentOrUpdater;
 
-      if (!deployment?.id) {
-        return prev;
-      }
+        if (!deployment?.id) {
+          return prev;
+        }
 
-      return mergeDeploymentRecord(prev, deployment);
-    });
+        return mergeDeploymentRecord(prev, deployment);
+      });
 
-    setDeployments((prev) => {
-      const deployment =
-        typeof deploymentOrUpdater === "function"
-          ? deploymentOrUpdater(
-              latestDeploymentRef.current
-            )
-          : deploymentOrUpdater;
+      setDeployments((prev) => {
+        const deployment =
+          typeof deploymentOrUpdater === "function"
+            ? deploymentOrUpdater(
+                latestDeploymentRef.current
+              )
+            : deploymentOrUpdater;
 
-      if (!deployment?.id) {
-        return prev;
-      }
+        if (!deployment?.id) {
+          return prev;
+        }
 
-      const exists = prev.some(
-        (item) =>
+        const exists = prev.some(
+          (item) =>
+            Number(item.id) === Number(deployment.id)
+        );
+
+        if (!exists) {
+          return [deployment, ...prev];
+        }
+
+        return prev.map((item) =>
           Number(item.id) === Number(deployment.id)
-      );
-
-      if (!exists) {
-        return [deployment, ...prev];
-      }
-
-      return prev.map((item) =>
-        Number(item.id) === Number(deployment.id)
-          ? mergeDeploymentRecord(item, deployment)
-          : item
-      );
-    });
-  }, []);
+            ? mergeDeploymentRecord(item, deployment)
+            : item
+        );
+      });
+    },
+    []
+  );
 
   const updateDeploymentStatus = (
     deploymentId,
     newStatus
   ) => {
     setDeployments((prev) =>
-      prev.map((deployment) => {
-        if (deployment.id === deploymentId) {
-          return {
-            ...deployment,
-            status: newStatus,
-          };
-        }
-
-        return deployment;
-      })
+      prev.map((deployment) =>
+        deployment.id === deploymentId
+          ? {
+              ...deployment,
+              status: newStatus,
+            }
+          : deployment
+      )
     );
 
     setLatestDeployment((prev) => {
@@ -156,13 +142,16 @@ function useDeployments() {
         [deploymentId]: "starting",
       }));
 
-      updateDeploymentStatus(deploymentId, "running");
+      updateDeploymentStatus(
+        deploymentId,
+        "running"
+      );
 
       await API.post(
         `/deployment/${deploymentId}/start`
       );
 
-      fetchDeployments();
+      await fetchDeployments();
     } catch (error) {
       console.error(
         "Start deployment error:",
@@ -183,13 +172,16 @@ function useDeployments() {
         [deploymentId]: "stopping",
       }));
 
-      updateDeploymentStatus(deploymentId, "stopped");
+      updateDeploymentStatus(
+        deploymentId,
+        "stopped"
+      );
 
       await API.post(
         `/deployment/${deploymentId}/stop`
       );
 
-      fetchDeployments();
+      await fetchDeployments();
     } catch (error) {
       console.error(
         "Stop deployment error:",
@@ -203,7 +195,9 @@ function useDeployments() {
     }
   };
 
-  const restartDeployment = async (deploymentId) => {
+  const restartDeployment = async (
+    deploymentId
+  ) => {
     try {
       setActionLoading((prev) => ({
         ...prev,
@@ -219,7 +213,7 @@ function useDeployments() {
         `/deployment/${deploymentId}/restart`
       );
 
-      fetchDeployments();
+      await fetchDeployments();
     } catch (error) {
       console.error(
         "Restart deployment error:",
@@ -233,7 +227,9 @@ function useDeployments() {
     }
   };
 
-  const deleteDeployment = async (deploymentId) => {
+  const deleteDeployment = async (
+    deploymentId
+  ) => {
     try {
       await API.delete(
         `/deployments/${deploymentId}`
@@ -253,7 +249,7 @@ function useDeployments() {
         setLatestDeployment(null);
       }
 
-      fetchDeployments();
+      await fetchDeployments();
     } catch (error) {
       console.error(
         "Delete deployment error:",

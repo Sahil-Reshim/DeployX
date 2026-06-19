@@ -3,6 +3,10 @@ from flask_socketio import SocketIO
 import os
 from datetime import datetime
 
+from managers.deployment_state import (
+    get_state_payload,
+)
+
 _debug = os.getenv("SOCKETIO_DEBUG", "false").lower() in ("1", "true", "yes")
 
 socketio = SocketIO(
@@ -28,6 +32,9 @@ def emit_deployment_update(
     url=None,
     container_id=None,
     metrics=None,
+    state_key=None,
+    state_label=None,
+    progress=None,
 ):
     room = get_deployment_room(deployment_id)
 
@@ -49,12 +56,31 @@ def emit_deployment_update(
 
     # Include jenkins_stages when explicitly provided (even empty list)
     # so the frontend can clear previous stage data when appropriate.
-    if jenkins_stages is not None
-    if jenkins_stages is not None and len(jenkins_stages) >
+    if jenkins_stages is not None:
         payload["jenkins_stages"] = jenkins_stages
 
     if url is not None:
         payload["url"] = url
+
+    if state_key is None or state_label is None or progress is None:
+        state_payload = (
+            get_state_payload(current_step)
+            or get_state_payload(status)
+            or get_state_payload(jenkins_status)
+        )
+        if state_payload:
+            payload.setdefault("state_key", state_payload["state_key"])
+            payload.setdefault("state_label", state_payload["state_label"])
+            payload.setdefault("progress", state_payload["progress"])
+
+    if state_key is not None:
+        payload["state_key"] = state_key
+
+    if state_label is not None:
+        payload["state_label"] = state_label
+
+    if progress is not None:
+        payload["progress"] = progress
 
     if container_id is not None:
         payload["container_id"] = container_id
