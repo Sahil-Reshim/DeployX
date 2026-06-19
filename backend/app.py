@@ -1296,6 +1296,37 @@ def cleanup_repo():
 
 
 # =========================================================
+# TEMP TEST ENDPOINT (DEV ONLY)
+# POST JSON: { "deployment_id": <id>, "message": "...", "level": "info|warn|error|success" }
+# =========================================================
+@app.route("/test/emit", methods=["POST"])
+def test_emit():
+    try:
+        data = request.get_json() or {}
+
+        deployment_id = data.get("deployment_id")
+        message = data.get("message")
+        level = data.get("level", "info")
+
+        if deployment_id is None or message is None:
+            return jsonify({
+                "success": False,
+                "message": "deployment_id and message required"
+            }), 400
+
+        emit_log(deployment_id, {
+            "message": message,
+            "level": level,
+            "timestamp": None
+        })
+
+        return jsonify({"success": True})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =========================================================
 # MAIN
 # =========================================================
 

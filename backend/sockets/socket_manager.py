@@ -1,6 +1,7 @@
 from flask_socketio import SocketIO
 
 import os
+from datetime import datetime
 
 _debug = os.getenv("SOCKETIO_DEBUG", "false").lower() in ("1", "true", "yes")
 
@@ -75,14 +76,47 @@ def emit_deployment_update(
 
 def emit_log(deployment_id, log):
     room = get_deployment_room(deployment_id)
+    # Normalize log to a structured object with message, level and timestamp
+    structured = None
+
+    try:
+        if isinstance(log, dict):
+            structured = {
+                "message": str(log.get("message") or log.get("msg") or ""),
+                "level": log.get("level") or log.get("level_name") or "info",
+                "timestamp": log.get("timestamp") or datetime.utcnow().isoformat() + "Z",
+            }
+        else:
+            text = str(log)
+            lt = text.lower()
+            if "error" in lt or "failed" in lt or "exception" in lt:
+                level = "error"
+            elif "success" in lt or "completed" in lt or "running" in lt:
+                level = "success"
+            elif "warn" in lt or "warning" in lt:
+                level = "warn"
+            else:
+                level = "info"
+
+            structured = {
+                "message": text,
+                "level": level,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+    except Exception:
+        structured = {
+            "message": str(log),
+            "level": "info",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
 
     socketio.emit(
         "log_update",
         {
             "deployment_id": deployment_id,
-            "log": log,
+            "log": structured,
         },
-        room=room
+        room=room,
     )
 
 
