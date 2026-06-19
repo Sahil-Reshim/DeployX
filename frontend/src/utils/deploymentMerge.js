@@ -15,6 +15,9 @@ export function mergeDeploymentRecord(prev, next) {
   if (!prev || Number(prev.id) !== Number(next.id)) {
     return {
       ...next,
+      state_key: next.state_key ?? null,
+      state_label: next.state_label ?? null,
+      progress: next.progress ?? 0,
       jenkins_stages: next.jenkins_stages || [],
     };
   }
@@ -27,6 +30,12 @@ export function mergeDeploymentRecord(prev, next) {
       next.jenkins_build_number ?? prev.jenkins_build_number,
     current_step:
       next.current_step ?? prev.current_step,
+    state_key:
+      next.state_key ?? prev.state_key,
+    state_label:
+      next.state_label ?? prev.state_label,
+    progress:
+      next.progress ?? prev.progress ?? 0,
     jenkins_stages: hasJenkinsStages(next.jenkins_stages)
       ? next.jenkins_stages
       : prev.jenkins_stages || next.jenkins_stages || [],
@@ -84,6 +93,12 @@ export function mergeSocketUpdate(prev, incoming) {
       incoming.current_step !== undefined
         ? incoming.current_step
         : base.current_step,
+    state_key:
+      incoming.state_key ?? base.state_key,
+    state_label:
+      incoming.state_label ?? base.state_label,
+    progress:
+      incoming.progress ?? base.progress ?? 0,
     jenkins_stages: hasJenkinsStages(incoming.jenkins_stages)
       ? incoming.jenkins_stages
       : base.jenkins_stages || [],

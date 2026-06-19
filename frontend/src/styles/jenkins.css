@@ -304,6 +304,272 @@ PIPELINE WRAPPER
   position: relative;
   z-index: 2;
 }
+.jenkins-card-body {
+  display: grid;
+  gap: 22px;
+}
+
+.jenkins-card-body .jenkins-header {
+  display: grid;
+  gap: 8px;
+}
+
+.jenkins-card-body .jenkins-header-main {
+  display: grid;
+  gap: 10px;
+}
+
+.jenkins-card-body .jenkins-small-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.12);
+  font-size: 11px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: #d1d5db;
+  font-weight: 700;
+}
+
+.jenkins-card-body .jenkins-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.jenkins-card-body h3 {
+  font-size: 28px;
+  margin: 0;
+  color: white;
+}
+
+.jenkins-card-body .jenkins-subtitle {
+  margin: 0;
+  color: rgba(255,255,255,.72);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.jenkins-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.jenkins-summary-card {
+  padding: 18px 20px;
+  border-radius: 22px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  display: grid;
+  gap: 8px;
+}
+
+.jenkins-summary-card span {
+  color: rgba(255,255,255,.56);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.jenkins-summary-card strong {
+  font-size: 16px;
+  color: white;
+  line-height: 1.4;
+}
+
+.jenkins-timeline {
+  display: grid;
+  gap: 18px;
+}
+
+.timeline-progress-bar {
+  position: relative;
+  height: 12px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.timeline-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(59,130,246,.95), rgba(96,165,250,.55));
+  box-shadow: 0 0 18px rgba(59,130,246,.25);
+  transition: width .4s ease;
+}
+
+.timeline-list {
+  display: grid;
+  gap: 14px;
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 38px 1fr;
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 22px;
+  background: rgba(255,255,255,.03);
+  border: 1px solid rgba(255,255,255,.08);
+  overflow: hidden;
+}
+
+.timeline-item::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: rgba(255,255,255,.08);
+  opacity: .5;
+}
+
+.timeline-item:last-child::before {
+  bottom: 50%;
+}
+
+.timeline-marker {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  margin-top: 4px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.28);
+  background: rgba(255,255,255,.06);
+  z-index: 1;
+}
+
+.timeline-item.active .timeline-marker {
+  background: linear-gradient(180deg, rgba(59,130,246,1), rgba(96,165,250,.35));
+  border-color: rgba(96,165,250,.9);
+  box-shadow: 0 0 18px rgba(59,130,246,.35);
+  animation: activePulse 2.2s infinite;
+}
+
+.timeline-item.success .timeline-marker {
+  background: rgba(34,197,94,.15);
+  border-color: rgba(34,197,94,.7);
+}
+
+.timeline-item.failed .timeline-marker {
+  background: rgba(239,68,68,.15);
+  border-color: rgba(239,68,68,.8);
+}
+
+.timeline-item.queued .timeline-marker,
+.timeline-item.pending .timeline-marker {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+}
+
+.timeline-body {
+  display: grid;
+  gap: 8px;
+}
+
+.timeline-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+
+.timeline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+}
+
+.timeline-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.85);
+  background: rgba(255,255,255,.06);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.timeline-duration {
+  color: rgba(255,255,255,.55);
+  font-size: 12px;
+}
+
+.timeline-item.success .timeline-tag {
+  background: rgba(34,197,94,.14);
+  border-color: rgba(34,197,94,.24);
+  color: #a7f3d0;
+}
+
+.timeline-item.failed .timeline-tag {
+  background: rgba(239,68,68,.12);
+  border-color: rgba(239,68,68,.28);
+  color: #fecaca;
+}
+
+.timeline-item.active .timeline-tag {
+  background: rgba(59,130,246,.12);
+  border-color: rgba(59,130,246,.22);
+  color: #bfdbfe;
+}
+
+.jenkins-log-hint {
+  display: grid;
+  grid-template-columns: 42px 1fr;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(15,23,42,.55);
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.log-hint-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(59,130,246,1), rgba(96,165,250,.45));
+  box-shadow: 0 0 20px rgba(59,130,246,.2);
+}
+
+.jenkins-log-hint p {
+  margin: 0;
+  color: white;
+  font-weight: 700;
+}
+
+.jenkins-log-hint span {
+  color: rgba(255,255,255,.65);
+  font-size: 13px;
+}
+
+@keyframes activePulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(59,130,246,.24);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 28px rgba(59,130,246,.36);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 18px rgba(59,130,246,.24);
+  }
+}
 
 /* =====================================================
 ANIMATION
@@ -351,6 +617,331 @@ ANIMATION
 
     box-shadow:
       0 0 10px rgba(59,130,246,.15);
+  }
+}
+
+/* =====================================================
+Jenkins horizontal status card
+===================================================== */
+
+.section-block.jenkins-card {
+  padding: 18px;
+}
+
+.jenkins-horizontal-card {
+  display: grid;
+  gap: 16px;
+  width: 100%;
+  min-height: 160px;
+  max-height: 220px;
+  padding: 18px;
+  border-radius: 24px;
+  background: rgba(15,23,42,.82);
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 20px 40px rgba(0,0,0,.22);
+  backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.jenkins-horizontal-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.jenkins-brand-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.jenkins-brand-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 900;
+  color: #111827;
+  background: linear-gradient(135deg, #f6d365, #fda085);
+  box-shadow: 0 10px 20px rgba(246,211,101,.25);
+}
+
+.jenkins-build-info {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.jenkins-build-label {
+  color: rgba(255,255,255,.65);
+  font-size: 13px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.jenkins-build-name {
+  margin: 0;
+  color: white;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jenkins-status-pill {
+  padding: 10px 18px;
+  border-radius: 999px;
+  min-width: 120px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  border: 1px solid rgba(255,255,255,.12);
+  backdrop-filter: blur(14px);
+}
+
+.jenkins-status-pill.success,
+.jenkins-status-pill.completed {
+  color: #4ade80;
+  background: rgba(34,197,94,.12);
+  border-color: rgba(34,197,94,.22);
+}
+
+.jenkins-status-pill.running,
+.jenkins-status-pill.building {
+  color: #60a5fa;
+  background: rgba(59,130,246,.14);
+  border-color: rgba(59,130,246,.24);
+}
+
+.jenkins-status-pill.failed,
+.jenkins-status-pill.error {
+  color: #f87171;
+  background: rgba(239,68,68,.14);
+  border-color: rgba(239,68,68,.22);
+}
+
+.jenkins-status-pill.pending,
+.jenkins-status-pill.queued {
+  color: rgba(255,255,255,.78);
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.12);
+}
+
+.jenkins-metrics-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.jenkins-metric-card {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  min-height: 72px;
+}
+
+.jenkins-metric-card span {
+  color: rgba(255,255,255,.62);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+}
+
+.jenkins-metric-card strong {
+  color: white;
+  font-size: 15px;
+  line-height: 1.3;
+}
+
+.jenkins-timeline-row {
+  display: grid;
+  gap: 12px;
+}
+
+.timeline-bar-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding-bottom: 4px;
+}
+
+.timeline-step {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.timeline-node {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900;
+  background: rgba(255,255,255,.08);
+  color: rgba(255,255,255,.8);
+  border: 1px solid rgba(255,255,255,.14);
+}
+
+.timeline-node.completed {
+  background: rgba(34,197,94,.18);
+  color: #4ade80;
+  border-color: rgba(34,197,94,.4);
+}
+
+.timeline-node.active {
+  background: linear-gradient(135deg, rgba(59,130,246,.95), rgba(96,165,250,.5));
+  color: white;
+  border-color: rgba(59,130,246,.95);
+  box-shadow: 0 0 20px rgba(59,130,246,.22);
+  animation: activePulse 2.2s infinite;
+}
+
+.timeline-node.failed {
+  background: rgba(239,68,68,.18);
+  color: #fca5a5;
+  border-color: rgba(239,68,68,.5);
+}
+
+.timeline-node.pending {
+  color: rgba(255,255,255,.58);
+}
+
+.timeline-label {
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.timeline-label.active,
+.timeline-label.completed {
+  color: white;
+}
+
+.timeline-label.failed {
+  color: #fecaca;
+}
+
+.timeline-connector {
+  flex: 1;
+  height: 2px;
+  background: rgba(255,255,255,.08);
+  position: relative;
+  margin-left: -6px;
+  margin-right: -6px;
+}
+
+.timeline-connector.completed {
+  background: linear-gradient(90deg, rgba(34,197,94,.9), rgba(34,197,94,.35));
+}
+
+.timeline-connector.failed {
+  background: linear-gradient(90deg, rgba(239,68,68,.9), rgba(239,68,68,.35));
+}
+
+.jenkins-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 28px;
+}
+
+.progress-label {
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.progress-track {
+  flex: 1;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.08);
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.12);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(59,130,246,.95), rgba(34,197,94,.8));
+  transition: width .4s ease;
+}
+
+.progress-value {
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 44px;
+  text-align: right;
+}
+
+@media (max-width: 1024px) {
+  .jenkins-metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .jenkins-horizontal-card {
+    max-height: none;
+    padding: 18px;
+  }
+
+  .jenkins-horizontal-top {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .jenkins-metrics-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .jenkins-progress-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@media (max-width: 600px) {
+  .jenkins-horizontal-card {
+    padding: 16px;
+  }
+
+  .jenkins-metrics-row {
+    grid-template-columns: 1fr;
+  }
+
+  .timeline-bar-row {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .timeline-step {
+    grid-template-columns: 1fr;
+    gap: 10px;
   }
 }
 
