@@ -86,12 +86,43 @@ function useDeploymentSocket(deploymentId) {
         return;
       }
 
-      setLogs((prev) => {
-        if (prev[prev.length - 1] === data.log) {
-          return prev;
+      // Ensure log is a structured object { message, level, timestamp }
+      const raw = data.log;
+
+      const entry = (() => {
+        if (!raw) return null;
+        if (typeof raw === "string") {
+          const text = raw;
+          const lt = text.toLowerCase();
+          const level = lt.includes("error") || lt.includes("failed") || lt.includes("exception")
+            ? "error"
+            : lt.includes("success") || lt.includes("completed") || lt.includes("running")
+            ? "success"
+            : lt.includes("warn") || lt.includes("warning")
+            ? "warn"
+            : "info";
+
+          return {
+            message: text,
+            level,
+            timestamp: new Date().toISOString(),
+          };
         }
 
-        return [...prev, data.log];
+        // assume object-like
+        return {
+          message: String(raw.message ?? raw.msg ?? ""),
+          level: raw.level ?? raw.level_name ?? "info",
+          timestamp: raw.timestamp ?? new Date().toISOString(),
+        };
+      })();
+
+      if (!entry) return;
+
+      setLogs((prev) => {
+        const last = prev[prev.length - 1];
+        if (last && last.message === entry.message && last.timestamp === entry.timestamp) return prev;
+        return [...prev, entry];
       });
     };
 
