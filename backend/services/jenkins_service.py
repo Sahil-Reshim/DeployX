@@ -383,8 +383,8 @@ def get_console_log(build_number):
         response = requests.get(
             endpoint,
             auth=(
-                JENKINS_USER,
-                JENKINS_API_TOKEN
+                cfg.get("user"),
+                cfg.get("token")
             ),
             timeout=REQUEST_TIMEOUT
         )
