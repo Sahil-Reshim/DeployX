@@ -573,22 +573,22 @@ def wait_for_pipeline(
         # change) so jenkins_status / build number / stage list
         # stay live even while the same stage is still running.
 
-        emit_deployment_update(
-            deployment_id,
-            "ci_pipeline",
-            active_stage or "Running Jenkins pipeline...",
-            jenkins_status=status_result["status"],
-            jenkins_build_number=build_number,
-            current_step=current_step_slug,
-            jenkins_stages=stages
-        )
-
         if (
             active_stage and
             active_stage != last_stage
         ):
 
             last_stage = active_stage
+
+            emit_deployment_update(
+                deployment_id,
+                "ci_pipeline",
+                active_stage,
+                jenkins_status=status_result["status"],
+                jenkins_build_number=build_number,
+                current_step=current_step_slug,
+                jenkins_stages=stages
+            )
 
             print(
                 "Current Stage:",

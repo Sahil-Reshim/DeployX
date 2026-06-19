@@ -124,6 +124,10 @@ CREATE TABLE IF NOT EXISTS deployments (
         "jenkins_console_log":   "ALTER TABLE deployments ADD COLUMN jenkins_console_log TEXT",
         "pipeline_started_at":   "ALTER TABLE deployments ADD COLUMN pipeline_started_at TIMESTAMP",
         "pipeline_finished_at":  "ALTER TABLE deployments ADD COLUMN pipeline_finished_at TIMESTAMP",
+        "state_key": "ALTER TABLE deployments ADD COLUMN state_key TEXT",
+        "state_label": "ALTER TABLE deployments ADD COLUMN state_label TEXT",
+        "current_stage": "ALTER TABLE deployments ADD COLUMN current_stage TEXT DEFAULT 'Queue'",
+        "progress": "ALTER TABLE deployments ADD COLUMN progress INTEGER DEFAULT 0",
     }
 
     for column, query in migrations.items():

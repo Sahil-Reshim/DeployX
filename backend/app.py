@@ -551,6 +551,17 @@ def run_deployment_job(
             docker_result,
             container_result
         )
+        
+        emit_deployment_update(
+            deployment_id,
+            "live",
+            "Deployment completed successfully",
+            url=custom_url,
+            container_id=container_id,
+            state_key="LIVE",
+            state_label="Live",
+            progress=100
+        )
 
         save_build_logs(
             deployment_id,
