@@ -1,5 +1,9 @@
 # log files
 backend/logs/
+deployx.db
+venv/
+__pycache__/
+wq
 
 # Python
 venv/
