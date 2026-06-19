@@ -11,6 +11,10 @@ from managers.state_manager import (
     remove_state
 )
 
+from managers.deployment_state import (
+    get_state_payload,
+)
+
 from sockets.socket_manager import (
     emit_deployment_started,
     emit_deployment_stopped,
@@ -66,9 +70,28 @@ def serialize_deployment(row):
     d.setdefault("jenkins_status", None)
     d.setdefault("jenkins_build_number", None)
     d.setdefault("current_step", None)
+    d.setdefault("state_key", None)
+    d.setdefault("state_label", None)
+    d.setdefault("progress", None)
     d.setdefault("status", "queued")
     d.setdefault("url", None)
     d.setdefault("container_id", None)
+
+    if d["progress"] is None:
+        state_payload = get_state_payload(
+            d.get("current_step")
+        ) or get_state_payload(
+            d.get("status")
+        ) or get_state_payload(
+            d.get("jenkins_status")
+        )
+
+        if state_payload:
+            d["state_key"] = d["state_key"] or state_payload["state_key"]
+            d["state_label"] = d["state_label"] or state_payload["state_label"]
+            d["progress"] = state_payload["progress"]
+        else:
+            d["progress"] = 0
 
     return d
 
@@ -113,26 +136,53 @@ def create_deployment(repo_url):
 # UPDATE STATUS
 # =========================================================
 
-def update_deployment_status(
+def set_deployment_state(
     deployment_id,
-    status
+    status,
+    current_step=None
 ):
+    state_source = current_step or status
+    payload = get_state_payload(
+        state_source
+    ) or get_state_payload(
+        status
+    )
+
     conn = get_db_connection()
 
     conn.execute(
         """
         UPDATE deployments
-        SET status=?
+        SET status=?,
+            current_step=?,
+            state_key=?,
+            state_label=?,
+            progress=?
         WHERE id=?
         """,
         (
             status,
-            deployment_id
+            current_step or status,
+            payload["state_key"] if payload else None,
+            payload["state_label"] if payload else None,
+            payload["progress"] if payload else 0,
+            deployment_id,
         )
     )
 
     conn.commit()
     conn.close()
+
+
+def update_deployment_status(
+    deployment_id,
+    status
+):
+    set_deployment_state(
+        deployment_id,
+        status,
+        status
+    )
 
 
 # =========================================================
@@ -143,24 +193,11 @@ def update_deployment_step(
     deployment_id,
     status
 ):
-    conn = get_db_connection()
-
-    conn.execute(
-        """
-        UPDATE deployments
-        SET current_step=?,
-            status=?
-        WHERE id=?
-        """,
-        (
-            status,
-            status,
-            deployment_id
-        )
+    set_deployment_state(
+        deployment_id,
+        status,
+        status
     )
-
-    conn.commit()
-    conn.close()
 
 # =========================================================
 # SAVE JENKINS QUEUE
@@ -170,6 +207,12 @@ def save_jenkins_queue(
     deployment_id,
     queue_id
 ):
+    payload = get_state_payload(
+        "queued_in_jenkins"
+    ) or get_state_payload(
+        "QUEUED"
+    )
+
     conn = get_db_connection()
 
     conn.execute(
@@ -177,12 +220,20 @@ def save_jenkins_queue(
         UPDATE deployments
         SET
             jenkins_queue_id=?,
-            jenkins_status=?
+            jenkins_status=?,
+            current_step=?,
+            state_key=?,
+            state_label=?,
+            progress=?
         WHERE id=?
         """,
         (
             queue_id,
             "QUEUED",
+            "queued_in_jenkins",
+            payload["state_key"] if payload else None,
+            payload["state_label"] if payload else None,
+            payload["progress"] if payload else 0,
             deployment_id
         )
     )
@@ -199,6 +250,12 @@ def save_jenkins_build_number(
     deployment_id,
     build_number
 ):
+    payload = get_state_payload(
+        "build_started"
+    ) or get_state_payload(
+        "BUILDING"
+    )
+
     conn = get_db_connection()
 
     conn.execute(
@@ -206,12 +263,20 @@ def save_jenkins_build_number(
         UPDATE deployments
         SET
             jenkins_build_number=?,
-            jenkins_status=?
+            jenkins_status=?,
+            current_step=?,
+            state_key=?,
+            state_label=?,
+            progress=?
         WHERE id=?
         """,
         (
             build_number,
             "BUILDING",
+            "build_started",
+            payload["state_key"] if payload else None,
+            payload["state_label"] if payload else None,
+            payload["progress"] if payload else 0,
             deployment_id
         )
     )
@@ -226,8 +291,43 @@ def save_jenkins_build_number(
 
 def update_jenkins_status(
     deployment_id,
-    status
+    status,
+    current_step=None
 ):
+    payload = get_state_payload(
+        current_step
+    ) or get_state_payload(
+        status
+    )
+
+    if payload:
+        conn = get_db_connection()
+
+        conn.execute(
+            """
+            UPDATE deployments
+            SET
+                jenkins_status=?,
+                current_step=?,
+                state_key=?,
+                state_label=?,
+                progress=?
+            WHERE id=?
+            """,
+            (
+                status,
+                current_step,
+                payload["state_key"],
+                payload["state_label"],
+                payload["progress"],
+                deployment_id
+            )
+        )
+
+        conn.commit()
+        conn.close()
+        return
+
     conn = get_db_connection()
 
     conn.execute(
@@ -253,7 +353,8 @@ def update_jenkins_status(
 def save_jenkins_stages(
     deployment_id,
     stages,
-    current_stage=None
+    current_stage=None,
+    jenkins_status=None
 ):
     """
     Persists the latest Jenkins stage list and active stage
@@ -263,6 +364,22 @@ def save_jenkins_stages(
     current_stage : str | None  — the stage currently IN_PROGRESS
     """
 
+    stage_source = current_stage
+    if stage_source is None and stages:
+        # When the Jenkins pipeline is complete, infer the last pipeline
+        # stage from the final stage list instead of using the terminal
+        # Jenkins status to avoid mapping SUCCESS -> LIVE too early.
+        last_stage = stages[-1] if len(stages) else None
+        stage_source = last_stage.get("name") if isinstance(last_stage, dict) else None
+
+    payload = get_state_payload(
+        stage_source
+    ) or get_state_payload(
+        jenkins_status
+    ) or get_state_payload(
+        "ci_pipeline"
+    )
+
     conn = get_db_connection()
 
     if stages:
@@ -271,12 +388,20 @@ def save_jenkins_stages(
             UPDATE deployments
             SET
                 jenkins_stages=?,
-                current_step=?
+                current_step=?,
+                jenkins_status=?,
+                state_key=?,
+                state_label=?,
+                progress=?
             WHERE id=?
             """,
             (
                 json.dumps(stages),
                 current_stage,
+                jenkins_status,
+                payload["state_key"] if payload else None,
+                payload["state_label"] if payload else None,
+                payload["progress"] if payload else 0,
                 deployment_id
             )
         )
@@ -284,11 +409,39 @@ def save_jenkins_stages(
         conn.execute(
             """
             UPDATE deployments
-            SET current_step=?
+            SET
+                current_step=?,
+                jenkins_status=?,
+                state_key=?,
+                state_label=?,
+                progress=?
             WHERE id=?
             """,
             (
                 current_stage,
+                jenkins_status,
+                payload["state_key"] if payload else None,
+                payload["state_label"] if payload else None,
+                payload["progress"] if payload else 0,
+                deployment_id
+            )
+        )
+    elif jenkins_status is not None:
+        conn.execute(
+            """
+            UPDATE deployments
+            SET
+                jenkins_status=?,
+                state_key=?,
+                state_label=?,
+                progress=?
+            WHERE id=?
+            """,
+            (
+                jenkins_status,
+                payload["state_key"] if payload else None,
+                payload["state_label"] if payload else None,
+                payload["progress"] if payload else 0,
                 deployment_id
             )
         )
@@ -467,7 +620,10 @@ def complete_deployment(
             local_url=?,
 
             status=?,
-            current_step=?
+            current_step=?,
+            state_key=?,
+            state_label=?,
+            progress=?
 
         WHERE id=?
         """,
@@ -514,6 +670,9 @@ def complete_deployment(
 
             "running",
             "running",
+            "LIVE",
+            "Live",
+            100,
 
             deployment_id
         )
@@ -575,25 +734,11 @@ def fail_deployment(
     deployment_id,
     status="failed"
 ):
-    conn = get_db_connection()
-
-    conn.execute(
-        """
-        UPDATE deployments
-        SET
-            status=?,
-            current_step=?
-        WHERE id=?
-        """,
-        (
-            status,
-            status,
-            deployment_id
-        )
+    set_deployment_state(
+        deployment_id,
+        status,
+        status
     )
-
-    conn.commit()
-    conn.close()
 
 
 # =========================================================

@@ -565,7 +565,8 @@ def wait_for_pipeline(
         save_jenkins_stages(
             deployment_id,
             stages,
-            current_stage=current_step_slug
+            current_stage=current_step_slug,
+            jenkins_status=status_result["status"]
         )
 
         # Emit a full CI payload on every poll (not just on stage
@@ -617,7 +618,8 @@ def wait_for_pipeline(
     save_jenkins_stages(
         deployment_id,
         final_stages,
-        current_stage=None
+        current_stage=None,
+        jenkins_status=status_result["status"]
     )
 
     emit_deployment_update(
@@ -633,11 +635,7 @@ def wait_for_pipeline(
         status_result["status"] == "SUCCESS"
     )
 
-
     result = {
-
-    return {
-
         "success": pipeline_success,
         "build_number": build_number,
         "status": status_result["status"],
@@ -646,7 +644,6 @@ def wait_for_pipeline(
             if pipeline_success
             else f"Jenkins pipeline ended with status {status_result['status']}"
         )
-
     }
 
     if not pipeline_success:
@@ -655,6 +652,4 @@ def wait_for_pipeline(
         result["console_log"] = console[:8000]
 
     return result
-
-    }
 

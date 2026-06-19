@@ -63,6 +63,9 @@ CREATE TABLE IF NOT EXISTS deployments (
 
     status TEXT,
     current_step TEXT,
+    state_key TEXT,
+    state_label TEXT,
+    progress INTEGER DEFAULT 0,
 
     jenkins_queue_id INTEGER,
     jenkins_build_number INTEGER,

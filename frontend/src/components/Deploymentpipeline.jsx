@@ -1,218 +1,149 @@
 import React from "react";
 
-function DeploymentPipeline({ status }) {
-  const normalizedStatus =
-    status?.toLowerCase()?.trim() || "";
-
-  const isWaiting = !normalizedStatus;
+function DeploymentPipeline({ stateKey, progress }) {
+  const normalizedStateKey = (stateKey || "").toLowerCase().trim();
+  const progressPercent = Math.min(100, Math.max(0, Number(progress) || 0));
 
   const steps = [
-    {
-      key: "queued",
-      icon: "⏳",
-      label: "Queued",
-      sublabel: "Request received",
-    },
-    {
-      key: "cloning",
-      icon: "📂",
-      label: "Clone",
-      sublabel: "Fetching repository",
-    },
-    {
-      key: "detecting",
-      icon: "🧠",
-      label: "Detect",
-      sublabel: "Checking framework",
-    },
-    {
-      key: "dockerfile_generating",
-      icon: "📝",
-      label: "Dockerfile",
-      sublabel: "Generating config",
-    },
-    {
-      key: "ci_pipeline",
-      icon: "🔧",
-      label: "CI Pipeline",
-      sublabel: "Running Jenkins",
-    },
-    {
-      key: "docker_build",
-      icon: "🐳",
-      label: "Build",
-      sublabel: "Building image",
-    },
-    {
-      key: "deploying",
-      icon: "⚡",
-      label: "Deploy",
-      sublabel: "Starting runtime",
-    },
-    {
-      key: "running",
-      icon: "🌍",
-      label: "Live",
-      sublabel: "Deployment online",
-    },
+    { key: "source", label: "Source" },
+    { key: "clone", label: "Clone" },
+    { key: "build", label: "Build" },
+    { key: "ci", label: "CI" },
+    { key: "docker", label: "Docker" },
+    { key: "deploy", label: "Deploy" },
+    { key: "verify", label: "Verify" },
+    { key: "live", label: "Live" },
   ];
 
-  const statusOrder = {
-    queued: 0,
-    cloning: 1,
-    detecting: 2,
-    dockerfile_generating: 3,
-    ci_pipeline: 4,
-    docker_build: 5,
-    deploying: 6,
-    running: 7,
-    success: 7,
-    completed: 7,
-    live: 7,
-    stopped: 7,
-    failed: 5,
-  };
+  const stageThresholds = steps.map((_, index) =>
+    Math.round(((index + 1) / steps.length) * 100)
+  );
 
-  const currentStep =
-    normalizedStatus in statusOrder
-      ? statusOrder[normalizedStatus]
-      : -1;
-
-  const getStepState = (index) => {
-    if (normalizedStatus === "failed") {
-      if (index < currentStep) {
-        return "done";
-      }
-
-      if (index === currentStep) {
-        return "failed";
-      }
-
-      return "pending";
-    }
-
-    if (index < currentStep) {
+  const stepStates = steps.map((step, index) => {
+    if (progressPercent >= stageThresholds[index]) {
       return "done";
     }
 
-    if (index === currentStep) {
+    const previousThreshold = index === 0 ? 0 : stageThresholds[index - 1];
+    if (progressPercent > previousThreshold && progressPercent < stageThresholds[index]) {
       return "active";
     }
 
     return "pending";
-  };
+  });
 
-  const statusLabel = normalizedStatus
-    ? normalizedStatus.replaceAll("_", " ")
-    : "waiting";
+  const activeIndex = stepStates.findIndex((state) => state === "active");
+  const currentStageLabel =
+    steps[
+      activeIndex >= 0
+        ? activeIndex
+        : Math.min(
+            steps.length - 1,
+            Math.floor((progressPercent / 100) * steps.length)
+          )
+    ]?.label || "Source";
 
-  const footerMessage = (() => {
-    switch (normalizedStatus) {
-      case "running":
-      case "success":
-      case "completed":
-      case "live":
-        return (
-          <div className="pipeline-success-message">
-            Deployment completed successfully.
-          </div>
-        );
-      case "failed":
-        return (
-          <div className="pipeline-failed-message">
-            Deployment failed.
-          </div>
-        );
-      case "stopped":
-        return (
-          <div className="pipeline-progress-message">
-            Deployment is stopped.
-          </div>
-        );
-      default:
-        return (
-          <div className="pipeline-progress-message">
-            Deployment is running...
-          </div>
-        );
-    }
-  })();
+  const statusLabel = normalizedStateKey
+    ? normalizedStateKey
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (match) => match.toUpperCase())
+    : "Waiting";
+
+  const statusClass = normalizedStateKey.includes("fail")
+    ? "failed"
+    : normalizedStateKey.includes("run") ||
+      normalizedStateKey.includes("progress") ||
+      normalizedStateKey.includes("build") ||
+      normalizedStateKey.includes("deploy")
+    ? "running"
+    : normalizedStateKey.includes("success") ||
+      normalizedStateKey.includes("live")
+    ? "success"
+    : "idle";
+
+  const lastUpdate = progressPercent > 0 ? "Now" : "Pending";
+  const successRate = normalizedStateKey.includes("success")
+    ? "100%"
+    : normalizedStateKey.includes("fail")
+    ? "0%"
+    : `${Math.max(12, Math.round(progressPercent * 0.9))}%`;
 
   return (
     <div className="pipeline-section">
       <div className="pipeline-header">
         <div className="pipeline-header-left">
-          <p className="pipeline-mini-label">
-            DEPLOYX FLOW
-          </p>
-
-          <h2>Deployment Pipeline</h2>
-
+          <span className="pipeline-mini-label">DeployX production flow</span>
+          <h2>Deployment pipeline</h2>
           <p className="pipeline-description">
-            Real-time deployment monitoring.
+            High-level production stages with clean horizontal flow.
           </p>
         </div>
 
-        <div
-          className={`pipeline-status ${
-            normalizedStatus || "idle"
-          }`}
-        >
+        <div className={`pipeline-status ${statusClass}`}>
           <span className="pipeline-status-dot"></span>
           <span>{statusLabel}</span>
         </div>
       </div>
 
-      {isWaiting && (
-        <div className="pipeline-empty">
-          <div className="pipeline-empty-icon">🚀</div>
-          <h3>Waiting For Deploy</h3>
-          <p>Click deploy to start the deployment pipeline.</p>
+      <div className="pipeline-summary-row">
+        <div className="pipeline-summary-card">
+          <span>Status</span>
+          <strong>{statusLabel}</strong>
         </div>
-      )}
+        <div className="pipeline-summary-card">
+          <span>Current stage</span>
+          <strong>{currentStageLabel}</strong>
+        </div>
+        <div className="pipeline-summary-card">
+          <span>Progress</span>
+          <strong>{progressPercent}%</strong>
+        </div>
+      </div>
 
-      {!isWaiting && (
-        <>
-          <div className="pipeline-steps">
-            {steps.map((step, index) => {
-              const state = getStepState(index);
+      <div className="pipeline-track">
+        {steps.map((step, index) => {
+          const stepState = stepStates[index];
+          const icon =
+            stepState === "done"
+              ? "✓"
+              : stepState === "active"
+              ? "●"
+              : "○";
+          const connectorState =
+            index < steps.length - 1
+              ? stepStates[index] === "done"
+                ? stepStates[index + 1] === "failed"
+                  ? "failed"
+                  : "done"
+                : "pending"
+              : "pending";
 
-              return (
+          return (
+            <React.Fragment key={step.key}>
+              <div className={`pipeline-step step-${stepState}`}>
+                <div className="pipeline-node">{icon}</div>
+                <div className="pipeline-label">{step.label}</div>
+              </div>
+              {index < steps.length - 1 && (
                 <div
-                  key={step.key}
-                  className={`pipeline-step step-${state}`}
-                  style={{
-                    animationDelay: `${index * 0.06}s`,
-                  }}
-                >
-                  <div className="pipeline-step-glow"></div>
+                  className={`pipeline-connector ${connectorState}`}
+                />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
 
-                  <div className="pipeline-icon">
-                    {step.icon}
-                  </div>
-
-                  <div className="pipeline-content">
-                    <div className="pipeline-label">
-                      {step.label}
-                    </div>
-                    <div className="pipeline-sublabel">
-                      {step.sublabel}
-                    </div>
-                  </div>
-
-                  {state === "active" && (
-                    <div className="pipeline-active-dot"></div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="pipeline-footer">
-            {footerMessage}
-          </div>
-        </>
-      )}
+      <div className="pipeline-footer-row">
+        <div className="pipeline-footer-card">
+          <span>Last update</span>
+          <strong>{lastUpdate}</strong>
+        </div>
+        <div className="pipeline-footer-card">
+          <span>Success rate</span>
+          <strong>{successRate}</strong>
+        </div>
+      </div>
     </div>
   );
 }

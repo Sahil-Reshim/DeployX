@@ -72,11 +72,7 @@ function useDeploymentSocket(deploymentId) {
       setConnectionStatus("error");
       joinRoom();
     };
-
-    const handleDisconnect = () => {
-      setConnectionStatus("disconnected");
-
-    };
+   
 
     const handleLogUpdate = (data) => {
       if (
