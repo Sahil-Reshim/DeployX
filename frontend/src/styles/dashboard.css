@@ -474,7 +474,7 @@ GRID
   display: grid;
 
   grid-template-columns:
-    420px 1fr;
+    repeat(12, minmax(0, 1fr));
 
   gap: 28px;
 
@@ -488,6 +488,31 @@ GRID
   flex-direction: column;
 
   gap: 28px;
+}
+
+.dashboard-grid > .section-block {
+  grid-column: 1 / -1;
+}
+
+.dashboard-grid > .deployment-card,
+.dashboard-grid > .production-card,
+.dashboard-grid > .monitoring-preview-card,
+.dashboard-grid > .logs-card {
+  grid-column: span 6;
+}
+
+.dashboard-grid > .jenkins-card {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid > .deployment-card,
+  .dashboard-grid > .production-card,
+  .dashboard-grid > .monitoring-preview-card,
+  .dashboard-grid > .logs-card,
+  .dashboard-grid > .jenkins-card {
+    grid-column: 1 / -1;
+  }
 }
 
 /* =========================================================
