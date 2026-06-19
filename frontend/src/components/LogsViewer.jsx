@@ -17,42 +17,23 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const [levelFilter, setLevelFilter] = useState("all");
 
   const logsBoxRef = useRef(null);
   const liveLogs = socketContext?.logs || [];
 
   const getLogType = (log) => {
-    if (!log) {
+    if (!log) return "info";
+    if (typeof log === "string") {
+      const text = log.toLowerCase();
+      if (text.includes("error") || text.includes("failed") || text.includes("exception")) return "error";
+      if (text.includes("success") || text.includes("live") || text.includes("running") || text.includes("completed")) return "success";
+      if (text.includes("warning") || text.includes("warn")) return "warn";
       return "info";
     }
 
-    const text = log.toLowerCase();
-
-    if (
-      text.includes("error") ||
-      text.includes("failed") ||
-      text.includes("exception")
-    ) {
-      return "error";
-    }
-
-    if (
-      text.includes("success") ||
-      text.includes("live") ||
-      text.includes("running") ||
-      text.includes("completed")
-    ) {
-      return "success";
-    }
-
-    if (
-      text.includes("warning") ||
-      text.includes("warn")
-    ) {
-      return "warn";
-    }
-
-    return "info";
+    return log.level || "info";
   };
 
   useEffect(() => {
@@ -84,10 +65,31 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
           containerLogs = [];
         }
 
-        const buildLogs =
-          buildResponse.data?.logs || [];
+        const buildLogs = buildResponse.data?.logs || [];
 
-        setLogs([...buildLogs, ...containerLogs]);
+        const normalize = (entry) => {
+          if (!entry) return null;
+          if (typeof entry === "string") {
+            return {
+              message: entry,
+              level: getLogType(entry),
+              timestamp: null,
+            };
+          }
+
+          return {
+            message: entry.message ?? entry.msg ?? String(entry),
+            level: entry.level ?? getLogType(entry),
+            timestamp: entry.timestamp ?? null,
+          };
+        };
+
+        const merged = [
+          ...buildLogs.map(normalize).filter(Boolean),
+          ...containerLogs.map(normalize).filter(Boolean),
+        ];
+
+        setLogs(merged);
       } catch (loadError) {
         console.error("Failed loading logs:", loadError);
         setError("Failed to load deployment logs");
@@ -109,9 +111,25 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
       const next = [...prev];
 
       liveLogs.forEach((logLine) => {
-        if (logLine && !next.includes(logLine)) {
-          next.push(logLine);
+        // normalize incoming live log entries
+        let entry = null;
+        if (!logLine) return;
+        if (typeof logLine === "string") {
+          entry = {
+            message: logLine,
+            level: getLogType(logLine),
+            timestamp: null,
+          };
+        } else {
+          entry = {
+            message: logLine.message ?? logLine.msg ?? String(logLine),
+            level: logLine.level ?? getLogType(logLine),
+            timestamp: logLine.timestamp ?? null,
+          };
         }
+
+        const exists = next.some((l) => l.message === entry.message && l.timestamp === entry.timestamp);
+        if (!exists) next.push(entry);
       });
 
       return next;
@@ -131,13 +149,28 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
 
   const copyLogs = async () => {
     try {
-      await navigator.clipboard.writeText(
-        logs.join("\n")
-      );
+      const text = logs
+        .map((l, i) => {
+          const time = l.timestamp ? ` [${new Date(l.timestamp).toLocaleString()}]` : "";
+          return `${String(i + 1).padStart(3, "0")} ${l.level.toUpperCase()}${time} - ${l.message}`;
+        })
+        .join("\n");
+
+      await navigator.clipboard.writeText(text);
     } catch (copyError) {
       console.error("Failed to copy logs", copyError);
     }
   };
+
+  const filteredLogs = logs.filter((l) => {
+    if (!l) return false;
+    if (levelFilter !== "all" && (l.level || "info") !== levelFilter) return false;
+    if (search) {
+      const txt = `${l.message} ${l.level} ${l.timestamp || ""}`.toLowerCase();
+      return txt.includes(search.toLowerCase());
+    }
+    return true;
+  });
 
   return (
     <div className="logs-container">
@@ -161,32 +194,23 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
       </div>
 
       <div className="logs-toolbar">
-        <div
-          style={{
-            display: "flex",
-            gap: "10px",
-          }}
-        >
-          <button
-            className="logs-tool-btn"
-            onClick={copyLogs}
-            type="button"
-          >
-            Copy
-          </button>
-
-          <button
-            className="logs-tool-btn"
-            onClick={clearLogs}
-            type="button"
-          >
-            Clear
-          </button>
+        <div className="logs-toolbar-left">
+          <button className="logs-tool-btn" onClick={copyLogs} type="button">Copy</button>
+          <button className="logs-tool-btn" onClick={clearLogs} type="button">Clear</button>
         </div>
 
-        <div className="logs-count">
-          {logs.length} ENTRIES
+        <div className="logs-toolbar-center">
+          <input className="logs-search" placeholder="Search logs..." value={search} onChange={(e) => setSearch(e.target.value)} />
+          <select className="logs-filter" value={levelFilter} onChange={(e) => setLevelFilter(e.target.value)}>
+            <option value="all">All</option>
+            <option value="info">Info</option>
+            <option value="success">Success</option>
+            <option value="warn">Warning</option>
+            <option value="error">Error</option>
+          </select>
         </div>
+
+        <div className="logs-count">{filteredLogs.length} ENTRIES</div>
       </div>
 
       {loading ? (
@@ -200,17 +224,21 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
             <div className="logs-empty">
               <p>{error}</p>
             </div>
-          ) : logs.length === 0 ? (
+          ) : filteredLogs.length === 0 ? (
             <div className="logs-empty">
               <p>Waiting for logs...</p>
             </div>
           ) : (
-            logs.map((log, index) => {
+            filteredLogs.map((log, index) => {
               const type = getLogType(log);
+
+              const timeLabel = log.timestamp
+                ? new Date(log.timestamp).toLocaleString()
+                : "-";
 
               return (
                 <div
-                  key={`${index}-${log?.slice(0, 24)}`}
+                  key={`${index}-${log?.message?.slice(0, 24)}`}
                   className={`log-line ${type}`}
                 >
                   <div className="log-number">
@@ -222,8 +250,9 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
                   </div>
 
                   <div className="log-message">
-                    {log}
-                    {index === logs.length - 1 && (
+                    <div className="log-meta">{timeLabel}</div>
+                    <div className="log-text">{log.message}</div>
+                    {index === filteredLogs.length - 1 && (
                       <span className="terminal-cursor"></span>
                     )}
                   </div>
