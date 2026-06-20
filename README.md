@@ -6,6 +6,7 @@
 
 ### Modern Self-Hosted DevOps Deployment Platform
 
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
 [![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
@@ -19,6 +20,19 @@
 
 
 **DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+
+
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18%2B-61DAFB.svg)](https://reactjs.org/)
+[![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
+[![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
+
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+
 
 [Documentation](#) • [Quick Start](#installation-guide) • [Features](#key-features) • [Contributing](#contributing)
 
@@ -42,6 +56,24 @@ Modern application deployment often requires complex infrastructure setup, manua
 DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
 
 ### Complete Deployment Lifecycle
+
+
+
+DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring.
+
+### The Problem DeployX Solves
+
+Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
+- **Complex deployment pipelines** requiring manual intervention
+- **Fragmented monitoring** across different services
+- **Lack of unified visibility** into deployment lifecycle
+- **High costs** of managed cloud platforms
+- **Vendor lock-in** with proprietary solutions
+
+DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
+
+### Complete Deployment Lifecycle
+
 
 DeployX orchestrates the entire deployment lifecycle from code to production:
 
@@ -539,9 +571,17 @@ DeployX provides comprehensive Kubernetes integration:
 - Node failure handling
 - Automatic rescheduling
 
+
 ---
 
 ## Folder Structure
+
+
+
+---
+
+## Folder Structure
+
 
 ```txt
 DeployX/
@@ -824,6 +864,7 @@ FRONTEND_PORT=5173
 VITE_API_URL=http://localhost:5000
 VITE_WS_URL=ws://localhost:5000
 
+
 # Application
 VITE_APP_NAME=DeployX
 VITE_APP_VERSION=1.0.0
@@ -847,6 +888,33 @@ VITE_APP_VERSION=1.0.0
 - Container CPU limit: 0.5 cores (configurable)
 - Network mode: bridge
 - Restart policy: unless-stopped
+
+
+
+# Application
+VITE_APP_NAME=DeployX
+VITE_APP_VERSION=1.0.0
+```
+
+### Ports
+
+| Service | Default Port | Description |
+|---------|-------------|-------------|
+| Backend API | 5000 | Flask REST API |
+| Frontend | 5173 | React development server |
+| Jenkins | 8080 | Jenkins web interface |
+| Prometheus | 9090 | Metrics collection |
+| Grafana | 3000 | Monitoring dashboard |
+| Kubernetes API | 6443 | Kubernetes cluster API |
+
+### Runtime Settings
+
+**Docker Settings**
+- Container memory limit: 512MB (configurable)
+- Container CPU limit: 0.5 cores (configurable)
+- Network mode: bridge
+- Restart policy: unless-stopped
+
 
 **Kubernetes Settings**
 - Default replicas: 2
@@ -918,7 +986,12 @@ VITE_APP_VERSION=1.0.0
   - Custom metrics and alerts
   - Log analysis and anomaly detection
 
+
 ---
+
+
+---
+
 
 ## Contributing
 
@@ -1036,11 +1109,14 @@ SOFTWARE.
 ### Tanavi Shinde
 - GitHub: [@tanvishinde017](https://github.com/tanvishinde017)
 
+
 - Role: Frontend Developer, UI/UX Design
 
 ### Sahil Reshim
 - GitHub: [@sahilreshim](https://github.com/sahilreshim)
 - Role:  Core Developer, Architecture Design
+
+
 
 - Role: Core Developer, Architecture Design
 
@@ -1048,12 +1124,12 @@ SOFTWARE.
 - GitHub: [@sahilreshim](https://github.com/sahilreshim)
 - Role: Frontend Developer, UI/UX Design
 
-
 ---
 
 ## Acknowledgements
 
 DeployX is inspired by and built upon the excellent work of these projects and platforms:
+
 
 - **Vercel** - For pioneering modern deployment workflows and developer experience
 - **Railway** - For elegant application deployment and infrastructure abstraction
@@ -1066,6 +1142,20 @@ DeployX is inspired by and built upon the excellent work of these projects and p
 - **React** - For the amazing frontend framework
 - **Flask** - For the lightweight and powerful Python web framework
 
+=======
+
+- **Vercel** - For pioneering modern deployment workflows and developer experience
+- **Railway** - For elegant application deployment and infrastructure abstraction
+- **Render** - For comprehensive platform-as-a-service features
+- **Docker** - For revolutionizing containerization and application packaging
+- **Jenkins** - For providing robust CI/CD automation capabilities
+- **Kubernetes** - For industry-standard container orchestration
+- **Grafana** - For powerful monitoring and visualization
+- **Prometheus** - For metrics collection and alerting
+- **React** - For the amazing frontend framework
+- **Flask** - For the lightweight and powerful Python web framework
+
+
 Special thanks to the open-source community for creating and maintaining these incredible tools that make DeployX possible.
 
 ---
@@ -1077,6 +1167,13 @@ Special thanks to the open-source community for creating and maintaining these i
 If you find DeployX useful, please consider giving us a star on GitHub. It helps us grow and motivates us to keep improving the project.
 
 [![Star on GitHub](https://img.shields.io/badge/GitHub-DeployX-brightgreen.svg?logo=github&style=social)](https://github.com/tanvishinde017/DeployX)
+
+
+
+If you find DeployX useful, please consider giving us a star on GitHub. It helps us grow and motivates us to keep improving the project.
+
+[![Star on GitHub](https://img.shields.io/badge/GitHub-DeployX-brightgreen.svg?logo=github&style=social)](https://github.com/tanvishinde017/DeployX)
+
 
 **Built with ❤️ by the DeployX Team**
 
