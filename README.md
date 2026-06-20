@@ -1031,11 +1031,11 @@ SOFTWARE.
 
 ### Tanavi Shinde
 - GitHub: [@tanvishinde017](https://github.com/tanvishinde017)
-- Role: Core Developer, Architecture Design
+- Role: Frontend Developer, UI/UX Design
 
 ### Sahil Reshim
 - GitHub: [@sahilreshim](https://github.com/sahilreshim)
-- Role: Frontend Developer, UI/UX Design
+- Role:  Core Developer, Architecture Design
 
 ---
 
