@@ -12,7 +12,11 @@
 [![React](https://img.shields.io/badge/React-18%2B-61DAFB.svg)](https://reactjs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
 [![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
+
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-pending-326CE5.svg)](https://kubernetes.io/)
+
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
+
 
 **DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
 
@@ -1031,11 +1035,19 @@ SOFTWARE.
 
 ### Tanavi Shinde
 - GitHub: [@tanvishinde017](https://github.com/tanvishinde017)
+
 - Role: Frontend Developer, UI/UX Design
 
 ### Sahil Reshim
 - GitHub: [@sahilreshim](https://github.com/sahilreshim)
 - Role:  Core Developer, Architecture Design
+
+- Role: Core Developer, Architecture Design
+
+### Sahil Reshim
+- GitHub: [@sahilreshim](https://github.com/sahilreshim)
+- Role: Frontend Developer, UI/UX Design
+
 
 ---
 
