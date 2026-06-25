@@ -70,7 +70,7 @@ Modern application deployment often requires complex infrastructure setup, manua
 - **High costs** of managed cloud platforms
 - **Vendor lock-in** with proprietary solutions
 
-DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
+DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure .
 
 ### Complete Deployment Lifecycle
 
