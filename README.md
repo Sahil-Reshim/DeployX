@@ -19,7 +19,7 @@
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
 
 
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
 
 
 
