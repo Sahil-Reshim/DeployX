@@ -4,7 +4,7 @@
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
-### Modern Self-Hosted DevOps Deployment Platform
+### Modern Self-Hosted DevOps Deployment Platform.
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -70,7 +70,7 @@ Modern application deployment often requires complex infrastructure setup, manua
 - **High costs** of managed cloud platforms
 - **Vendor lock-in** with proprietary solutions
 
-DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
+DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure .
 
 ### Complete Deployment Lifecycle
 
