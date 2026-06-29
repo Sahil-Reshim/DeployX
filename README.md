@@ -458,13 +458,13 @@ graph LR
 
 DeployX provides comprehensive monitoring capabilities:
 
-### CPU Monitoring
+### CPU Monitoring,
 - Real-time CPU utilization tracking per container
 - CPU usage percentage and core allocation
 - Historical CPU trends and patterns
 - CPU-based alerting and thresholds
 
-### RAM Monitoring
+### RAM Monitoring.
 - Memory usage tracking per container
 - Memory allocation and utilization percentage
 - Memory leak detection and alerting
