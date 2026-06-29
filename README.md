@@ -88,9 +88,9 @@ DeployX orchestrates the entire deployment lifecycle from code to production:
 
 ---
 
-## Key Features
+## Key Features.
 
-### GitHub Deployments
+### GitHub Deployments.
 
 DeployX provides seamless GitHub integration for automated deployments:
 
