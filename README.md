@@ -47,11 +47,11 @@ DeployX is a production-grade, self-hosted DevOps deployment platform that bring
 ### The Problem DeployX Solves.
 
 Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
-- **Complex deployment pipelines** requiring manual intervention
-- **Fragmented monitoring** across different services
-- **Lack of unified visibility** into deployment lifecycle
-- **High costs** of managed cloud platforms
-- **Vendor lock-in** with proprietary solutions
+- **Complex deployment pipelines** requiring manual intervention.
+- **Fragmented monitoring** across different services.
+- **Lack of unified visibility** into deployment lifecycle.
+- **High costs** of managed cloud platforms.
+- **Vendor lock-in** with proprietary solutions.
 
 DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
 
