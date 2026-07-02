@@ -19,7 +19,7 @@
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
 
 
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
 
 
 
@@ -63,7 +63,7 @@ DeployX is a production-grade, self-hosted DevOps deployment platform that bring
 
 ### The Problem DeployX Solves.
 
-Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
+Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with :
 - **Complex deployment pipelines** requiring manual intervention
 - **Fragmented monitoring** across different services
 - **Lack of unified visibility** into deployment lifecycle
@@ -88,7 +88,7 @@ DeployX orchestrates the entire deployment lifecycle from code to production:
 
 ---
 
-## Key Features.
+## Key Features .
 
 ### GitHub Deployments.
 
