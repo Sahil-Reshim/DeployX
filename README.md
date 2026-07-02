@@ -70,7 +70,7 @@ Modern application deployment often requires complex infrastructure setup, manua
 - **High costs** of managed cloud platforms
 - **Vendor lock-in** with proprietary solutions
 
-DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure .
+DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
 
 ### Complete Deployment Lifecycle.
 
@@ -134,7 +134,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - **Scalability** – Easy horizontal scaling with container replication
 
 **Technical Implementation**
-- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.)
+- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.) 
 - Multi-stage build optimization
 - Container health checks and automatic restarts
 - Volume management for persistent storage
