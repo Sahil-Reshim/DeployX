@@ -154,7 +154,7 @@ def get_jenkins_crumb():
 # TRIGGER JOB
 # =========================================================
 
-def trigger_jenkins_job(repo_url):
+def trigger_jenkins_job(repo_url, framework):
 
     print("\n===== TRIGGERING JENKINS =====")
     print("Repo URL sent to Jenkins:", repo_url)
@@ -165,7 +165,10 @@ def trigger_jenkins_job(repo_url):
         cfg = _get_config()
         endpoint = f"{cfg.get('url')}/job/{cfg.get('job')}/buildWithParameters"
 
-        params = {"REPO_URL": repo_url}
+        params = {
+            "REPO_URL": repo_url,
+            "FRAMEWORK": framework
+        }
 
         headers = {crumb_data["field"]: crumb_data["crumb"]} if crumb_data else {}
 
