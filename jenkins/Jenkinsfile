@@ -1,0 +1,231 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(
+            name: 'REPO_URL',
+            defaultValue: '',
+            description: 'GitHub Repository URL'
+        )
+
+        string(
+            name: 'FRAMEWORK',
+            defaultValue: 'flask',
+            description: 'Detected Framework'
+        )
+    }
+
+    stages {
+
+        stage('Clone Repository') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[
+                        url: params.REPO_URL
+                    ]]
+                ])
+            }
+        }
+
+        stage('Verify Files') {
+            steps {
+                sh 'ls -la'
+            }
+        }
+
+        stage('Generate Dockerfile') {
+            steps {
+                script {
+
+                    echo "Detected Framework: ${params.FRAMEWORK}"
+
+                    // -------------------------
+                    // Python Frameworks
+                    // -------------------------
+
+                    if (
+                        params.FRAMEWORK == 'flask' ||
+                        params.FRAMEWORK == 'django' ||
+                        params.FRAMEWORK == 'fastapi'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM python:3.11-alpine
+
+WORKDIR /app
+
+COPY . .
+
+RUN pip install -r requirements.txt
+
+EXPOSE 5000
+
+CMD ["python","app.py"]
+'''
+
+                    }
+
+                    // -------------------------
+                    // Node Frameworks
+                    // -------------------------
+
+                    else if (
+                        params.FRAMEWORK == 'node' ||
+                        params.FRAMEWORK == 'express' ||
+                        params.FRAMEWORK == 'nestjs'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 3000
+
+CMD ["npm","start"]
+'''
+
+                    }
+
+                    // -------------------------
+                    // React / Vite
+                    // -------------------------
+
+                    else if (
+                        params.FRAMEWORK == 'react' ||
+                        params.FRAMEWORK == 'vite' ||
+                        params.FRAMEWORK == 'react-vite'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm","run","dev","--","--host"]
+'''
+
+                    }
+
+                    // -------------------------
+                    // Next.js
+                    // -------------------------
+
+                    else if (
+                        params.FRAMEWORK == 'nextjs'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm","start"]
+'''
+
+                    }
+
+                    // -------------------------
+                    // Vue
+                    // -------------------------
+
+                    else if (
+                        params.FRAMEWORK == 'vue'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 5173
+
+CMD ["npm","run","dev","--","--host"]
+'''
+
+                    }
+
+                    // -------------------------
+                    // Angular
+                    // -------------------------
+
+                    else if (
+                        params.FRAMEWORK == 'angular'
+                    ) {
+
+                        writeFile file: 'Dockerfile', text: '''
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package*.json ./
+
+RUN npm install
+
+COPY . .
+
+EXPOSE 4200
+
+CMD ["npm","start"]
+'''
+
+                    }
+
+                    else {
+
+                        error "Unsupported Framework: ${params.FRAMEWORK}"
+
+                    }
+
+                    sh 'echo "========== Generated Dockerfile =========="'
+                    sh 'cat Dockerfile'
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t deployx-test-image .'
+            }
+        }
+
+        stage('Verify Image') {
+            steps {
+                sh 'docker images | grep deployx-test-image'
+            }
+        }
+
+    }
+}
