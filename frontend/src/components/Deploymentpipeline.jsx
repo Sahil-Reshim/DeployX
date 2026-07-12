@@ -1,16 +1,21 @@
 import React from "react";
+import { motion } from "framer-motion";
 
 function DeploymentPipeline({ stateKey, progress }) {
   const normalizedStateKey = (stateKey || "").toLowerCase().trim();
   const progressPercent = Math.min(100, Math.max(0, Number(progress) || 0));
 
   const steps = [
-    { key: "source", label: "Source" },
+    { key: "source", label: "Repository" },
     { key: "clone", label: "Clone" },
-    { key: "build", label: "Build" },
-    { key: "ci", label: "CI" },
-    { key: "docker", label: "Docker" },
-    { key: "deploy", label: "Deploy" },
+    { key: "detect", label: "Detect\nFramework" },
+    { key: "dockerfile", label: "Generate\nDockerfile" },
+    { key: "queue", label: "Jenkins\nQueue" },
+    { key: "ci", label: "CI\nPipeline" },
+    { key: "docker", label: "Docker\nBuild" },
+    { key: "container", label: "Container" },
+    { key: "health", label: "Health\nCheck" },
+    { key: "prod", label: "Production" },
     { key: "verify", label: "Verify" },
     { key: "live", label: "Live" },
   ];
@@ -23,12 +28,10 @@ function DeploymentPipeline({ stateKey, progress }) {
     if (progressPercent >= stageThresholds[index]) {
       return "done";
     }
-
     const previousThreshold = index === 0 ? 0 : stageThresholds[index - 1];
     if (progressPercent > previousThreshold && progressPercent < stageThresholds[index]) {
       return "active";
     }
-
     return "pending";
   });
 
@@ -61,6 +64,7 @@ function DeploymentPipeline({ stateKey, progress }) {
     ? "success"
     : "idle";
 
+  const completedCount = stepStates.filter((s) => s === "done").length;
   const lastUpdate = progressPercent > 0 ? "Now" : "Pending";
   const successRate = normalizedStateKey.includes("success")
     ? "100%"
@@ -69,13 +73,18 @@ function DeploymentPipeline({ stateKey, progress }) {
     : `${Math.max(12, Math.round(progressPercent * 0.9))}%`;
 
   return (
-    <div className="pipeline-section">
+    <motion.div
+      className="pipeline-section"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4 }}
+    >
       <div className="pipeline-header">
         <div className="pipeline-header-left">
           <span className="pipeline-mini-label">DeployX production flow</span>
-          <h2>Deployment pipeline</h2>
+          <h2>Deployment Pipeline</h2>
           <p className="pipeline-description">
-            High-level production stages with clean horizontal flow.
+            12-stage production pipeline with real-time status tracking
           </p>
         </div>
 
@@ -92,7 +101,7 @@ function DeploymentPipeline({ stateKey, progress }) {
         </div>
         <div className="pipeline-summary-card">
           <span>Current stage</span>
-          <strong>{currentStageLabel}</strong>
+          <strong>{currentStageLabel.replace("\n", " ")}</strong>
         </div>
         <div className="pipeline-summary-card">
           <span>Progress</span>
@@ -120,10 +129,15 @@ function DeploymentPipeline({ stateKey, progress }) {
 
           return (
             <React.Fragment key={step.key}>
-              <div className={`pipeline-step step-${stepState}`}>
+              <motion.div
+                className={`pipeline-step ${stepState}`}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: index * 0.03, duration: 0.3 }}
+              >
                 <div className="pipeline-node">{icon}</div>
                 <div className="pipeline-label">{step.label}</div>
-              </div>
+              </motion.div>
               {index < steps.length - 1 && (
                 <div
                   className={`pipeline-connector ${connectorState}`}
@@ -144,7 +158,7 @@ function DeploymentPipeline({ stateKey, progress }) {
           <strong>{successRate}</strong>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

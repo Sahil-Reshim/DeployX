@@ -1,223 +1,82 @@
 import { useEffect, useRef, useState } from "react";
 import API from "../services/api";
-import Loader from "./Loader";
 
-function RepoForm({
-  refreshDeployments,
-  setActiveDeployment,
-  upsertLatestDeployment,
-}) {
-
+function RepoForm({ refreshDeployments, setActiveDeployment, upsertLatestDeployment }) {
   const [repoUrl, setRepoUrl] = useState("");
-
   const [loading, setLoading] = useState(false);
-
-  const [message, setMessage] = useState({
-    text: "",
-    type: ""
-  });
-
+  const [message, setMessage] = useState({ text: "", type: "" });
   const pollingRef = useRef(null);
 
-  /* ─────────────────────────────────────────────
-     CLEANUP
-  ───────────────────────────────────────────── */
-
   useEffect(() => {
-
     return () => {
-
-      if (pollingRef.current) {
-
-        clearInterval(pollingRef.current);
-
-      }
-
+      if (pollingRef.current) clearInterval(pollingRef.current);
     };
-
   }, []);
 
-  /* ─────────────────────────────────────────────
-     STOP POLLING
-  ───────────────────────────────────────────── */
-
   const stopPolling = () => {
-
     if (pollingRef.current) {
-
       clearInterval(pollingRef.current);
-
       pollingRef.current = null;
-
     }
-
   };
 
-  /* ─────────────────────────────────────────────
-     POLL DEPLOYMENT STATUS
-  ───────────────────────────────────────────── */
-
   const pollDeploymentStatus = (deploymentId) => {
-
     stopPolling();
-
     pollingRef.current = setInterval(async () => {
-
       try {
-
-        const response = await API.get(
-          `/deployments/${deploymentId}/status`
-        );
-
-        const deployment =
-          response.data?.deployment ||
-          response.data;
-
+        const response = await API.get(`/deployments/${deploymentId}/status`);
+        const deployment = response.data?.deployment || response.data;
         if (!deployment) return;
 
         const normalizedDeployment = {
           ...deployment,
-          id:
-            deployment.id ||
-            deployment.deployment_id,
-          jenkins_stages:
-            deployment.jenkins_stages || [],
+          id: deployment.id || deployment.deployment_id,
+          jenkins_stages: deployment.jenkins_stages || [],
         };
 
-        const status = (
-          normalizedDeployment.status || ""
-        ).toLowerCase();
-
-        setActiveDeployment(
-          normalizedDeployment
-        );
-
-        upsertLatestDeployment?.(
-          normalizedDeployment
-        );
-
+        const status = (normalizedDeployment.status || "").toLowerCase();
+        setActiveDeployment(normalizedDeployment);
+        upsertLatestDeployment?.(normalizedDeployment);
         await refreshDeployments();
 
-        /* SUCCESS */
-
-        if (
-          status === "running" ||
-          status === "live"
-        ) {
-
-          setMessage({
-            text:
-              `Deployment Live 🚀 ${normalizedDeployment.url || ""}`,
-            type: "success"
-          });
-
+        if (status === "running" || status === "live") {
+          setMessage({ text: `Deployment Live 🚀 ${normalizedDeployment.url || ""}`, type: "success" });
           stopPolling();
-
           setLoading(false);
-
         }
-
-        /* FAILED */
-
         if (status === "failed") {
-
-          setMessage({
-            text:
-              normalizedDeployment.error ||
-              "Deployment failed",
-            type: "error"
-          });
-
+          setMessage({ text: normalizedDeployment.error || "Deployment failed", type: "error" });
           stopPolling();
-
           setLoading(false);
-
         }
-
       } catch (error) {
-
-        console.error(
-          "Polling error:",
-          error
-        );
-
+        console.error("Polling error:", error);
         stopPolling();
-
         setLoading(false);
-
-        setMessage({
-          text:
-            "Failed to fetch deployment status",
-          type: "error"
-        });
-
+        setMessage({ text: "Failed to fetch deployment status", type: "error" });
       }
-
     }, 2000);
-
   };
 
-  /* ─────────────────────────────────────────────
-     DEPLOY
-  ───────────────────────────────────────────── */
-
   const handleDeploy = async (e) => {
-
     e.preventDefault();
-
     if (!repoUrl.trim()) {
-
-      setMessage({
-        text:
-          "Please enter a valid GitHub repository URL",
-        type: "error"
-      });
-
+      setMessage({ text: "Please enter a valid GitHub repository URL", type: "error" });
       return;
-
     }
 
     try {
-
       setLoading(true);
-
-      setMessage({
-        text:
-          "Initializing deployment pipeline...",
-        type: "info"
-      });
-
-      const response = await API.post(
-        "/deploy",
-        {
-          repo_url: repoUrl.trim()
-        }
-      );
-
+      setMessage({ text: "Initializing deployment pipeline...", type: "info" });
+      const response = await API.post("/deploy", { repo_url: repoUrl.trim() });
       const data = response.data;
 
       if (!data?.success) {
-
-        throw new Error(
-          data?.error ||
-          data?.message ||
-          "Deployment request failed"
-        );
-
+        throw new Error(data?.error || data?.message || "Deployment request failed");
       }
 
-      const deploymentId =
-        data?.deployment_id;
-
-      if (!deploymentId) {
-
-        throw new Error(
-          "Deployment ID missing"
-        );
-
-      }
-
-      /* ACTIVE DEPLOYMENT */
+      const deploymentId = data?.deployment_id;
+      if (!deploymentId) throw new Error("Deployment ID missing");
 
       const newDeployment = {
         id: deploymentId,
@@ -229,157 +88,54 @@ function RepoForm({
       };
 
       setActiveDeployment(newDeployment);
-
       upsertLatestDeployment?.(newDeployment);
-
-      /* START POLLING */
-
-      pollDeploymentStatus(
-        deploymentId
-      );
-
-      /* RESET */
-
+      pollDeploymentStatus(deploymentId);
       setRepoUrl("");
-
-      setMessage({
-        text:
-          "Deployment started successfully 🚀",
-        type: "success"
-      });
-
+      setMessage({ text: "Deployment started successfully 🚀", type: "success" });
     } catch (error) {
-
       console.error(error);
-
       setLoading(false);
-
       if (error.response) {
-
-        setMessage({
-          text:
-            error.response.data?.error ||
-            error.response.data?.message ||
-            "Deployment failed",
-          type: "error"
-        });
-
+        setMessage({ text: error.response.data?.error || error.response.data?.message || "Deployment failed", type: "error" });
       } else {
-
-        setMessage({
-          text:
-            error.message ||
-            "Cannot connect to backend server",
-          type: "error"
-        });
-
+        setMessage({ text: error.message || "Cannot connect to backend server", type: "error" });
       }
-
     }
-
   };
 
-  /* ─────────────────────────────────────────────
-     UI
-  ───────────────────────────────────────────── */
-
   return (
-
     <div className="repo-form-container">
-
-      <div className="repo-form-glow"></div>
-
-      <div className="repo-form-header">
-
-        <div className="repo-mini-badge">
-          DEPLOYX CLOUD
+      <form className="repo-form" onSubmit={handleDeploy}>
+        <div className="repo-url-wrapper">
+          <span className="repo-url-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+            </svg>
+            GitHub
+          </span>
+          <input
+            type="text"
+            placeholder="https://github.com/user/project"
+            className="repo-url-input"
+            value={repoUrl}
+            onChange={(e) => setRepoUrl(e.target.value)}
+            disabled={loading}
+          />
         </div>
-
-        <h2>
-          Deploy GitHub Repository
-        </h2>
-
-        <p>
-          Build, containerize and deploy
-          applications instantly with
-          real-time monitoring.
-        </p>
-
-      </div>
-
-      <form
-        className="repo-form"
-        onSubmit={handleDeploy}
-      >
-
-        <div className="repo-input-group">
-
-          <label className="repo-input-label">
-            Repository URL
-          </label>
-
-          <div className="repo-url-wrapper">
-
-            <span className="repo-url-icon">
-              GitHub
-            </span>
-
-            <input
-              type="text"
-              placeholder="https://github.com/user/project"
-              className="repo-url-input"
-              value={repoUrl}
-              onChange={(e) =>
-                setRepoUrl(e.target.value)
-              }
-              disabled={loading}
-            />
-
-          </div>
-
-        </div>
-
-        <button
-          type="submit"
-          className={`deploy-btn ${
-            loading ? "loading" : ""
-          }`}
-          disabled={loading}
-        >
-
+        <button type="submit" className={`deploy-btn ${loading ? "loading" : ""}`} disabled={loading}>
           {loading ? (
             <>
               <span className="deploy-spinner"></span>
               Deploying...
             </>
           ) : (
-            <>
-              Launch Deployment
-            </>
+            "Launch Deployment"
           )}
-
         </button>
-
       </form>
-
-      {loading && <Loader />}
-
-      {message.text && (
-
-        <div
-          className={`deploy-message ${message.type}`}
-        >
-
-          {message.text}
-
-        </div>
-
-      )}
-
+      {message.text && <div className={`deploy-message ${message.type}`}>{message.text}</div>}
     </div>
-
   );
-
 }
 
 export default RepoForm;
