@@ -125,6 +125,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - Multi-stage builds for optimized image sizes
 - Container isolation for secure runtime environments
 - Support for custom Dockerfiles and build configurations
+- and jenkins
 
 **Benefits**
 - **Environment Consistency** – Same environment from development to production
