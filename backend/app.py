@@ -347,7 +347,8 @@ def run_deployment_job(
 
 
         jenkins_result = trigger_jenkins_job(
-            repo_url
+            repo_url,
+            framework_result["framework"]
         )
 
         if not jenkins_result["success"]:
