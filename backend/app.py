@@ -446,30 +446,14 @@ def run_deployment_job(
 
         
         # =================================================
-        # PHASE 7 DOMAIN + PORT SETUP
+        # PHASE 7 PORT SETUP
         # =================================================
-
-        repo_name = repo_url.rstrip("/").split("/")[-1]
-
-        if repo_name.endswith(".git"):
-            repo_name = repo_name[:-4]
 
         assigned_port = allocate_port()
 
-        subdomain = generate_subdomain(
-            repo_name
-        )
+        subdomain = None
 
-        custom_url = build_custom_url(
-            subdomain
-        )
-
-        create_route(
-            subdomain,
-            assigned_port
-        )
-
-        reload_proxy()
+        custom_url = f"http://localhost:{assigned_port}"
 
         # =================================================
         # RUN CONTAINER - THIS ALSO MARKS THE END OF THE DEPLOYMENT PROCESS
@@ -501,10 +485,6 @@ def run_deployment_job(
                     "message",
                     "Container failed to start"
                 )
-            )
-
-            cleanup_proxy_route(
-                subdomain
             )
 
             remove_image(
