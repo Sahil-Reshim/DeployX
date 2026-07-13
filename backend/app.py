@@ -1308,6 +1308,239 @@ def cleanup_repo():
 
 
 # =========================================================
+# ANALYTICS ENDPOINT
+# =========================================================
+
+@app.route("/api/analytics", methods=["GET"])
+def get_analytics():
+    try:
+        conn = get_db_connection()
+
+        # Total deployments
+        total = conn.execute("SELECT COUNT(*) as count FROM deployments").fetchone()["count"]
+
+        # Status breakdown - successful = deployments that are running/live, failed = deployments that failed
+        successful = conn.execute("SELECT COUNT(*) as count FROM deployments WHERE status IN ('running', 'live')").fetchone()["count"]
+        failed = conn.execute("SELECT COUNT(*) as count FROM deployments WHERE status='failed'").fetchone()["count"]
+        running = conn.execute("SELECT COUNT(*) as count FROM deployments WHERE status='running'").fetchone()["count"]
+        queued = conn.execute("SELECT COUNT(*) as count FROM deployments WHERE status='queued' OR status IS NULL").fetchone()["count"]
+        stopped = conn.execute("SELECT COUNT(*) as count FROM deployments WHERE status='stopped'").fetchone()["count"]
+
+        # Framework distribution
+        frameworks_raw = conn.execute("""
+            SELECT framework, COUNT(*) as count
+            FROM deployments
+            WHERE framework IS NOT NULL AND framework != ''
+            GROUP BY framework
+            ORDER BY count DESC
+        """).fetchall()
+
+        framework_distribution = [dict(r) for r in frameworks_raw]
+
+        # Most used framework
+        most_used = framework_distribution[0] if framework_distribution else None
+
+        # Deployments per day (last 30 days)
+        per_day = conn.execute("""
+            SELECT DATE(created_at) as day, COUNT(*) as count
+            FROM deployments
+            WHERE created_at >= DATE('now', '-30 days')
+            GROUP BY DATE(created_at)
+            ORDER BY day ASC
+        """).fetchall()
+
+        deployments_per_day = [dict(r) for r in per_day]
+
+        # Latest 10 deployments for activity
+        latest_raw = conn.execute("""
+            SELECT id, repo_url, repo_name, framework, status, image_name, container_id, url, custom_url, created_at, progress, state_key, state_label, current_step
+            FROM deployments
+            ORDER BY id DESC
+            LIMIT 10
+        """).fetchall()
+
+        latest_deployments = []
+        for r in latest_raw:
+            d = dict(r)
+            repo_url = d.get("repo_url", "")
+            if repo_url:
+                repo_name = repo_url.rstrip("/").split("/")[-1]
+                if repo_name.endswith(".git"):
+                    repo_name = repo_name[:-4]
+                d["repo_name_display"] = repo_name
+            d["container_running"] = d.get("container_id") is not None
+            latest_deployments.append(d)
+
+        # Pipeline timing averages
+        timing = conn.execute("""
+            SELECT
+                AVG(
+                    CASE
+                        WHEN pipeline_started_at IS NOT NULL AND pipeline_finished_at IS NOT NULL
+                        THEN (julianday(pipeline_finished_at) - julianday(pipeline_started_at)) * 86400
+                        ELSE NULL
+                    END
+                ) as avg_build_time
+            FROM deployments
+            WHERE pipeline_started_at IS NOT NULL
+        """).fetchone()
+
+        avg_build_time = round(timing["avg_build_time"], 1) if timing and timing["avg_build_time"] else 0
+
+        # Deployment duration (from created_at to when it reached running)
+        # For simplicity, use a reasonable average estimate from created_at to status change
+        avg_deploy_time = conn.execute("""
+            SELECT AVG(
+                CASE
+                    WHEN progress = 100 OR status = 'running'
+                    THEN (
+                        julianday(CURRENT_TIMESTAMP) - julianday(created_at)
+                    ) * 86400
+                    ELSE NULL
+                END
+            ) as avg_dur
+            FROM deployments
+        """).fetchone()
+
+        avg_deployment_time = round(avg_deploy_time["avg_dur"], 1) if avg_deploy_time and avg_deploy_time["avg_dur"] else 0
+
+        # Success rate
+        success_rate = round((successful / total * 100), 1) if total > 0 else 0
+
+        # Average health check time (count metrics rows)
+        health_metrics_count = conn.execute("SELECT COUNT(*) as count FROM deployment_metrics").fetchone()["count"]
+
+        # Deployment duration per deployment (last 20)
+        duration_raw = conn.execute("""
+            SELECT id, created_at, status, framework
+            FROM deployments
+            ORDER BY id DESC
+            LIMIT 20
+        """).fetchall()
+
+        deployment_durations = []
+        for r in duration_raw:
+            d = dict(r)
+            d["status"] = d.get("status", "unknown")
+            deployment_durations.append(d)
+
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "analytics": {
+                "total": total,
+                "successful": successful,
+                "failed": failed,
+                "running": running,
+                "queued": queued,
+                "stopped": stopped,
+                "success_rate": success_rate,
+                "avg_deployment_time": avg_deployment_time,
+                "avg_build_time": avg_build_time,
+                "avg_health_check_count": health_metrics_count,
+                "framework_distribution": framework_distribution,
+                "most_used_framework": most_used,
+                "deployments_per_day": deployments_per_day,
+                "latest_deployments": latest_deployments,
+                "deployment_durations": deployment_durations,
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# =========================================================
+# DOCKER STATS ENDPOINT
+# =========================================================
+
+@app.route("/api/docker/stats", methods=["GET"])
+def get_docker_stats():
+    try:
+        import docker
+        client = docker.from_env()
+
+        containers = client.containers.list(all=True)
+        images = client.images.list()
+
+        running_containers = sum(1 for c in containers if c.status == "running")
+        stopped_containers = sum(1 for c in containers if c.status in ("exited", "stopped"))
+        total_containers = len(containers)
+        total_images = len(images)
+
+        container_list = []
+        for c in containers:
+            name = c.name
+            image = c.image.tags[0] if c.image.tags else "untagged"
+            status = c.status
+            ports = c.ports
+            container_list.append({
+                "name": name,
+                "image": image,
+                "status": status,
+                "ports": ports
+            })
+
+        return jsonify({
+            "success": True,
+            "stats": {
+                "running_containers": running_containers,
+                "stopped_containers": stopped_containers,
+                "total_containers": total_containers,
+                "total_images": total_images,
+                "containers": container_list
+            }
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "stats": {
+                "running_containers": 0,
+                "stopped_containers": 0,
+                "total_containers": 0,
+                "total_images": 0,
+                "containers": []
+            }
+        })
+
+
+# =========================================================
+# ALL METRICS FOR ANALYTICS CHARTS
+# =========================================================
+
+@app.route("/api/metrics/all", methods=["GET"])
+def get_all_metrics():
+    try:
+        conn = get_db_connection()
+        metrics = conn.execute("""
+            SELECT dm.*, d.repo_url, d.framework
+            FROM deployment_metrics dm
+            LEFT JOIN deployments d ON dm.deployment_id = d.id
+            ORDER BY dm.created_at ASC
+            LIMIT 500
+        """).fetchall()
+
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "metrics": [dict(m) for m in metrics]
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+# =========================================================
 # TEMP TEST ENDPOINT (DEV ONLY)
 # POST JSON: { "deployment_id": <id>, "message": "...", "level": "info|warn|error|success" }
 # =========================================================
