@@ -4,7 +4,7 @@
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
-### Modern Self-Hosted DevOps Deployment Platform .
+### Modern Self-Hosted DevOps Deployment Platform.
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
