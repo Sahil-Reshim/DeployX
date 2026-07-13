@@ -4,7 +4,7 @@
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
-### Modern Self-Hosted DevOps Deployment Platform.
+### Modern Self-Hosted DevOps Deployment Platform .
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -19,7 +19,7 @@
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
 
 
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
 
 
 
@@ -31,7 +31,7 @@
 [![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
 [![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
 
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
 
 
 [Documentation](#) • [Quick Start](#installation-guide) • [Features](#key-features) • [Contributing](#contributing)
@@ -42,12 +42,12 @@
 
 ## Overview.
 
-DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring.
+DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring .
 
 ### The Problem DeployX Solves.
 
 Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
-- **Complex deployment pipelines** requiring manual intervention.
+- **Complex deployment pipelines** requiring manual intervention .
 - **Fragmented monitoring** across different services.
 - **Lack of unified visibility** into deployment lifecycle.
 - **High costs** of managed cloud platforms.
@@ -63,14 +63,14 @@ DeployX is a production-grade, self-hosted DevOps deployment platform that bring
 
 ### The Problem DeployX Solves.
 
-Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
+Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with :
 - **Complex deployment pipelines** requiring manual intervention
 - **Fragmented monitoring** across different services
 - **Lack of unified visibility** into deployment lifecycle
 - **High costs** of managed cloud platforms
 - **Vendor lock-in** with proprietary solutions
 
-DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure .
+DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
 
 ### Complete Deployment Lifecycle.
 
@@ -88,7 +88,7 @@ DeployX orchestrates the entire deployment lifecycle from code to production:
 
 ---
 
-## Key Features.
+## Key Features .
 
 ### GitHub Deployments.
 
@@ -125,6 +125,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - Multi-stage builds for optimized image sizes
 - Container isolation for secure runtime environments
 - Support for custom Dockerfiles and build configurations
+- and jenkins
 
 **Benefits**
 - **Environment Consistency** – Same environment from development to production
@@ -134,7 +135,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - **Scalability** – Easy horizontal scaling with container replication
 
 **Technical Implementation**
-- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.)
+- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.) 
 - Multi-stage build optimization
 - Container health checks and automatic restarts
 - Volume management for persistent storage
