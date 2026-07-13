@@ -143,6 +143,13 @@
   font-family: 'Syne', sans-serif;
 }
 
+.landing-nav-logo-img {
+  height: 40px;
+  width: auto;
+  margin-right: 6px;
+  object-fit: contain;
+}
+
 .landing-nav-logo:hover { opacity: 0.9; }
 
 .landing-logo-text { color: #ffffff; }
@@ -258,6 +265,27 @@
   letter-spacing: -3px;
   font-family: 'Syne', sans-serif;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.landing-hero-logo-img {
+  width: clamp(200px, 25vw, 280px);
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 0 20px rgba(220,38,38,0.3));
+  transition: filter 0.4s ease;
+  animation: heroLogoFloat 4s ease-in-out infinite;
+}
+
+.landing-hero-logo-img:hover {
+  filter: drop-shadow(0 0 30px rgba(37,99,235,0.5));
+}
+
+@keyframes heroLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 .hero-logo-text { color: #ffffff; }

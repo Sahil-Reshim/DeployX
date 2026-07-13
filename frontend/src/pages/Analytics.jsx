@@ -239,21 +239,15 @@ function Analytics() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <motion.div className="analytics-kpi-grid" variants={{ animate: { transition: { staggerChildren: 0.08 } } }} initial="initial" animate="animate">
-        <KPICard title="Total Deployments" value={total} icon={<Layers size={18} />} color="#DC2626" subtitle={`${queued} queued`} />
-        <KPICard title="Successful" value={successful} icon={<CheckCircle size={18} />} color="#22C55E" subtitle={`${successRate}% success rate`} />
-        <KPICard title="Failed" value={failed} icon={<XCircle size={18} />} color="#EF4444" subtitle={`${total > 0 ? ((failed / total) * 100).toFixed(1) : 0}% failure rate`} />
-        <KPICard title="Running Deployments" value={running} icon={<Play size={18} />} color="#38BDF8" subtitle={`${stopped} stopped`} />
-        <KPICard title="Active Containers" value={ds.running_containers || 0} icon={<Server size={18} />} color="#22C55E" subtitle={`${ds.total_containers || 0} total containers`} />
-        <KPICard title="Total Docker Images" value={ds.total_images || 0} icon={<Image size={18} />} color="#8B5CF6" subtitle="Docker images" />
-        <KPICard title="Avg Deployment Time" value={formatDuration(avgDeployTime)} icon={<Clock size={18} />} color="#8B5CF6" subtitle="From queue to live" />
-        <KPICard title="Avg Build Time" value={formatDuration(avgBuildTime)} icon={<Zap size={18} />} color="#EAB308" subtitle="Jenkins pipeline" />
-        <KPICard title="Health Checks" value={healthCount} icon={<Heart size={18} />} color="#22C55E" subtitle="Total metrics collected" />
-        <KPICard title="System Health" value={failed > 0 ? "Degraded" : "Healthy"} icon={<Activity size={18} />} color={failed > 0 ? "#EF4444" : "#22C55E"} subtitle={failed > 0 ? `${failed} failed deployments` : "All systems operational"} />
-        <KPICard title="CPU Usage" value={cpuTrendData.length > 0 ? `${cpuTrendData[cpuTrendData.length - 1].cpu}%` : "0%"} icon={<Cpu size={18} />} color="#DC2626" subtitle="Latest reading" />
-        <KPICard title="RAM Usage" value={cpuTrendData.length > 0 ? `${cpuTrendData[cpuTrendData.length - 1].ram}%` : "0%"} icon={<Memory size={18} />} color="#38BDF8" subtitle="Latest reading" />
-      </motion.div>
+       {/* KPI Cards */}
+       <motion.div className="analytics-kpi-grid" variants={{ animate: { transition: { staggerChildren: 0.08 } } }} initial="initial" animate="animate">
+         <KPICard title="Total Deployments" value={total} icon={<Layers size={18} />} color="#DC2626" subtitle={`${queued} queued`} />
+         <KPICard title="Successful" value={successful} icon={<CheckCircle size={18} />} color="#22C55E" subtitle={`${successRate}% success rate`} />
+         <KPICard title="Failed" value={failed} icon={<XCircle size={18} />} color="#EF4444" subtitle={`${total > 0 ? ((failed / total) * 100).toFixed(1) : 0}% failure rate`} />
+         <KPICard title="Running Deployments" value={running} icon={<Play size={18} />} color="#38BDF8" subtitle={`${stopped} stopped`} />
+         <KPICard title="Avg Deployment Time" value={formatDuration(avgDeployTime)} icon={<Clock size={18} />} color="#8B5CF6" subtitle="From queue to live" />
+         <KPICard title="Avg Build Time" value={formatDuration(avgBuildTime)} icon={<Zap size={18} />} color="#EAB308" subtitle="Jenkins pipeline" />
+       </motion.div>
 
       {/* Charts Row 1 - Deployment Trend + Success vs Failure */}
       <motion.div className="analytics-charts-row" variants={{ animate: { transition: { staggerChildren: 0.1 } } }} initial="initial" animate="animate">
