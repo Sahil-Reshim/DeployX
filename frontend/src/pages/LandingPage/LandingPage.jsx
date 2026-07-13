@@ -57,8 +57,7 @@ const Navbar = () => {
     >
       <div className="landing-nav-inner">
         <div className="landing-nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <span className="landing-logo-text">Deploy</span>
-          <span className="landing-logo-accent">X</span>
+          <img src="/logo.png" alt="DeployX" className="landing-nav-logo-img" />
         </div>
 
         <div className={`landing-nav-center ${mobileOpen ? "open" : ""}`}>
@@ -638,7 +637,7 @@ const Footer = () => {
             <span className="landing-logo-accent">X</span>
           </div>
           <p className="footer-desc">
-            Modern deployment platform for developers. Deploy any repository with Docker + Jenkins automation.
+            Modern DevOps Deployment Platform
           </p>
         </div>
 
