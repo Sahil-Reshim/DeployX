@@ -13,10 +13,10 @@ function App() {
           element={
             <Suspense fallback={
               <div className="loader-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <div className="loader-ring">
-                  <div className="loader-ring-outer"></div>
-                  <div className="loader-ring-inner"></div>
+                <div className="loader-logo-container">
+                  <img src="/logo.png" alt="DeployX" className="loader-logo-img" />
                 </div>
+                <p className="loader-text" style={{ marginTop: "16px" }}>Initializing DeployX...</p>
               </div>
             }>
               <LandingPage />
