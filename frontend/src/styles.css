@@ -210,6 +210,13 @@ input, select, textarea { outline: none; }
   font-family: var(--font-display);
 }
 
+.navbar-logo-img {
+  height: 40px;
+  width: auto;
+  margin-right: 6px;
+  object-fit: contain;
+}
+
 .navbar-logo:hover { opacity: 0.9; }
 
 .logo-text { color: var(--text-primary); }
@@ -460,20 +467,21 @@ input, select, textarea { outline: none; }
 
 .dash-progress-bar {
   width: 100%;
-  height: 8px;
+  height: 10px;
   background: rgba(255,255,255,0.04);
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
   position: relative;
 }
 
 .dash-progress-fill {
   height: 100%;
   border-radius: inherit;
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
+  min-width: 0;
 }
 
 .dash-progress-fill::after {
@@ -488,6 +496,22 @@ input, select, textarea { outline: none; }
 .dash-progress-fill.success { background: linear-gradient(90deg, var(--green), #4ade80); }
 .dash-progress-fill.failed { background: linear-gradient(90deg, var(--red-status), #f87171); }
 .dash-progress-fill.building, .dash-progress-fill.deploying, .dash-progress-fill.cloning, .dash-progress-fill.queued, .dash-progress-fill.running { background: linear-gradient(90deg, var(--red), var(--red-light)); }
+
+/* Ensure progress bar is visible even at 0% with animated shimmer placeholder */
+.dash-progress-fill[style*="width: 0%"], .dash-progress-fill[style*="width:0%"] {
+  opacity: 1;
+  background: rgba(255,255,255,0.06);
+  animation: progressIdle 2s ease-in-out infinite;
+}
+
+.dash-progress-fill[style*="width: 0%"]::after, .dash-progress-fill[style*="width:0%"]::after {
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent);
+}
+
+@keyframes progressIdle {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.9; }
+}
 
 .dash-pipeline-mini {
   display: flex;
@@ -2190,6 +2214,25 @@ input, select, textarea { outline: none; }
   align-items: center;
   justify-content: center;
   gap: 20px;
+}
+
+.loader-logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loader-logo-img {
+  width: 80px;
+  height: auto;
+  object-fit: contain;
+  animation: loaderPulse 2s ease-in-out infinite;
+  filter: drop-shadow(0 0 16px rgba(220,38,38,0.4));
+}
+
+@keyframes loaderPulse {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
 }
 
 .loader-ring {
