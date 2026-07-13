@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 import useDeployments from "../hooks/useDeployments";
 import useMonitoring from "../hooks/useMonitoring";
@@ -84,15 +85,16 @@ function DashboardContent({
       case "dashboard":
         return (
           <>
-            <section className="hero-section">
-              <div className="hero-eyebrow">
-                <span className="hero-eyebrow-dot"></span>
+            {/* ─── Hero Section ─── */}
+            <section className="dash-hero-section">
+              <div className="dash-hero-eyebrow">
+                <span className="dash-hero-eyebrow-dot"></span>
                 Smart DevOps Platform
               </div>
-              <h1>
+              <h1 className="dash-hero-title">
                 Deploy<span>X</span>
               </h1>
-              <p className="hero-subtitle">
+              <p className="dash-hero-subtitle">
                 Automated GitHub Deployments · Docker Runtime · Real-Time Logs & Smart Monitoring
               </p>
               <RepoForm
@@ -102,30 +104,31 @@ function DashboardContent({
               />
             </section>
 
+            {/* ─── Active Deployment ─── */}
             {displayDeployment && (
-              <div className="active-deployment-card glass-card">
-                <div className="active-top">
+              <div className="dash-active-deployment glass-card">
+                <div className="dash-active-top">
                   <div>
-                    <p className="active-label">Active Deployment</p>
+                    <p className="dash-active-label">Active Deployment</p>
                     <h2>{deploymentName}</h2>
                   </div>
                   <div className={`status-pill ${(displayDeployment?.state_key || displayDeployment?.status || "offline").toLowerCase()}`}>
                     {displayDeployment?.state_label || displayDeployment?.status || "Offline"}
                   </div>
                 </div>
-                <div className="progress-wrapper">
-                  <div className="progress-info">
+                <div className="dash-progress-wrapper">
+                  <div className="dash-progress-info">
                     <span>Deployment Progress</span>
                     <span>{deploymentProgress}%</span>
                   </div>
-                  <div className="progress-bar">
+                  <div className="dash-progress-bar">
                     <div
-                      className={`progress-fill ${(displayDeployment?.status || "").toLowerCase()}`}
+                      className={`dash-progress-fill ${(displayDeployment?.status || "").toLowerCase()}`}
                       style={{ width: `${deploymentProgress}%` }}
                     />
                   </div>
                 </div>
-                <div className="pipeline-mini" style={{ display: "flex", gap: "12px", marginTop: "16px", overflowX: "auto" }}>
+                <div className="dash-pipeline-mini">
                   {[
                     { label: "Queue", progress: 10 },
                     { label: "Clone", progress: 20 },
@@ -138,18 +141,7 @@ function DashboardContent({
                   ].map((step) => (
                     <span
                       key={step.label}
-                      style={{
-                        padding: "4px 10px",
-                        borderRadius: "999px",
-                        fontSize: "10px",
-                        fontFamily: "var(--font-mono)",
-                        fontWeight: 600,
-                        whiteSpace: "nowrap",
-                        background: isStepActive(step.progress) ? "var(--green-bg)" : "var(--glass-bg)",
-                        border: `1px solid ${isStepActive(step.progress) ? "var(--green-border)" : "var(--border-secondary)"}`,
-                        color: isStepActive(step.progress) ? "var(--green)" : "var(--text-muted)",
-                        transition: "var(--transition-fast)",
-                      }}
+                      className={`dash-step-tag ${isStepActive(step.progress) ? "active" : ""}`}
                     >
                       {step.label}
                     </span>
@@ -158,18 +150,21 @@ function DashboardContent({
               </div>
             )}
 
-            <div className="dashboard-grid">
-              <div className="glass-card card-deployment-pipeline">
+            {/* ─── Deployment Overview Grid ─── */}
+            <div className="dash-overview-grid">
+              <div className="glass-card dash-card-deployment-pipeline">
                 <p className="glass-card-title">Deployment Pipeline</p>
                 <DeploymentPipeline stateKey={displayDeployment?.state_key} progress={displayDeployment?.progress} />
               </div>
-
-              <div className="glass-card card-production">
+              <div className="glass-card dash-card-production">
                 <p className="glass-card-title">Production Deployment</p>
                 <ProductionLink deployment={displayDeployment} />
               </div>
+            </div>
 
-              <div className="glass-card card-jenkins">
+            {/* ─── Monitoring + Logs Grid ─── */}
+            <div className="dash-monitoring-grid">
+              <div className="glass-card dash-card-jenkins">
                 <p className="glass-card-title">CI/CD Pipeline</p>
                 <JenkinsPipeline
                   stages={jenkinsData?.stages || []}
@@ -178,8 +173,7 @@ function DashboardContent({
                   currentStage={jenkinsData?.current_stage}
                 />
               </div>
-
-              <div className="glass-card card-monitoring">
+              <div className="glass-card dash-card-monitoring">
                 <div className="monitoring-header">
                   <div>
                     <p className="glass-card-title">Live Infrastructure Monitoring</p>
@@ -228,14 +222,23 @@ function DashboardContent({
                   </div>
                 </div>
               </div>
+            </div>
 
-              <div className="glass-card card-logs">
+            {/* ─── Live Logs ─── */}
+            <div className="dash-logs-section">
+              <div className="glass-card dash-card-logs">
                 <p className="glass-card-title">Live Deployment Logs</p>
                 <LogsViewer deploymentId={effectiveDeploymentId} />
               </div>
             </div>
 
-            <div className="history-section">
+            {/* ─── Analytics Preview ─── */}
+            <div className="dash-analytics-section">
+              <Analytics />
+            </div>
+
+            {/* ─── Deployment History ─── */}
+            <div className="dash-history-section">
               <div className="section-header">
                 <h1>Deployment History</h1>
                 <div className="count-badge">{deployments?.length || 0} Deployments</div>
@@ -256,8 +259,8 @@ function DashboardContent({
 
       case "deployments":
         return (
-          <div>
-            <div className="section-header" style={{ marginTop: "24px" }}>
+          <div className="dash-page-section">
+            <div className="section-header">
               <h1>All Deployments</h1>
               <div className="count-badge">{deployments?.length || 0} Deployments</div>
             </div>
@@ -276,8 +279,8 @@ function DashboardContent({
 
       case "logs":
         return (
-          <div>
-            <div className="section-header" style={{ marginTop: "24px" }}>
+          <div className="dash-page-section">
+            <div className="section-header">
               <h1>Deployment Engine Logs</h1>
             </div>
             <LogsViewer deploymentId={effectiveDeploymentId} />
@@ -286,7 +289,7 @@ function DashboardContent({
 
       case "monitoring":
         return (
-          <div style={{ marginTop: "24px" }}>
+          <div className="dash-page-section">
             <MonitoringPanel
               metrics={metrics}
               cpuHistory={cpuHistory}
@@ -299,10 +302,10 @@ function DashboardContent({
         );
 
       case "analytics":
-        return <Analytics />;
+        return <div className="dash-page-section"><Analytics /></div>;
 
       case "settings":
-        return <Settings />;
+        return <div className="dash-page-section"><Settings /></div>;
 
       default:
         return null;
@@ -313,6 +316,8 @@ function DashboardContent({
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [activePage, setActivePage] = useState("dashboard");
   const [activeDeployment, setActiveDeployment] = useState(null);
 
@@ -334,6 +339,12 @@ function Dashboard() {
   return (
     <>
       <Navbar activePage={activePage} setActivePage={setActivePage} />
+      <div className="bg-container">
+        <div className="bg-orb bg-orb-1"></div>
+        <div className="bg-orb bg-orb-2"></div>
+        <div className="bg-orb bg-orb-3"></div>
+        <div className="bg-grid"></div>
+      </div>
       {initialLoading ? (
         <div className="loader-container" style={{ minHeight: "60vh" }}>
           <div className="loader-ring">
