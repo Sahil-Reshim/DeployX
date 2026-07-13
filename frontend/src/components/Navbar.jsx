@@ -32,8 +32,7 @@ function Navbar({ activePage, setActivePage }) {
     <nav className="navbar">
       <div className="navbar-left">
         <div className="navbar-logo" onClick={() => handleNavigation("dashboard")}>
-          <span className="logo-text">Deploy</span>
-          <span className="logo-accent">X</span>
+          <img src="/logo.png" alt="DeployX" className="navbar-logo-img" />
         </div>
       </div>
 
