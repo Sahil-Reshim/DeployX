@@ -240,7 +240,7 @@ function DashboardContent({
             {/* ─── Deployment History ─── */}
             <div className="dash-history-section">
               <div className="section-header">
-                <h1>Deployment History</h1>
+                
                 <div className="count-badge">{deployments?.length || 0} Deployments</div>
               </div>
               <DeploymentHistory
