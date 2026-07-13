@@ -338,19 +338,23 @@ input, select, textarea { outline: none; }
   position: relative;
   z-index: 2;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1500px;
   margin: 0 auto;
-  padding: 0 24px 40px;
+  padding: 0 32px 60px;
 }
 
-/* ─── Hero Section ───────────────────────────────────────── */
-.hero-section {
-  padding: 28px 0 16px;
+.dash-page-section {
+  margin-top: 32px;
+}
+
+/* ─── Dashboard Hero Section ────────────────────────────── */
+.dash-hero-section {
+  padding: 36px 0 24px;
   text-align: center;
   position: relative;
 }
 
-.hero-eyebrow {
+.dash-hero-eyebrow {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -367,7 +371,7 @@ input, select, textarea { outline: none; }
   backdrop-filter: blur(12px);
 }
 
-.hero-eyebrow-dot {
+.dash-hero-eyebrow-dot {
   width: 6px; height: 6px;
   border-radius: 50%;
   background: var(--red);
@@ -375,7 +379,7 @@ input, select, textarea { outline: none; }
   animation: pulseDot 1.5s ease-in-out infinite;
 }
 
-.hero-section h1 {
+.dash-hero-title {
   font-family: var(--font-display);
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 800;
@@ -384,18 +388,170 @@ input, select, textarea { outline: none; }
   margin-bottom: 12px;
 }
 
-.hero-section h1 span {
+.dash-hero-title span {
   color: var(--red);
   text-shadow: 0 0 20px rgba(220,38,38,0.5), 0 0 40px rgba(220,38,38,0.3);
 }
 
-.hero-subtitle {
+.dash-hero-subtitle {
   max-width: 600px;
   margin: 0 auto 20px;
   color: var(--text-muted);
   font-size: 13px;
   line-height: 1.7;
   font-family: var(--font-mono);
+}
+
+/* ─── Dashboard Active Deployment ────────────────────────── */
+.dash-active-deployment {
+  padding: 24px;
+  margin-bottom: 28px;
+  border: 1px solid rgba(220,38,38,0.12);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+
+.dash-active-deployment::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(220,38,38,0.5), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 4s linear infinite;
+}
+
+.dash-active-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.dash-active-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.dash-active-top h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.dash-progress-wrapper {
+  margin-top: 8px;
+}
+
+.dash-progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.dash-progress-bar {
+  width: 100%;
+  height: 8px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.03);
+  position: relative;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dash-progress-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+  transform: translateX(-100%);
+  animation: progressShimmer 2s linear infinite;
+}
+
+.dash-progress-fill.success { background: linear-gradient(90deg, var(--green), #4ade80); }
+.dash-progress-fill.failed { background: linear-gradient(90deg, var(--red-status), #f87171); }
+.dash-progress-fill.building, .dash-progress-fill.deploying, .dash-progress-fill.cloning, .dash-progress-fill.queued, .dash-progress-fill.running { background: linear-gradient(90deg, var(--red), var(--red-light)); }
+
+.dash-pipeline-mini {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.dash-step-tag {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  white-space: nowrap;
+  background: var(--glass-bg);
+  border: 1px solid var(--border-secondary);
+  color: var(--text-muted);
+  transition: var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.dash-step-tag.active {
+  background: var(--green-bg);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+
+/* ─── Dashboard Overview Grid ────────────────────────────── */
+.dash-overview-grid {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.dash-card-deployment-pipeline { grid-column: 1 / 2; }
+.dash-card-production { grid-column: 2 / 3; }
+
+/* ─── Dashboard Monitoring Grid ──────────────────────────── */
+.dash-monitoring-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px;
+  margin-bottom: 28px;
+}
+
+.dash-card-jenkins { grid-column: 1 / 2; }
+.dash-card-monitoring { grid-column: 2 / 3; }
+
+/* ─── Dashboard Sections ─────────────────────────────────── */
+.dash-logs-section {
+  margin-bottom: 28px;
+}
+
+.dash-card-logs { }
+
+.dash-analytics-section {
+  margin-bottom: 28px;
+}
+
+.dash-history-section {
+  margin-top: 8px;
 }
 
 /* ─── Glass Card ─────────────────────────────────────────── */
@@ -2811,6 +2967,13 @@ input, select, textarea { outline: none; }
   .dashboard-grid .card-monitoring { grid-column: 1 / -1; }
   .dashboard-grid .card-logs { grid-column: 1 / -1; }
   .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  
+  .dash-overview-grid { grid-template-columns: 1fr; gap: 24px; }
+  .dash-monitoring-grid { grid-template-columns: 1fr; gap: 24px; }
+  .dash-card-deployment-pipeline { grid-column: 1 / -1; }
+  .dash-card-production { grid-column: 1 / -1; }
+  .dash-card-jenkins { grid-column: 1 / -1; }
+  .dash-card-monitoring { grid-column: 1 / -1; }
 }
 
 @media (max-width: 1024px) {
@@ -3317,6 +3480,15 @@ input, select, textarea { outline: none; }
   border-bottom: 1px solid var(--border-secondary);
 }
 
+/* 6-column variant for analytics recent activity */
+.builds-table-header.analytics-recent {
+  grid-template-columns: 1fr 70px 80px 50px 40px 40px;
+}
+
+.build-row.analytics-recent {
+  grid-template-columns: 1fr 70px 80px 50px 40px 40px;
+}
+
 .build-row {
   display: grid;
   grid-template-columns: 60px 1fr 80px 80px;
@@ -3336,6 +3508,23 @@ input, select, textarea { outline: none; }
 .build-id { color: var(--text-muted); }
 .build-repo { color: var(--text-primary); }
 
+.build-framework {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.build-container {
+  text-align: center;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.build-url {
+  text-align: center;
+  color: var(--blue-light);
+  font-size: 12px;
+}
+
 .build-status {
   text-transform: capitalize;
   font-weight: 600;
@@ -3349,6 +3538,7 @@ input, select, textarea { outline: none; }
 .build-status.success { background: var(--green-bg); color: var(--green); }
 .build-status.failed { background: var(--red-status-bg); color: var(--red-status); }
 .build-status.running { background: var(--blue-bg); color: var(--blue-light); }
+.build-status.queued { background: var(--glass-bg); color: var(--text-muted); }
 
 .build-duration { color: var(--text-muted); text-align: right; }
 
@@ -3801,4 +3991,154 @@ input, select, textarea { outline: none; }
   .analytics-kpi-grid { grid-template-columns: 1fr; }
   .kpi-value { font-size: 22px; }
   .chart-card-title { font-size: 14px; }
+}
+
+/* ═══ Analytics New Component Styles ═══════════════════════ */
+.empty-chart-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  color: var(--text-muted);
+  gap: 12px;
+}
+
+.empty-chart-state p {
+  font-size: 14px;
+  color: var(--text-faint);
+}
+
+.most-used-framework {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+  text-align: center;
+  gap: 8px;
+}
+
+.framework-big-icon {
+  margin-bottom: 8px;
+}
+
+.framework-big-name {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.framework-big-count {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.framework-big-bar {
+  width: 80%;
+  max-width: 200px;
+  height: 8px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.framework-big-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.5s ease;
+}
+
+.framework-big-percent {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.docker-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.docker-stat-item {
+  padding: 16px;
+  background: rgba(255,255,255,0.03);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-secondary);
+  text-align: center;
+}
+
+.docker-stat-value {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.docker-stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 4px;
+}
+
+.docker-container-list {
+  margin-top: 8px;
+}
+
+.docker-container-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border-secondary);
+}
+
+.docker-container-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-secondary);
+  font-size: 13px;
+}
+
+.docker-container-row:last-child {
+  border-bottom: none;
+}
+
+.docker-container-name {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.docker-container-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.docker-container-status.status-running {
+  color: var(--green);
+}
+
+.docker-container-status.status-stopped {
+  color: var(--red-status);
+}
+
+/* ─── KPI Trend without direction ────────────────────────── */
+.kpi-trend span {
+  font-size: 12px;
+  color: var(--text-muted);
 }

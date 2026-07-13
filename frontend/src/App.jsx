@@ -1,16 +1,31 @@
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import Dashboard from "./pages/Dashboard";
+
+const LandingPage = lazy(() => import("./pages/LandingPage/LandingPage"));
 
 function App() {
   return (
-    <div className="dashboard">
-      <div className="bg-container">
-        <div className="bg-orb bg-orb-1"></div>
-        <div className="bg-orb bg-orb-2"></div>
-        <div className="bg-orb bg-orb-3"></div>
-        <div className="bg-grid"></div>
-      </div>
-      <Dashboard />
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Suspense fallback={
+              <div className="loader-container" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div className="loader-ring">
+                  <div className="loader-ring-outer"></div>
+                  <div className="loader-ring-inner"></div>
+                </div>
+              </div>
+            }>
+              <LandingPage />
+            </Suspense>
+          }
+        />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
