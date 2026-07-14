@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import "./LandingPage.css";
 
+
 const Background = () => (
   <div className="landing-bg-container">
     <div className="landing-bg-orb landing-bg-orb-1" />
