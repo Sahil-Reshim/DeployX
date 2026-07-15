@@ -2,10 +2,7 @@
 
 # DeployX
 
-![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
-
-### Modern Self-Hosted DevOps Deployment Platform .
-
+### Modern Self-Hosted DevOps Deployment Platform
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
@@ -14,56 +11,21 @@
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
 [![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
 
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-pending-326CE5.svg)](https://kubernetes.io/)
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
 
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
-
-
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
-
-
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
-[![React](https://img.shields.io/badge/React-18%2B-61DAFB.svg)](https://reactjs.org/)
-[![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
-[![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-Ready-326CE5.svg)](https://kubernetes.io/)
-
-**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes .**
-
-
-[Documentation](#) • [Quick Start](#installation-guide) • [Features](#key-features) • [Contributing](#contributing)
+[Documentation](#features) • [Quick Start](#installation-guide) • [Features](#key-features) • [Contributing](#contributing)
 
 </div>
 
 ---
 
-## Overview.
-
-DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring .
-
-### The Problem DeployX Solves.
-
-Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
-- **Complex deployment pipelines** requiring manual intervention .
-- **Fragmented monitoring** across different services.
-- **Lack of unified visibility** into deployment lifecycle.
-- **High costs** of managed cloud platforms.
-- **Vendor lock-in** with proprietary solutions.
-
-DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
-
-### Complete Deployment Lifecycle.
-
-
+## Overview
 
 DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring.
 
-### The Problem DeployX Solves.
+### The Problem DeployX Solves
 
-Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with :
+Modern application deployment often requires complex infrastructure setup, manual configuration, and fragmented tooling across multiple services. Developers struggle with:
 - **Complex deployment pipelines** requiring manual intervention
 - **Fragmented monitoring** across different services
 - **Lack of unified visibility** into deployment lifecycle
@@ -72,8 +34,7 @@ Modern application deployment often requires complex infrastructure setup, manua
 
 DeployX addresses these challenges by providing a unified, self-hosted platform that combines the best practices from leading deployment platforms while maintaining complete control over your infrastructure.
 
-### Complete Deployment Lifecycle.
-
+### Complete Deployment Lifecycle
 
 DeployX orchestrates the entire deployment lifecycle from code to production:
 
@@ -88,9 +49,9 @@ DeployX orchestrates the entire deployment lifecycle from code to production:
 
 ---
 
-## Key Features .
+## Key Features
 
-### GitHub Deployments.
+### GitHub Deployments
 
 DeployX provides seamless GitHub integration for automated deployments:
 
@@ -125,7 +86,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - Multi-stage builds for optimized image sizes
 - Container isolation for secure runtime environments
 - Support for custom Dockerfiles and build configurations
-- and jenkins
+- Jenkins integration for build automation
 
 **Benefits**
 - **Environment Consistency** – Same environment from development to production
@@ -135,7 +96,7 @@ DeployX leverages Docker for consistent, reproducible deployments:
 - **Scalability** – Easy horizontal scaling with container replication
 
 **Technical Implementation**
-- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.) 
+- Framework-specific Dockerfile templates (Node.js, Python, Go, etc.)
 - Multi-stage build optimization
 - Container health checks and automatic restarts
 - Volume management for persistent storage
@@ -398,7 +359,7 @@ graph TD
 | **Charts** | Recharts | Interactive data visualization |
 | **Animations** | Framer Motion | Smooth UI animations |
 | **API Communication** | Axios | HTTP client for API requests |
-| **Styling** | CSS3 + Tailwind CSS | Modern styling and responsive design |
+| **Styling** | CSS3 | Modern styling and responsive design |
 | **Database** | SQLite | Lightweight data persistence |
 
 ---
@@ -433,39 +394,17 @@ graph LR
 
 ---
 
-## UI Showcase
-
-### Dashboard
-![Dashboard](https://via.placeholder.com/1200x600/1e293b/ffffff?text=DeployX+Dashboard)
-
-### Deployment Pipeline
-![Deployment Pipeline](https://via.placeholder.com/1200x600/1e293b/ffffff?text=Deployment+Pipeline)
-
-### Deployment History
-![Deployment History](https://via.placeholder.com/1200x600/1e293b/ffffff?text=Deployment+History)
-
-### Monitoring Dashboard
-![Monitoring Dashboard](https://via.placeholder.com/1200x600/1e293b/ffffff?text=Monitoring+Dashboard)
-
-### Logs Viewer
-![Logs Viewer](https://via.placeholder.com/1200x600/1e293b/ffffff?text=Logs+Viewer)
-
-### System Health
-![System Health](https://via.placeholder.com/1200x600/1e293b/ffffff?text=System+Health)
-
----
-
 ## Monitoring Features
 
 DeployX provides comprehensive monitoring capabilities:
 
-### CPU Monitoring,
+### CPU Monitoring
 - Real-time CPU utilization tracking per container
 - CPU usage percentage and core allocation
 - Historical CPU trends and patterns
 - CPU-based alerting and thresholds
 
-### RAM Monitoring.
+### RAM Monitoring
 - Memory usage tracking per container
 - Memory allocation and utilization percentage
 - Memory leak detection and alerting
@@ -572,17 +511,9 @@ DeployX provides comprehensive Kubernetes integration:
 - Node failure handling
 - Automatic rescheduling
 
-
 ---
 
 ## Folder Structure
-
-
-
----
-
-## Folder Structure
-
 
 ```txt
 DeployX/
@@ -591,90 +522,49 @@ DeployX/
 │   ├── app.py                      # Main Flask application
 │   ├── database.py                 # Database configuration and models
 │   ├── requirements.txt            # Python dependencies
-│   ├── Dockerfile                 # Backend Docker configuration
-│   ├── services/                  # Business logic services
-│   │   ├── deployment_service.py  # Deployment orchestration
-│   │   ├── github_service.py      # GitHub integration
-│   │   ├── docker_service.py      # Docker management
-│   │   ├── jenkins_service.py     # Jenkins integration
-│   │   ├── kubernetes_service.py  # Kubernetes orchestration
-│   │   └── monitoring_service.py # Monitoring and metrics
-│   ├── sockets/                   # WebSocket handlers
-│   │   ├── deployment_socket.py   # Deployment events
-│   │   ├── monitoring_socket.py  # Monitoring updates
-│   │   └── logs_socket.py         # Log streaming
-│   ├── routes/                    # API endpoints
-│   │   ├── deployment_routes.py   # Deployment API
-│   │   ├── monitoring_routes.py  # Monitoring API
-│   │   └── system_routes.py       # System API
-│   └── utils/                     # Utility functions
-│       ├── framework_detector.py  # Framework detection
-│       ├── dockerfile_generator.py # Dockerfile generation
-│       └── health_checker.py      # Health check utilities
+│   ├── test_jenkins.py             # Jenkins integration tests
+│   ├── deployments/                # Deployment-related files
+│   ├── logs/                       # Application logs
+│   ├── managers/                   # Manager classes
+│   ├── scripts/                    # Utility scripts
+│   │   └── list_jenkinsfiles.py   # Jenkins file listing utility
+│   ├── services/                   # Business logic services
+│   │   └── framework_detector.py  # Framework detection logic
+│   └── sockets/                    # WebSocket handlers
 │
 ├── frontend/
+│   ├── index.html                  # Entry HTML file
+│   ├── package.json                # Node dependencies
+│   ├── vite.config.js             # Vite configuration
+│   ├── public/                     # Static assets
 │   ├── src/
-│   │   ├── components/           # Reusable UI components
-│   │   │   ├── Dashboard/        # Dashboard components
-│   │   │   ├── Deployment/       # Deployment components
-│   │   │   ├── Monitoring/       # Monitoring components
-│   │   │   ├── Logs/             # Log viewer components
-│   │   │   └── Shared/           # Shared components
-│   │   ├── hooks/                # Custom React hooks
-│   │   │   ├── useDeployment.js   # Deployment logic
-│   │   │   ├── useMonitoring.js  # Monitoring logic
-│   │   │   └── useWebSocket.js   # WebSocket logic
-│   │   ├── pages/                # Page components
-│   │   │   ├── Dashboard.jsx     # Main dashboard
-│   │   │   ├── Deployments.jsx   # Deployments page
-│   │   │   ├── Monitoring.jsx    # Monitoring page
-│   │   │   └── Settings.jsx      # Settings page
-│   │   ├── services/             # API service layer
-│   │   │   ├── api.js            # API client
-│   │   │   ├── deployment.js     # Deployment API
-│   │   │   └── monitoring.js     # Monitoring API
-│   │   ├── styles/               # Global styles
-│   │   │   ├── globals.css       # Global CSS
-│   │   │   └── variables.css     # CSS variables
-│   │   ├── monitoring/           # Monitoring utilities
-│   │   │   ├── metrics.js        # Metrics collection
-│   │   │   └── charts.js         # Chart configurations
-│   │   ├── App.jsx               # Main App component
-│   │   └── main.jsx              # Application entry point
-│   ├── public/                   # Static assets
-│   ├── package.json              # Node dependencies
-│   ├── vite.config.js           # Vite configuration
-│   └── Dockerfile               # Frontend Docker configuration
+│   │   ├── components/             # Reusable UI components
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   └── ...
+│   │   ├── pages/                  # Page components
+│   │   │   ├── Dashboard.jsx
+│   │   │   ├── Settings.jsx
+│   │   │   ├── Analytics.jsx
+│   │   │   └── LandingPage/
+│   │   │       ├── LandingPage.jsx
+│   │   │       └── LandingPage.css
+│   │   ├── services/               # API service layer
+│   │   ├── hooks/                  # Custom React hooks
+│   │   ├── styles/                 # Global styles
+│   │   │   ├── styles.css
+│   │   │   └── global.css
+│   │   ├── App.jsx                 # Main App component
+│   │   └── main.jsx                # Application entry point
+│   │
+├── jenkins/
+│   ├── Dockerfile                  # Jenkins Docker configuration
+│   └── Jenkinsfile                 # Pipeline definition
 │
-├── kubernetes/                   # Kubernetes configurations
-│   ├── deployments/             # Deployment manifests
-│   ├── services/                # Service manifests
-│   ├── ingress/                 # Ingress configurations
-│   └── configmaps/              # Configuration maps
-│
-├── jenkins/                     # Jenkins configurations
-│   ├── Jenkinsfile              # Pipeline definition
-│   └── plugins/                 # Required plugins
-│
-├── monitoring/                  # Monitoring stack
-│   ├── prometheus/              # Prometheus configuration
-│   ├── grafana/                 # Grafana dashboards
-│   └── alertmanager/            # Alerting configuration
-│
-├── docs/                        # Documentation
-│   ├── api.md                   # API documentation
-│   ├── architecture.md          # Architecture documentation
-│   └── deployment.md            # Deployment guide
-│
-├── scripts/                     # Utility scripts
-│   ├── setup.sh                 # Setup script
-│   ├── deploy.sh                # Deployment script
-│   └── backup.sh                # Backup script
-│
-├── docker-compose.yml           # Docker Compose configuration
-├── .gitignore                   # Git ignore rules
-├── .env.example                 # Environment variables template
-└── README.md                    # This file
+├── docker-compose.yml              # Docker Compose configuration
+├── .gitignore                      # Git ignore rules
+├── .env                           # Environment variables (not committed)
+└── README.md                      # This file
 ```
 
 ---
@@ -820,7 +710,7 @@ The frontend will be available at `http://localhost:5173`
 
 ### Environment Variables
 
-Create a `.env` file in both backend and frontend directories with the following variables:
+Create a `.env` file in the backend directory with the following variables:
 
 **Backend (.env)**
 ```env
@@ -859,18 +749,6 @@ BACKEND_PORT=5000
 FRONTEND_PORT=5173
 ```
 
-**Frontend (.env)**
-```env
-# API Configuration
-VITE_API_URL=http://localhost:5000
-VITE_WS_URL=ws://localhost:5000
-
-
-# Application
-VITE_APP_NAME=DeployX
-VITE_APP_VERSION=1.0.0
-```
-
 ### Ports
 
 | Service | Default Port | Description |
@@ -889,33 +767,6 @@ VITE_APP_VERSION=1.0.0
 - Container CPU limit: 0.5 cores (configurable)
 - Network mode: bridge
 - Restart policy: unless-stopped
-
-
-
-# Application
-VITE_APP_NAME=DeployX
-VITE_APP_VERSION=1.0.0
-```
-
-### Ports
-
-| Service | Default Port | Description |
-|---------|-------------|-------------|
-| Backend API | 5000 | Flask REST API |
-| Frontend | 5173 | React development server |
-| Jenkins | 8080 | Jenkins web interface |
-| Prometheus | 9090 | Metrics collection |
-| Grafana | 3000 | Monitoring dashboard |
-| Kubernetes API | 6443 | Kubernetes cluster API |
-
-### Runtime Settings
-
-**Docker Settings**
-- Container memory limit: 512MB (configurable)
-- Container CPU limit: 0.5 cores (configurable)
-- Network mode: bridge
-- Restart policy: unless-stopped
-
 
 **Kubernetes Settings**
 - Default replicas: 2
@@ -987,12 +838,7 @@ VITE_APP_VERSION=1.0.0
   - Custom metrics and alerts
   - Log analysis and anomaly detection
 
-
 ---
-
-
----
-
 
 ## Contributing
 
@@ -1079,51 +925,17 @@ We welcome contributions from the community! DeployX is an open-source project, 
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-```
-MIT License
-
-Copyright (c) 2026 DeployX Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-```
-
 ---
 
 ## Authors
 
 ### Tanavi Shinde
 - GitHub: [@tanvishinde017](https://github.com/tanvishinde017)
-
-
 - Role: Frontend Developer, UI/UX Design
 
 ### Sahil Reshim
 - GitHub: [@sahilreshim](https://github.com/sahilreshim)
-- Role:  Core Developer, Architecture Design
-
-
-
 - Role: Core Developer, Architecture Design
-
-### Sahil Reshim
-- GitHub: [@sahilreshim](https://github.com/sahilreshim)
-- Role: Frontend Developer, UI/UX Design
 
 ---
 
@@ -1131,7 +943,6 @@ SOFTWARE.
 
 DeployX is inspired by and built upon the excellent work of these projects and platforms:
 
-
 - **Vercel** - For pioneering modern deployment workflows and developer experience
 - **Railway** - For elegant application deployment and infrastructure abstraction
 - **Render** - For comprehensive platform-as-a-service features
@@ -1142,20 +953,6 @@ DeployX is inspired by and built upon the excellent work of these projects and p
 - **Prometheus** - For metrics collection and alerting
 - **React** - For the amazing frontend framework
 - **Flask** - For the lightweight and powerful Python web framework
-
-=======
-
-- **Vercel** - For pioneering modern deployment workflows and developer experience
-- **Railway** - For elegant application deployment and infrastructure abstraction
-- **Render** - For comprehensive platform-as-a-service features
-- **Docker** - For revolutionizing containerization and application packaging
-- **Jenkins** - For providing robust CI/CD automation capabilities
-- **Kubernetes** - For industry-standard container orchestration
-- **Grafana** - For powerful monitoring and visualization
-- **Prometheus** - For metrics collection and alerting
-- **React** - For the amazing frontend framework
-- **Flask** - For the lightweight and powerful Python web framework
-
 
 Special thanks to the open-source community for creating and maintaining these incredible tools that make DeployX possible.
 
@@ -1168,13 +965,6 @@ Special thanks to the open-source community for creating and maintaining these i
 If you find DeployX useful, please consider giving us a star on GitHub. It helps us grow and motivates us to keep improving the project.
 
 [![Star on GitHub](https://img.shields.io/badge/GitHub-DeployX-brightgreen.svg?logo=github&style=social)](https://github.com/tanvishinde017/DeployX)
-
-
-
-If you find DeployX useful, please consider giving us a star on GitHub. It helps us grow and motivates us to keep improving the project.
-
-[![Star on GitHub](https://img.shields.io/badge/GitHub-DeployX-brightgreen.svg?logo=github&style=social)](https://github.com/tanvishinde017/DeployX)
-
 
 **Built with ❤️ by the DeployX Team**
 
