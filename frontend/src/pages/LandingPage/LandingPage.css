@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════════════════════
    DEPLOYX — Landing Page Styles
-   Premium SaaS Dark Theme · Cherry Red + Electric Blue
+   Premium SaaS Dark Theme· Cherry Red + Electric Blue
    ═══════════════════════════════════════════════════════════════ */
 
 /* ─── Landing Page Container ─────────────────────────────── */
@@ -435,6 +435,18 @@
   color: rgba(255,255,255,0.2);
   font-size: 12px;
   margin-top: 4px;
+  transition: all 0.3s;
+}
+
+.hero-pipeline-step.active .pipeline-step-arrow {
+  color: #dc2626;
+  opacity: 1;
+  text-shadow: 0 0 8px rgba(220,38,38,0.5);
+}
+
+.hero-pipeline-step.done .pipeline-step-arrow {
+  color: rgba(34,197,94,0.7);
+  opacity: 0.8;
 }
 
 /* ─── Section Common ─────────────────────────────────────── */
