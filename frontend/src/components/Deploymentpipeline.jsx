@@ -118,14 +118,20 @@ function DeploymentPipeline({ stateKey, progress }) {
               : stepState === "active"
               ? "●"
               : "○";
-          const connectorState =
-            index < steps.length - 1
-              ? stepStates[index] === "done"
-                ? stepStates[index + 1] === "failed"
-                  ? "failed"
-                  : "done"
-                : "pending"
-              : "pending";
+          let connectorState = "pending";
+          if (index < steps.length - 1) {
+            const current = stepStates[index];
+            const next = stepStates[index + 1];
+            if (current === "failed" || next === "failed") {
+              connectorState = "failed";
+            } else if (current === "done" && next === "done") {
+              connectorState = "done";
+            } else if (current === "active" || next === "active") {
+              connectorState = "active";
+            } else if (current === "done") {
+              connectorState = "done";
+            }
+          }
 
           return (
             <React.Fragment key={step.key}>
