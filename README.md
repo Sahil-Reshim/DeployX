@@ -1,6 +1,16 @@
 <div align="center">
 
+
 <img src="https://raw.githubusercontent.com/tanvishinde017/DeployX/main/assets/deployx-banner.svg" alt="DeployX - Animated Banner" width="100%"/>
+
+# DeployX
+
+### Modern Self-Hosted DevOps Deployment Platform
+
+![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
+
+### Modern Self-Hosted DevOps Deployment Platform .
+
 
 
 ### Modern Self-Hosted DevOps Deployment Platform
