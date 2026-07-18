@@ -2,14 +2,13 @@
 
 # DeployX
 
-<<<<<<< HEAD
+
 ### Modern Self-Hosted DevOps Deployment Platform
-=======
+
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
 ### Modern Self-Hosted DevOps Deployment Platform.
 
->>>>>>> 3b7c81dfafe181672dad72d3c5c53dcb9c8652e1
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
