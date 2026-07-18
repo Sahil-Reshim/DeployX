@@ -6,7 +6,11 @@
 
 # <span style="color:#ef4444">Deploy</span><span style="color:#2563eb">X</span>
 
+
 ### 🚀 Modern Self-Hosted DevOps Deployment Platform
+
+### Modern Self-Hosted DevOps Deployment Platform .
+
 
 
 > Deploy, orchestrate, monitor & scale production applications from your own infrastructure —
