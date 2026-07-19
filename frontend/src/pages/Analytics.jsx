@@ -11,6 +11,7 @@ const containerMotion = {
   transition: { duration: 0.4, ease: "easeOut" },
 };
 
+
 const fadeSlide = {
   initial: { opacity: 0, y: 15 },
   animate: { opacity: 1, y: 0 },
