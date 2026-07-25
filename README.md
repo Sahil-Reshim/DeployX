@@ -14,7 +14,6 @@
 
 ### 🚀 Modern Self-Hosted DevOps Deployment Platform
 
-
 > Deploy, orchestrate, monitor & scale production applications from your own infrastructure —
 > <b>inspired by Vercel · Railway · Render · Kubernetes</b>
 
