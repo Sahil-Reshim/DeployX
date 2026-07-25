@@ -2,11 +2,6 @@
 
 # DeployX
 
-
-### Modern Self-Hosted DevOps Deployment Platform
-
-![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
-
 ### Modern Self-Hosted DevOps Deployment Platform  .
 
 
