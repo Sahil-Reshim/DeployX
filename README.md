@@ -3,9 +3,6 @@
 <img src="https://raw.githubusercontent.com/tanvishinde017/DeployX/main/assets/deployx-banner.svg" alt="DeployX - Animated Banner" width="100%"/>
 
 
-<br/>
-
-
 ### Modern Self-Hosted DevOps Deployment Platform .
 
 
