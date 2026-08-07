@@ -5,7 +5,7 @@ import DeploymentItem from "./DeploymentItem";
 /*
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 DEPLOYMENT HISTORY COMPONENT
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ ━
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 */
 
 function DeploymentHistory({
