@@ -57,6 +57,54 @@ def save_build_logs(deployment_id, logs):
         }
 
 
+def append_build_log(deployment_id, log_entry):
+    """
+    Append a single log entry to the build log file.
+    This allows logs to be saved incrementally during deployment.
+    """
+    try:
+        ensure_logs_folder()
+
+        log_file_path = os.path.join(
+            LOG_DIR,
+            f"deployment_{deployment_id}_build.log"
+        )
+
+        if isinstance(log_entry, dict):
+            obj = log_entry
+        else:
+            text = str(log_entry)
+            lt = text.lower()
+            if "error" in lt or "failed" in lt or "exception" in lt:
+                level = "error"
+            elif "success" in lt or "completed" in lt or "running" in lt:
+                level = "success"
+            elif "warn" in lt or "warning" in lt:
+                level = "warn"
+            else:
+                level = "info"
+
+            obj = {
+                "message": text,
+                "level": level,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+            }
+
+        with open(log_file_path, "a", encoding="utf-8") as file:
+            file.write(json.dumps(obj, ensure_ascii=False) + "\n")
+
+        return {
+            "success": True,
+            "message": "Build log appended successfully",
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
 def get_build_logs(deployment_id):
     try:
         log_file_path = os.path.join(
