@@ -40,7 +40,7 @@ from services.runtime_recovery import restore_runtime_states
 from services.git_service import clone_repository
 from services.framework_detector import detect_framework
 from services.dockerfile_generator import generate_dockerfile
-from services.log_service import save_build_logs, get_build_logs, save_container_logs, get_container_logs
+from services.log_service import save_build_logs, get_build_logs, save_container_logs, get_container_logs, append_build_log
 from services.docker_service import build_docker_image, run_docker_container
 from services.jenkins_service import trigger_jenkins_job, wait_for_pipeline
 from services.monitor_service import stop_monitoring
@@ -63,6 +63,12 @@ from services.deployment_service import (
     start_deployment,
     restart_deployment,
     delete_deployment_lifecycle,
+)
+
+from services.analytics_service import (
+    get_analytics,
+    get_docker_stats,
+    get_all_metrics,
 )
 
 from sockets.socket_manager import socketio, emit_deployment_update, emit_log
@@ -103,6 +109,7 @@ def mark_deployment_failed(deployment_id, message):
     fail_deployment(deployment_id, "failed")
     emit_deployment_update(deployment_id, "failed", message)
     emit_log(deployment_id, f"ERROR: {message}")
+    append_build_log(deployment_id, f"ERROR: {message}")
 
 
 # =========================================================
@@ -137,6 +144,7 @@ def run_deployment_job(deployment_id, repo_url):
         update_deployment_step(deployment_id, "cloning")
         emit_deployment_update(deployment_id, "cloning", "Cloning repository...")
         emit_log(deployment_id, "Starting repository clone...")
+        append_build_log(deployment_id, "Starting repository clone...")
 
         clone_result = clone_repository(repo_url)
 
@@ -145,12 +153,14 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 clone_result.get("message", "Repository clone failed")
             )
+            append_build_log(deployment_id, f"ERROR: {clone_result.get('message', 'Repository clone failed')}")
             repo_path = clone_result.get("repo_path")
             if repo_path:
                 remove_repo_folder(repo_path)
             return
 
         repo_path = clone_result["repo_path"]
+        append_build_log(deployment_id, f"Repository cloned successfully: {repo_url}")
 
         # =================================================
         # STEP 2 — DETECT FRAMEWORK
@@ -158,6 +168,7 @@ def run_deployment_job(deployment_id, repo_url):
 
         update_deployment_step(deployment_id, "detecting")
         emit_deployment_update(deployment_id, "detecting", "Detecting framework...")
+        append_build_log(deployment_id, "Detecting framework...")
 
         framework_result = detect_framework(repo_path)
 
@@ -166,11 +177,13 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 framework_result.get("message", "Framework detection failed")
             )
+            append_build_log(deployment_id, f"ERROR: {framework_result.get('message', 'Framework detection failed')}")
             remove_repo_folder(repo_path)
             return
 
         # Store the detected internal port for container creation
         detected_port = framework_result.get("port")
+        append_build_log(deployment_id, f"Framework detected: {framework_result['framework']} (port {detected_port})")
 
         # =================================================
         # STEP 3 — GENERATE DOCKERFILE
@@ -178,6 +191,7 @@ def run_deployment_job(deployment_id, repo_url):
 
         update_deployment_step(deployment_id, "dockerfile_generating")
         emit_deployment_update(deployment_id, "dockerfile_generating", "Generating Dockerfile...")
+        append_build_log(deployment_id, "Generating Dockerfile...")
 
         dockerfile_result = generate_dockerfile(repo_path, framework_result["framework"])
 
@@ -186,8 +200,11 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 dockerfile_result.get("message", "Dockerfile generation failed")
             )
+            append_build_log(deployment_id, f"ERROR: {dockerfile_result.get('message', 'Dockerfile generation failed')}")
             remove_repo_folder(repo_path)
             return
+
+        append_build_log(deployment_id, "Dockerfile generated successfully")
 
         # =================================================
         # STEP 4 — JENKINS CI PIPELINE
@@ -200,6 +217,7 @@ def run_deployment_job(deployment_id, repo_url):
             jenkins_status="TRIGGERED",
             current_step="triggering_jenkins",
         )
+        append_build_log(deployment_id, "Running Jenkins CI pipeline...")
 
         jenkins_result = trigger_jenkins_job(repo_url, framework_result["framework"])
 
@@ -208,11 +226,13 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 jenkins_result.get("message", "Jenkins pipeline trigger failed")
             )
+            append_build_log(deployment_id, f"ERROR: {jenkins_result.get('message', 'Jenkins pipeline trigger failed')}")
             remove_repo_folder(repo_path)
             return
 
         queue_id = jenkins_result["queue_id"]
         save_jenkins_queue(deployment_id, queue_id)
+        append_build_log(deployment_id, f"Jenkins pipeline triggered (queue ID: {queue_id})")
 
         pipeline_result = wait_for_pipeline(deployment_id, queue_id)
 
@@ -221,10 +241,12 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 pipeline_result.get("message", "Jenkins pipeline failed")
             )
+            append_build_log(deployment_id, f"ERROR: {pipeline_result.get('message', 'Jenkins pipeline failed')}")
             remove_repo_folder(repo_path)
             return
 
         emit_deployment_update(deployment_id, "ci_pipeline", "Jenkins pipeline successful")
+        append_build_log(deployment_id, "Jenkins pipeline completed successfully")
 
         # =================================================
         # STEP 5 — BUILD DOCKER IMAGE
@@ -232,6 +254,7 @@ def run_deployment_job(deployment_id, repo_url):
 
         update_deployment_step(deployment_id, "docker_build")
         emit_deployment_update(deployment_id, "docker_build", "Building Docker image...")
+        append_build_log(deployment_id, "Building Docker image...")
 
         docker_result = build_docker_image(repo_path, deployment_id)
 
@@ -240,10 +263,12 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 docker_result.get("message", "Docker image build failed")
             )
+            append_build_log(deployment_id, f"ERROR: {docker_result.get('message', 'Docker image build failed')}")
             remove_repo_folder(repo_path)
             return
 
         image_name = docker_result["image_name"]
+        append_build_log(deployment_id, f"Docker image built: {image_name}")
 
         # =================================================
         # STEP 6 — ALLOCATE PORT
@@ -251,6 +276,7 @@ def run_deployment_job(deployment_id, repo_url):
 
         assigned_port = allocate_port()
         custom_url = f"http://localhost:{assigned_port}"
+        append_build_log(deployment_id, f"Port allocated: {assigned_port}")
 
         # =================================================
         # STEP 7 — RUN CONTAINER
@@ -258,6 +284,7 @@ def run_deployment_job(deployment_id, repo_url):
 
         update_deployment_step(deployment_id, "deploying")
         emit_deployment_update(deployment_id, "deploying", "Starting container...")
+        append_build_log(deployment_id, "Starting container...")
 
         container_result = run_docker_container(
             image_name,
@@ -272,11 +299,13 @@ def run_deployment_job(deployment_id, repo_url):
                 deployment_id,
                 container_result.get("message", "Container failed to start")
             )
+            append_build_log(deployment_id, f"ERROR: {container_result.get('message', 'Container failed to start')}")
             remove_image(image_name)
             remove_repo_folder(repo_path)
             return
 
         container_id = container_result["container_id"]
+        append_build_log(deployment_id, f"Container started: {container_id}")
 
         # =================================================
         # STEP 8 — MARK AS RUNNING
@@ -310,6 +339,7 @@ def run_deployment_job(deployment_id, repo_url):
         # --- Save logs to database ---
         save_build_logs(deployment_id, docker_result.get("logs", []))
         save_container_logs(deployment_id, container_result.get("logs", []))
+        append_build_log(deployment_id, f"Deployment completed successfully! Live at {custom_url}")
 
         print("\n========== DEPLOYMENT COMPLETED ==========")
 
@@ -318,6 +348,7 @@ def run_deployment_job(deployment_id, repo_url):
         print(str(e))
 
         mark_deployment_failed(deployment_id, str(e))
+        append_build_log(deployment_id, f"ERROR: {str(e)}")
 
         if container_id:
             remove_container(container_id)
@@ -466,10 +497,10 @@ def get_metrics_history(deployment_id):
 
         rows = conn.execute(
             """
-            SELECT cpu, ram, network_rx, network_tx, timestamp
+            SELECT cpu, ram, network_rx, network_tx, created_at
             FROM deployment_metrics
             WHERE deployment_id=?
-            ORDER BY timestamp ASC
+            ORDER BY created_at ASC
             LIMIT 200
             """,
             (deployment_id,),
@@ -484,7 +515,7 @@ def get_metrics_history(deployment_id):
                 "ram": row["ram"],
                 "network_rx": row["network_rx"],
                 "network_tx": row["network_tx"],
-                "timestamp": row["timestamp"],
+                "timestamp": row["created_at"],
             })
 
         return jsonify({"success": True, "metrics": metrics})
@@ -496,8 +527,11 @@ def get_metrics_history(deployment_id):
 def get_logs_route(deployment_id):
     """Return stored deployment logs."""
     try:
-        build_logs = get_build_logs(deployment_id)
-        container_logs = get_container_logs(deployment_id)
+        build_result = get_build_logs(deployment_id)
+        container_result = get_container_logs(deployment_id)
+
+        build_logs = build_result.get("logs", []) if isinstance(build_result, dict) else []
+        container_logs = container_result.get("logs", []) if isinstance(container_result, dict) else []
 
         return jsonify({
             "success": True,
@@ -517,6 +551,43 @@ def get_latest_deployment():
             return jsonify({"success": True, "deployment": deployments[0]})
         return jsonify({"success": False, "message": "No deployments found"}), 404
     except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+# =========================================================
+# ANALYTICS ENDPOINTS
+# =========================================================
+
+@app.route("/api/analytics", methods=["GET"])
+def analytics_endpoint():
+    """Return aggregated analytics data for the dashboard."""
+    try:
+        analytics = get_analytics()
+        return jsonify({"success": True, "analytics": analytics})
+    except Exception as e:
+        print("Analytics error:", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/docker/stats", methods=["GET"])
+def docker_stats_endpoint():
+    """Return Docker container and image statistics."""
+    try:
+        stats = get_docker_stats()
+        return jsonify({"success": True, "stats": stats})
+    except Exception as e:
+        print("Docker stats error:", str(e))
+        return jsonify({"success": False, "error": str(e)}), 500
+
+
+@app.route("/api/metrics/all", methods=["GET"])
+def all_metrics_endpoint():
+    """Return all stored monitoring metrics."""
+    try:
+        metrics = get_all_metrics()
+        return jsonify({"success": True, "metrics": metrics})
+    except Exception as e:
+        print("Metrics error:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
 
 

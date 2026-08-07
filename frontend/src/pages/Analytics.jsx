@@ -93,7 +93,13 @@ function formatDuration(seconds) {
 function formatTimeAgo(dateStr) {
   if (!dateStr) return "—";
   const now = new Date();
-  const date = new Date(dateStr + (dateStr.includes("Z") || dateStr.includes("+") ? "" : "Z"));
+  // Handle SQLite format "YYYY-MM-DD HH:MM:SS" by converting to ISO
+  let normalized = dateStr;
+  if (typeof dateStr === "string" && dateStr.includes(" ") && !dateStr.includes("T")) {
+    normalized = dateStr.replace(" ", "T");
+  }
+  const date = new Date(normalized + (normalized.includes("Z") || normalized.includes("+") ? "" : "Z"));
+  if (isNaN(date.getTime())) return "—";
   const diffMs = now - date;
   const diffSec = Math.floor(diffMs / 1000);
   if (diffSec < 60) return `${diffSec}s ago`;
@@ -207,11 +213,24 @@ function Analytics() {
   ];
 
   // CPU/RAM trend from all metrics
-  const cpuTrendData = allMetrics.slice(-30).map((m) => ({
-    time: m.created_at ? new Date(m.created_at + "Z").toLocaleTimeString() : "",
-    cpu: Number(m.cpu || 0).toFixed(1),
-    ram: Number(m.ram || 0).toFixed(1),
-  }));
+  const cpuTrendData = allMetrics.slice(-30).map((m) => {
+    let timeStr = "";
+    if (m.created_at) {
+      let normalized = m.created_at;
+      if (typeof normalized === "string" && normalized.includes(" ") && !normalized.includes("T")) {
+        normalized = normalized.replace(" ", "T");
+      }
+      const dt = new Date(normalized + (normalized.includes("Z") || normalized.includes("+") ? "" : "Z"));
+      if (!isNaN(dt.getTime())) {
+        timeStr = dt.toLocaleTimeString();
+      }
+    }
+    return {
+      time: timeStr,
+      cpu: Number(m.cpu || 0).toFixed(1),
+      ram: Number(m.ram || 0).toFixed(1),
+    };
+  });
 
   // Latest deployments for activity
   const latestDeployments = a.latest_deployments || [];
