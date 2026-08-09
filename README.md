@@ -3,14 +3,18 @@
 <img src="https://raw.githubusercontent.com/tanvishinde017/DeployX/main/assets/deployx-banner.svg" alt="DeployX - Animated Banner" width="100%"/>
 
 
-<br/>
-
-
-### Modern Self-Hosted DevOps Deployment Platform  .
-
 ### Modern Self-Hosted DevOps Deployment Platform .
 
 
+# <span style="color:#ef4444">Deploy</span><span style="color:#2563eb">X</span>
+
+
+### 🚀 Modern Self-Hosted DevOps Deployment Platform
+
+> Deploy, orchestrate, monitor & scale production applications from your own infrastructure —
+> <b>inspired by Vercel · Railway · Render · Kubernetes</b>
+
+<br/>
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensourceorg/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
