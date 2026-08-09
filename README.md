@@ -5,6 +5,7 @@
 
 # DeployX
 
+<<<<<<< HEAD
 ## Modern Self-Hosted DevOps Deployment Platform
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
@@ -17,6 +18,8 @@
 ### Modern Self-Hosted DevOps Deployment Platform .
 
 
+=======
+>>>>>>> 18ea043 (Fix formatting of DevOps Deployment Platform title)
 
 ### Modern Self-Hosted DevOps Deployment Platform .
 
