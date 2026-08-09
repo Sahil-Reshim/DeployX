@@ -5,9 +5,6 @@
 
 <br/>
 
-## Modern Self-Hosted DevOps Deployment Platform
-
-
 
 ### Modern Self-Hosted DevOps Deployment Platform .
 
