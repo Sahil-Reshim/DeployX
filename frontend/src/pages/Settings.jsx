@@ -9,7 +9,7 @@ const fadeUp = {
   transition: { duration: 0.35 },
 };
 
-// localStorage keys
+// localStorage keys  
 const STORAGE_PREFIX = "deployx_settings_";
 
 const DEFAULT_SETTINGS = {

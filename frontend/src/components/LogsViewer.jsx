@@ -37,15 +37,9 @@ function LogsViewer({ deploymentId: deploymentIdProp }) {
       try {
         setLoading(true);
         setError(null);
-        const buildResponse = await API.get(`/deployments/${deploymentId}/logs`);
-        let containerLogs = [];
-        try {
-          const containerResponse = await API.get(`/deployments/${deploymentId}/container-logs`);
-          containerLogs = containerResponse.data?.logs || [];
-        } catch {
-          containerLogs = [];
-        }
-        const buildLogs = buildResponse.data?.logs || [];
+        const response = await API.get(`/deployments/${deploymentId}/logs`);
+        const buildLogs = response.data?.build_logs || [];
+        const containerLogs = response.data?.container_logs || [];
         const normalize = (entry) => {
           if (!entry) return null;
           if (typeof entry === "string") {

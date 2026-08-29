@@ -1,715 +1,607 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  useScroll,
+  useTransform,
+  useMotionValue,
+  useSpring,
+  AnimatePresence,
+} from "framer-motion";
+import {
+  Rocket, GitBranch, Box, Activity, ShieldCheck, Zap,
+  Server, Terminal, Globe, Cpu, Layers, ArrowRight, ChevronUp, Check,
+} from "lucide-react";
 import "./LandingPage.css";
 
+/* ═══════════════════════════════════════════════════════════════
+   useTilt — mouse-tracked 3D card
+   ═══════════════════════════════════════════════════════════════ */
+function useTilt(max = 14) {
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const rotateX = useSpring(rx, { stiffness: 160, damping: 18 });
+  const rotateY = useSpring(ry, { stiffness: 160, damping: 18 });
+
+  const onMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - 0.5;
+    const py = (e.clientY - rect.top) / rect.height - 0.5;
+    ry.set(px * max * 2);
+    rx.set(py * -max * 2);
+  };
+  const onMouseLeave = () => { rx.set(0); ry.set(0); };
+
+  return { tiltStyle: { rotateX, rotateY, transformStyle: "preserve-3d" }, onMouseMove, onMouseLeave };
+}
+
+/* ─── Background (space aurora + 3D floor + floating cubes) ─── */
+const fxCubes = [
+  { left: "8%",  top: "20%", size: 46, dur: 9,  depth: "140px" },
+  { left: "18%", top: "72%", size: 26, dur: 11, depth: "-60px" },
+  { left: "78%", top: "16%", size: 38, dur: 8,  depth: "110px" },
+  { left: "88%", top: "60%", size: 52, dur: 12, depth: "170px" },
+  { left: "48%", top: "10%", size: 20, dur: 10, depth: "-100px" },
+  { left: "36%", top: "82%", size: 30, dur: 13, depth: "60px" },
+  { left: "66%", top: "78%", size: 22, dur: 9,  depth: "-140px" },
+];
+
 const Background = () => (
-  <div className="landing-bg-container">
-    <div className="landing-bg-orb landing-bg-orb-1" />
-    <div className="landing-bg-orb landing-bg-orb-2" />
-    <div className="landing-bg-orb landing-bg-orb-3" />
-    <div className="landing-bg-orb landing-bg-orb-4" />
-    <div className="landing-grid" />
-    <div className="landing-particles">
-      {Array.from({ length: 40 }).map((_, i) => (
-        <div
-          key={i}
-          className="particle"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            width: `${Math.random() * 4 + 2}px`,
-            height: `${Math.random() * 4 + 2}px`,
-            animationDelay: `${Math.random() * 8}s`,
-            animationDuration: `${Math.random() * 10 + 8}s`,
-          }}
-        />
+  <div className="dx3-bg" aria-hidden="true">
+    <div className="dx3-orb dx3-orb-cyan" />
+    <div className="dx3-orb dx3-orb-pink" />
+    <div className="dx3-orb dx3-orb-violet" />
+    <div className="dx3-stars">
+      {Array.from({ length: 90 }).map((_, i) => (
+        <span key={i} className="dx3-star" style={{
+          left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%`,
+          width: `${Math.random() * 2.4 + 1}px`, height: `${Math.random() * 2.4 + 1}px`,
+          animationDelay: `${Math.random() * 6}s`, animationDuration: `${Math.random() * 8 + 4}s`,
+        }} />
       ))}
     </div>
+    <div className="dx3-floor" />
+    {fxCubes.map((c, i) => (
+      <span key={i} className="dx3-cube" style={{
+        left: c.left, top: c.top, width: c.size, height: c.size,
+        animationDuration: `${c.dur}s`, "--depth": c.depth,
+      }} />
+    ))}
+    <div className="dx3-vignette" />
   </div>
 );
 
+/* ─── Navbar ──────────────────────────────────────────────── */
+const links = [
+  { label: "Features", href: "#features" },
+  { label: "Pipeline", href: "#pipeline" },
+  { label: "Analytics", href: "#analytics" },
+  { label: "Stack", href: "#stack" },
+];
+
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const links = [
-    { label: "Features", href: "#features" },
-    { label: "Workflow", href: "#workflow" },
-    { label: "Tech Stack", href: "#techstack" },
-    { label: "Analytics", href: "#analytics" },
-    { label: "About", href: "#about" },
-  ];
 
   return (
     <motion.nav
-      className={`landing-navbar ${scrolled ? "scrolled" : ""}`}
-      initial={{ y: -80, opacity: 0 }}
+      className={`dx3-nav ${scrolled ? "scrolled" : ""}`}
+      initial={{ y: -70, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
+      transition={{ duration: 0.7, ease: "easeOut" }}
     >
-      <div className="landing-nav-inner">
-        <div className="landing-nav-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
-          <img src="/logo.png" alt="DeployX" className="landing-nav-logo-img" />
+      <div className="dx3-nav-inner">
+        <div className="dx3-logo" onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}>
+          <span className="app-logo">
+            <span className="app-logo-badge">
+              <img src="/logo.png" alt="DeployX" className="app-logo-img" />
+            </span>
+            <span className="app-logo-text">Deploy<span>X</span></span>
+          </span>
         </div>
 
-        <div className={`landing-nav-center ${mobileOpen ? "open" : ""}`}>
-          {links.map((link) => (
-            <a
-              key={link.label}
-              href={link.href}
-              className="landing-nav-link"
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
+        <div className={`dx3-nav-links ${open ? "open" : ""}`}>
+          {links.map((l) => (
+            <a key={l.href} href={l.href} className="dx3-nav-link" onClick={() => setOpen(false)}>
+              {l.label}
             </a>
           ))}
-        </div>
-
-        <div className="landing-nav-right">
           <motion.button
-            className="landing-cta-btn"
+            className="dx3-nav-cta"
             onClick={() => navigate("/dashboard")}
             whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.94 }}
           >
-            Get Started
+            Launch App
           </motion.button>
-          <button
-            className={`landing-hamburger ${mobileOpen ? "active" : ""}`}
-            onClick={() => setMobileOpen(!mobileOpen)}
-          >
-            <span /><span /><span />
-          </button>
         </div>
+
+        <button className={`dx3-hamburger ${open ? "active" : ""}`} onClick={() => setOpen(!open)}>
+          <span /><span /><span />
+        </button>
       </div>
     </motion.nav>
   );
 };
+/* ─── Hero (3D stage with scroll camera) ───────────────────── */
+const OrbitIcon = ({ Icon, style, delay = 0 }) => (
+  <span className="dx3-orbit-icon" style={style}>
+    <span className="dx3-orbit-ring" style={{ animationDelay: `${delay}s` }}>
+      <Icon size={20} />
+    </span>
+  </span>
+);
 
-const HeroSection = () => {
-  const navigate = useNavigate();
-  const { scrollYProgress } = useScroll();
-  const y = useTransform(scrollYProgress, [0, 0.3], [0, 150]);
-  const opacity = useTransform(scrollYProgress, [0, 0.25], [1, 0]);
+const HeroConsole = () => {
+  const { tiltStyle, onMouseMove, onMouseLeave } = useTilt(16);
 
-  const pipelineSteps = [
-    { label: "Repository", icon: "📦" },
-    { label: "Git Clone", icon: "📥" },
-    { label: "Docker Build", icon: "🐳" },
-    { label: "Jenkins", icon: "⚙️" },
-    { label: "Container", icon: "📦" },
-    { label: "Production", icon: "🚀" },
-    { label: "Live URL", icon: "🌐" },
-  ];
-
-  const [activeStep, setActiveStep] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveStep((prev) => (prev + 1) % pipelineSteps.length);
-    }, 1200);
-    return () => clearInterval(interval);
-  }, []);
-
-  return (
-    <motion.section className="landing-hero" style={{ y, opacity }}>
-      <div className="landing-hero-content">
-        <motion.div
-          className="landing-hero-logo"
-          initial={{ scale: 0, rotate: -20 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.8, type: "spring" }}
-        >
-          <span className="hero-logo-text">Deploy</span>
-          <span className="hero-logo-accent">X</span>
-        </motion.div>
-
-        <motion.h1
-          className="landing-hero-title"
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-        >
-          Deploy Any Repository.
-          <br />
-          <span className="hero-highlight">Anywhere. In Seconds.</span>
-        </motion.h1>
-
-        <motion.p
-          className="landing-hero-subtitle"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.4 }}
-        >
-          Deploy Flask, Django, FastAPI, React, Next.js, Express, Vue, Angular and more
-          using Docker + Jenkins with real-time monitoring.
-        </motion.p>
-
-        <motion.div
-          className="landing-hero-actions"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.6 }}
-        >
-          <motion.button
-            className="landing-hero-btn landing-hero-btn-primary"
-            onClick={() => navigate("/dashboard")}
-            whileHover={{ scale: 1.05, boxShadow: "0 0 40px rgba(220,38,38,0.4)" }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Get Started
-            <span className="btn-arrow">→</span>
-          </motion.button>
-          <motion.a
-            href="https://github.com/tanvishinde017/DeployX"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="landing-hero-btn landing-hero-btn-secondary"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <svg className="github-icon" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-            </svg>
-            View GitHub
-          </motion.a>
-        </motion.div>
-
-        <motion.div
-          className="hero-pipeline-animation"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          {pipelineSteps.map((step, index) => (
-            <motion.div
-              key={step.label}
-              className={`hero-pipeline-step ${index === activeStep ? "active" : ""} ${index < activeStep ? "done" : ""}`}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.1 + 1 }}
-            >
-              <span className="pipeline-step-icon">{step.icon}</span>
-              <span className="pipeline-step-label">{step.label}</span>
-              {index < pipelineSteps.length - 1 && (
-                <motion.div
-                  className="pipeline-step-arrow"
-                  animate={{ x: [0, 4, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  ↓
-                </motion.div>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </div>
-    </motion.section>
-  );
-};
-
-const FeaturesSection = () => {
-  const features = [
-    { title: "One Click Deployment", desc: "Deploy any repository with a single click. No complex configuration needed.", icon: "🚀" },
-    { title: "Automatic Framework Detection", desc: "Smart detection of your framework - Flask, React, Next.js, Django and more.", icon: "🔍" },
-    { title: "Dockerfile Generation", desc: "Auto-generate optimized Dockerfiles for your specific tech stack.", icon: "🐳" },
-    { title: "Jenkins CI/CD", desc: "Integrated Jenkins pipeline for continuous integration and deployment.", icon: "⚙️" },
-    { title: "Docker Runtime", desc: "Secure containerized runtime environment with isolated deployments.", icon: "📦" },
-    { title: "Real-Time Monitoring", desc: "Live CPU, RAM, and network monitoring for all deployments.", icon: "📊" },
-    { title: "Analytics Dashboard", desc: "Comprehensive analytics with deployment metrics and trends.", icon: "📈" },
-    { title: "Live Logs", desc: "Stream deployment logs in real-time with powerful filtering.", icon: "📝" },
-    { title: "Production URL", desc: "Auto-generated production URLs for every successful deployment.", icon: "🌐" },
-    { title: "Health Checks", desc: "Automated health monitoring with instant status updates.", icon: "💚" },
+  const lines = [
+    { prompt: "$", text: "deployx deploy tanvishinde017/DeployX --prod", ok: false },
+    { prompt: "✓", text: "Cloned repository  ·  128 files", ok: true },
+    { prompt: "✓", text: "Built Docker image  ·  deployx:v2.0", ok: true },
+    { prompt: "✓", text: "Jenkins pipeline passed in 27s", ok: true },
+    { prompt: "✓", text: "Containers live on 0.0.0.0:4173", ok: true },
   ];
 
   return (
-    <section id="features" className="landing-section">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Features</span>
-        <h2>Everything You Need to Deploy</h2>
-        <p>Powerful features designed for modern DevOps workflows.</p>
-      </motion.div>
+    <motion.div
+      className="dx3-console-scene"
+      initial={{ opacity: 0, scale: 0.85, y: 40 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      transition={{ duration: 0.9, delay: 0.4, ease: "easeOut" }}
+    >
+      <OrbitIcon Icon={Rocket} style={{ top: "-16%", left: "50%" }} />
+      <OrbitIcon Icon={Server} style={{ top: "12%", left: "-9%" }} />
+      <OrbitIcon Icon={Activity} style={{ top: "76%", left: "110%" }} />
+      <OrbitIcon Icon={ShieldCheck} style={{ top: "42%", left: "-12%" }} />
+      <OrbitIcon Icon={Cpu} style={{ top: "88%", left: "118%" }} />
 
-      <div className="features-grid">
-        {features.map((feature, index) => (
-          <motion.div
-            key={feature.title}
-            className="feature-card"
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-50px" }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ y: -8, transition: { duration: 0.3 } }}
-          >
-            <div className="feature-card-glow" />
-            <div className="feature-icon-wrapper">{feature.icon}</div>
-            <h3 className="feature-title">{feature.title}</h3>
-            <p className="feature-desc">{feature.desc}</p>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-};
+      <div className="dx3-console-wrap" {...{ style: tiltStyle, onMouseMove, onMouseLeave }}>
+        <div className="dx3-console-card">
+          <div className="dx3-console-head">
+            <div className="dx3-dots"><span /><span /><span /></div>
+            <div className="dx3-console-title"><Terminal size={14} /> deployx — live terminal</div>
+            <span className="dx3-console-live"><span className="dx3-pulse" /> LIVE</span>
+          </div>
 
-const SupportedFrameworks = () => {
-  const frameworks = [
-    { name: "Python", icon: "🐍", color: "#3776AB" },
-    { name: "Flask", icon: "🌶️", color: "#000000" },
-    { name: "Django", icon: "🎸", color: "#092E20" },
-    { name: "FastAPI", icon: "⚡", color: "#009688" },
-    { name: "Node.js", icon: "🟢", color: "#339933" },
-    { name: "Express", icon: "🚂", color: "#000000" },
-    { name: "NestJS", icon: "🏗️", color: "#E0234E" },
-    { name: "React", icon: "⚛️", color: "#61DAFB" },
-    { name: "Vite", icon: "⚡", color: "#646CFF" },
-    { name: "Next.js", icon: "▲", color: "#000000" },
-    { name: "Vue", icon: "💚", color: "#4FC08D" },
-    { name: "Angular", icon: "🅰️", color: "#DD0031" },
-  ];
-
-  return (
-    <section className="landing-section landing-section-alt">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Supported Frameworks</span>
-        <h2>Works With Your Stack</h2>
-        <p>Automatic detection and deployment for all major frameworks.</p>
-      </motion.div>
-
-      <div className="frameworks-grid">
-        {frameworks.map((fw, index) => (
-          <motion.div
-            key={fw.name}
-            className="framework-card"
-            initial={{ opacity: 0, scale: 0.8 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.05 }}
-            whileHover={{ scale: 1.08, y: -6 }}
-          >
-            <div className="framework-icon" style={{ background: `${fw.color}15`, borderColor: `${fw.color}30` }}>
-              <span style={{ fontSize: "28px" }}>{fw.icon}</span>
-            </div>
-            <span className="framework-name">{fw.name}</span>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-const WorkflowSection = () => {
-  const steps = [
-    { label: "Repository", desc: "Connect your GitHub repo" },
-    { label: "Clone", desc: "Auto-clone your code" },
-    { label: "Framework Detection", desc: "Detect your tech stack" },
-    { label: "Dockerfile", desc: "Generate Docker config" },
-    { label: "Jenkins", desc: "CI/CD pipeline runs" },
-    { label: "Build", desc: "Docker image build" },
-    { label: "Docker Image", desc: "Image is created" },
-    { label: "Container", desc: "Container starts" },
-    { label: "Health Check", desc: "Verify uptime" },
-    { label: "Production", desc: "Deploy to live" },
-    { label: "Live", desc: "Your app is live!" },
-  ];
-
-  return (
-    <section id="workflow" className="landing-section">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Workflow</span>
-        <h2>Deployment Pipeline</h2>
-        <p>From repository to production in minutes.</p>
-      </motion.div>
-
-      <div className="workflow-container">
-        {steps.map((step, index) => (
-          <motion.div
-            key={step.label}
-            className="workflow-step-wrapper"
-            initial={{ opacity: 0, x: index % 2 === 0 ? -30 : 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.08 }}
-          >
-            <div className="workflow-step">
-              <div className="workflow-number">{String(index + 1).padStart(2, "0")}</div>
-              <div className="workflow-content">
-                <h3>{step.label}</h3>
-                <p>{step.desc}</p>
-              </div>
-            </div>
-            {index < steps.length - 1 && (
+          <div className="dx3-console-body">
+            {lines.map((l, i) => (
               <motion.div
-                className="workflow-connector"
-                initial={{ height: 0 }}
-                whileInView={{ height: "40px" }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.08 + 0.3, duration: 0.5 }}
-              />
-            )}
-          </motion.div>
-        ))}
+                key={i}
+                className={`dx3-line ${l.ok ? "ok" : ""}`}
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.9 + i * 0.35 }}
+              >
+                <span className="dx3-line-prompt">{l.prompt}</span>
+                <span className="dx3-line-text">{l.text}</span>
+                {l.ok && <Check size={13} className="dx3-line-check" />}
+              </motion.div>
+            ))}
+            <span className="dx3-cursor" />
+          </div>
+
+          <div className="dx3-console-foot">
+            <span className="dx3-metric"><Zap size={12} /> 27s avg deploy</span>
+            <span className="dx3-metric"><Layers size={12} /> 342 containers</span>
+            <span className="dx3-metric"><Globe size={12} /> live-url ready</span>
+          </div>
+        </div>
+        <div className="dx3-console-glow" />
       </div>
+    </motion.div>
+  );
+};
+const Hero = () => {
+  const navigate = useNavigate();
+  const { scrollY } = useScroll();
+  const yBg = useTransform(scrollY, [0, 800], [0, 220]);
+  const yTitle = useTransform(scrollY, [0, 700], [0, -120]);
+  const zoom = useTransform(scrollY, [0, 700], [1, 0.82]);
+  const fade = useTransform(scrollY, [0, 500], [1, 0]);
+
+  return (
+    <section className="dx3-hero">
+      <motion.div className="dx3-hero-glow-bg" style={{ y: yBg }} />
+
+      <div className="dx3-hero-grid">
+        <motion.div className="dx3-hero-left" style={{ y: yTitle, opacity: fade }}>
+          <motion.div
+            className="dx3-hero-badge"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.15 }}
+          >
+            <span className="dx3-pulse" /> Modern DevOps Deployment Platform
+          </motion.div>
+
+          <motion.h1
+            className="dx3-hero-title"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.25 }}
+          >
+            Deploy any repo.
+            <br />
+            <span className="dx3-gradient-text">Go live in seconds.</span>
+          </motion.h1>
+
+          <motion.p
+            className="dx3-hero-sub"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            Deploy Flask, Django, FastAPI, React, Next.js & more using
+            <b> Docker + Jenkins </b> — with real-time logs, live metrics and one-click rollback.
+          </motion.p>
+
+          <motion.div
+            className="dx3-hero-actions"
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.55 }}
+          >
+            <motion.button
+              className="dx3-btn dx3-btn-primary"
+              onClick={() => navigate("/dashboard")}
+              whileHover={{ scale: 1.05, boxShadow: "0 0 44px rgba(220,38,38,0.6)" }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Get Started <ArrowRight size={18} />
+            </motion.button>
+            <motion.a
+              href="#pipeline"
+              className="dx3-btn dx3-btn-ghost"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              See how it works
+            </motion.a>
+          </motion.div>
+
+          <div className="dx3-hero-stats">
+            <div className="dx3-hero-stat"><b>27s</b><span>avg deploy</span></div>
+            <div className="dx3-hero-stat"><b>97%</b><span>success rate</span></div>
+            <div className="dx3-hero-stat"><b>1.2k+</b><span>deployments</span></div>
+          </div>
+        </motion.div>
+
+        <motion.div className="dx3-hero-right" style={{ scale: zoom, opacity: fade }}>
+          <HeroConsole />
+        </motion.div>
+      </div>
+
+      <motion.div className="dx3-scroll-hint" style={{ opacity: fade }}>
+        <span>scroll</span>
+        <ChevronUp className="dx3-hint-chevron" size={20} />
+      </motion.div>
     </section>
   );
 };
+/* ─── Features (3D tilt cards) ─────────────────────────────── */
+const features = [
+  { Icon: GitBranch, color: "#ef4444", title: "GitHub Auto-Deploy", desc: "Point at any repo and push. DeployX clones, builds and ships your code automatically." },
+  { Icon: ShieldCheck, color: "#2563eb", title: "One-Click Rollback", desc: "Recover in an instant with version snapshots and single-command revert." },
+  { Icon: Activity, color: "#dc2626", title: "Real-Time Monitoring", desc: "Watch CPU, RAM and network metrics stream live for every running container." },
+  { Icon: Terminal, color: "#4ade80", title: "Live Build Logs", desc: "Stream Jenkins build output line-by-line the moment it happens." },
+  { Icon: Zap, color: "#fbbf24", title: "Sub-Minute Builds", desc: "Optimized Docker layers cut average deployment time to under 30 seconds." },
+  { Icon: Globe, color: "#60a5fa", title: "Public Production Link", desc: "Ship to a shareable production URL instantly after each successful deploy." },
+];
 
-const AnalyticsPreview = () => {
-  const [counts, setCounts] = useState({ deployments: 0, successRate: 0, containers: 0, avgTime: 0 });
+const SectionHeader = ({ eyebrow, title, sub }) => (
+  <motion.div
+    className="dx3-section-head"
+    initial={{ opacity: 0, y: 40 }}
+    whileInView={{ opacity: 1, y: 0 }}
+    viewport={{ once: true, margin: "-80px" }}
+    transition={{ duration: 0.6 }}
+  >
+    <span className="dx3-eyebrow">{eyebrow}</span>
+    <h2 className="dx3-section-title">{title}</h2>
+    <p className="dx3-section-sub">{sub}</p>
+  </motion.div>
+);
+
+const Features = () => (
+  <section id="features" className="dx3-section">
+    <SectionHeader
+      eyebrow="Features"
+      title="Everything you need to ship"
+      sub="A complete deployment toolkit — from code push to live production link."
+    />
+    <div className="dx3-feature-grid">
+      {features.map((f, i) => {
+        const TiltCard = () => {
+          const { tiltStyle, onMouseMove, onMouseLeave } = useTilt(10);
+          return (
+            <motion.div
+              className="dx3-feature-tilt"
+              {...{ style: tiltStyle, onMouseMove, onMouseLeave }}
+            >
+              <div className="dx3-feature-card" style={{ ["--c"]: f.color }}>
+                <div className="dx3-feature-icon" style={{ color: f.color, borderColor: `${f.color}55`, background: `${f.color}15` }}>
+                  <f.Icon size={26} />
+                </div>
+                <h3>{f.title}</h3>
+                <p>{f.desc}</p>
+                <span className="dx3-feature-glow" style={{ background: `radial-gradient(circle, ${f.color}30, transparent 70%)` }} />
+              </div>
+            </motion.div>
+          );
+        };
+        return (
+          <motion.div
+            key={f.title}
+            initial={{ opacity: 0, y: 40, rotateX: -12 }}
+            whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.6, delay: (i % 3) * 0.12 }}
+          >
+            <TiltCard />
+          </motion.div>
+        );
+      })}
+    </div>
+  </section>
+);
+/* ─── Pipeline (3D glowing vertical timeline) ──────────────── */
+const pipelineSteps = [
+  { Icon: GitBranch, title: "Connect Repository", desc: "Paste a GitHub repo URL to kick off the flow.", color: "#ef4444" },
+  { Icon: Box, title: "Docker Build", desc: "Containerize your app with a smart, cached build.", color: "#2563eb" },
+  { Icon: Activity, title: "Jenkins Pipeline", desc: "Automated test, build and pack steps run cleanly.", color: "#dc2626" },
+  { Icon: Layers, title: "Container Launch", desc: "Orchestrate and boot optimized containers.", color: "#4ade80" },
+  { Icon: Globe, title: "Production Live", desc: "Get a secure, shareable production URL.", color: "#fbbf24" },
+];
+
+const Pipeline = () => (
+  <section id="pipeline" className="dx3-section dx3-section-alt">
+    <SectionHeader
+      eyebrow="Pipeline"
+      title="From push to production"
+      sub="A fully automated pipeline that turns your repository into a running app."
+    />
+
+    <div className="dx3-pipeline">
+      {pipelineSteps.map((s, i) => (
+        <motion.div
+          key={s.title}
+          className="dx3-pipe-step"
+          initial={{ opacity: 0, x: i % 2 ? 60 : -60 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.65 }}
+        >
+          <div className="dx3-pipe-content" style={{ ["--c"]: s.color }}>
+            <div className="dx3-pipe-icon" style={{ color: s.color, background: `${s.color}14`, borderColor: `${s.color}55` }}>
+              <s.Icon size={26} />
+            </div>
+            <div className="dx3-pipe-body">
+              <span className="dx3-pipe-num">0{i + 1}</span>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          </div>
+          {i < pipelineSteps.length - 1 && (
+            <motion.div
+              className="dx3-pipe-line-glow"
+              initial={{ scaleY: 0 }}
+              whileInView={{ scaleY: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+            />
+          )}
+        </motion.div>
+      ))}
+    </div>
+  </section>
+);
+
+/* ─── Analytics (count-up metrics) ─────────────────────────── */
+const statData = [
+  { label: "Deployments", value: 1284, suffix: "+", color: "#ef4444" },
+  { label: "Success Rate", value: 97, suffix: "%", color: "#4ade80" },
+  { label: "Active Containers", value: 342, suffix: "", color: "#2563eb" },
+  { label: "Avg Build Time", value: 27, suffix: "s", color: "#fbbf24" },
+];
+
+const Analytics = () => {
+  const [counts, setCounts] = useState(statData.map(() => 0));
 
   useEffect(() => {
-    const targets = { deployments: 1284, successRate: 97, containers: 342, avgTime: 28 };
-    const duration = 2000;
-    const startTime = Date.now();
-
-    const animate = () => {
-      const elapsed = Date.now() - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const ease = 1 - Math.pow(1 - progress, 3);
-
-      setCounts({
-        deployments: Math.floor(ease * targets.deployments),
-        successRate: Math.floor(ease * targets.successRate),
-        containers: Math.floor(ease * targets.containers),
-        avgTime: Math.floor(ease * targets.avgTime),
-      });
-
-      if (progress < 1) requestAnimationFrame(animate);
+    let raf;
+    const start = Date.now();
+    const dur = 1900;
+    const tick = () => {
+      const p = Math.min((Date.now() - start) / dur, 1);
+      const ease = 1 - Math.pow(1 - p, 3);
+      setCounts(statData.map((s) => Math.floor(ease * s.value)));
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          requestAnimationFrame(animate);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.3 }
-    );
-
     const el = document.getElementById("analytics");
-    if (el) observer.observe(el);
-
-    return () => observer.disconnect();
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { raf = requestAnimationFrame(tick); obs.disconnect(); } },
+      { threshold: 0.25 }
+    );
+    if (el) obs.observe(el);
+    return () => { if (raf) cancelAnimationFrame(raf); obs.disconnect(); };
   }, []);
 
-  const metrics = [
-    { label: "Deployment Count", value: counts.deployments, suffix: "+", color: "var(--red)" },
-    { label: "Success Rate", value: counts.successRate, suffix: "%", color: "var(--green)" },
-    { label: "Containers Active", value: counts.containers, suffix: "", color: "var(--blue)" },
-    { label: "Avg Deploy Time", value: counts.avgTime, suffix: "s", color: "var(--yellow)" },
-  ];
-
   return (
-    <section id="analytics" className="landing-section landing-section-alt">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Analytics</span>
-        <h2>Platform Metrics</h2>
-        <p>Real-time insights into your deployment infrastructure.</p>
-      </motion.div>
-
-      <div className="analytics-grid">
-        {metrics.map((metric, index) => (
+    <section id="analytics" className="dx3-section dx3-section-alt">
+      <SectionHeader
+        eyebrow="Analytics"
+        title="Performance you can trust"
+        sub="Live, real-world metrics across the entire deployment platform."
+      />
+      <div className="dx3-analytics-grid">
+        {statData.map((s, i) => (
           <motion.div
-            key={metric.label}
-            className="analytics-card"
-            initial={{ opacity: 0, y: 30 }}
+            key={s.label}
+            className="dx3-stat-card"
+            initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            whileHover={{ y: -6 }}
+            transition={{ delay: i * 0.1 }}
+            whileHover={{ y: -8 }}
+            style={{ ["--c"]: s.color }}
           >
-            <div className="analytics-card-glow" style={{ background: `radial-gradient(circle, ${metric.color}20, transparent 70%)` }} />
-            <div className="analytics-card-value" style={{ color: metric.color }}>
-              {metric.value}
-              <span className="analytics-suffix">{metric.suffix}</span>
+            <span className="dx3-stat-glow" style={{ background: `radial-gradient(circle, ${s.color}28, transparent 70%)` }} />
+            <div className="dx3-stat-value" style={{ color: s.color }}>
+              {counts[i]}<span className="dx3-stat-suffix">{s.suffix}</span>
             </div>
-            <div className="analytics-card-label">{metric.label}</div>
+            <div className="dx3-stat-label">{s.label}</div>
           </motion.div>
         ))}
       </div>
     </section>
   );
 };
+/* ─── Tech Stack (marquee) ─────────────────────────────────── */
+const stackItems = [
+  "React", "Node.js", "Flask", "Django", "FastAPI", "Express",
+  "Next.js", "Vue", "Angular", "Docker", "Jenkins", "GitHub",
+];
 
-const ScreenshotsPreview = () => {
-  const previews = [
-    { label: "Dashboard", icon: "📊", color: "#DC2626" },
-    { label: "Pipeline", icon: "⚙️", color: "#2563EB" },
-    { label: "Monitoring", icon: "📈", color: "#22C55E" },
-    { label: "Logs", icon: "📝", color: "#EAB308" },
-    { label: "Analytics", icon: "📉", color: "#8B5CF6" },
-    { label: "Settings", icon: "⚡", color: "#EC4899" },
-  ];
-
-  return (
-    <section className="landing-section">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Screenshots</span>
-        <h2>Experience the Dashboard</h2>
-        <p>Beautiful, intuitive interfaces for every task.</p>
-      </motion.div>
-
-      <div className="screenshots-grid">
-        {previews.map((preview, index) => (
-          <motion.div
-            key={preview.label}
-            className="screenshot-card"
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.08 }}
-            whileHover={{ y: -8, scale: 1.02 }}
-          >
-            <div className="screenshot-glow" style={{ background: `radial-gradient(circle, ${preview.color}15, transparent 70%)` }} />
-            <div className="screenshot-mockup" style={{ borderColor: `${preview.color}30` }}>
-              <div className="screenshot-mockup-bar">
-                <div className="mockup-dots">
-                  <span style={{ background: "#EF4444" }} />
-                  <span style={{ background: "#EAB308" }} />
-                  <span style={{ background: "#22C55E" }} />
-                </div>
-                <span className="mockup-title">{preview.label}</span>
-              </div>
-              <div className="screenshot-mockup-content">
-                <div className="mockup-grid">
-                  <div className="mockup-row" style={{ width: "80%" }} />
-                  <div className="mockup-row" style={{ width: "60%" }} />
-                  <div className="mockup-row" style={{ width: "70%" }} />
-                  <div className="mockup-row short" style={{ width: "40%" }} />
-                </div>
-              </div>
-            </div>
-            <span className="screenshot-label">{preview.label}</span>
-          </motion.div>
+const TechStack = () => (
+  <section id="stack" className="dx3-section">
+    <SectionHeader
+      eyebrow="Tech Stack"
+      title="Works with your favorite frameworks"
+      sub="From Python backends to modern JavaScript frontends — anything Docker can run."
+    />
+    <div className="dx3-marquee">
+      <div className="dx3-marquee-track">
+        {[...stackItems, ...stackItems].map((s, i) => (
+          <span key={i} className="dx3-marquee-chip">{s}</span>
         ))}
       </div>
-    </section>
-  );
-};
+    </div>
+  </section>
+);
 
-const TechStackSection = () => {
-  const techs = [
-    { name: "React", icon: "⚛️", color: "#61DAFB" },
-    { name: "Flask", icon: "🌶️", color: "#000000" },
-    { name: "Docker", icon: "🐳", color: "#2496ED" },
-    { name: "Jenkins", icon: "⚙️", color: "#D33833" },
-    { name: "Socket.IO", icon: "🔌", color: "#010101" },
-    { name: "SQLite", icon: "🗄️", color: "#003B57" },
-    { name: "GitHub", icon: "🐙", color: "#181717" },
-    { name: "Python", icon: "🐍", color: "#3776AB" },
-  ];
-
-  return (
-    <section id="techstack" className="landing-section">
-      <motion.div
-        className="landing-section-header"
-        initial={{ opacity: 0, y: 40 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-100px" }}
-      >
-        <span className="section-eyebrow">Tech Stack</span>
-        <h2>Built With Modern Technology</h2>
-        <p>A powerful stack designed for performance and reliability.</p>
-      </motion.div>
-
-      <div className="techstack-grid">
-        {techs.map((tech, index) => (
-          <motion.div
-            key={tech.name}
-            className="techstack-card"
-            initial={{ opacity: 0, rotateY: 90 }}
-            whileInView={{ opacity: 1, rotateY: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.08 }}
-            whileHover={{ scale: 1.1, z: 20 }}
-          >
-            <div className="techstack-icon" style={{ color: tech.color }}>
-              {tech.icon}
-            </div>
-            <span className="techstack-name">{tech.name}</span>
-          </motion.div>
-        ))}
-      </div>
-    </section>
-  );
-};
-
-const CTASection = () => {
+/* ─── CTA ──────────────────────────────────────────────────── */
+const CTA = () => {
   const navigate = useNavigate();
-
+  const { tiltStyle, onMouseMove, onMouseLeave } = useTilt(8);
   return (
-    <section className="landing-cta-section">
+    <section className="dx3-cta-section">
       <motion.div
-        className="landing-cta-card"
-        initial={{ opacity: 0, scale: 0.9 }}
+        className="dx3-cta-card"
+        initial={{ opacity: 0, scale: 0.92 }}
         whileInView={{ opacity: 1, scale: 1 }}
-        viewport={{ once: true }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.7 }}
+        {...{ style: tiltStyle, onMouseMove, onMouseLeave }}
       >
-        <div className="cta-glow" />
-        <motion.h2
-          className="cta-title"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.2 }}
-        >
-          Ready to Deploy?
-        </motion.h2>
-        <motion.p
-          className="cta-subtitle"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.3 }}
-        >
-          Join thousands of developers deploying with DeployX.
-        </motion.p>
+        <div className="dx3-cta-glow" />
+        <h2 className="dx3-cta-title">Ready to go live?</h2>
+        <p className="dx3-cta-sub">
+          Launch your first app in under a minute. No servers to configure, no pipelines to babysit.
+        </p>
         <motion.button
-          className="landing-hero-btn landing-hero-btn-primary cta-btn"
+          className="dx3-btn dx3-btn-primary dx3-btn-lg"
           onClick={() => navigate("/dashboard")}
-          whileHover={{ scale: 1.05, boxShadow: "0 0 50px rgba(220,38,38,0.5)" }}
-          whileTap={{ scale: 0.95 }}
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
+          whileHover={{ scale: 1.06, boxShadow: "0 0 60px rgba(220,38,38,0.55)" }}
+          whileTap={{ scale: 0.94 }}
         >
-          Get Started
-          <span className="btn-arrow">→</span>
+          Launch Your First Deploy <Rocket size={20} />
         </motion.button>
-        <motion.p
-          className="cta-navigate"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.6 }}
-        >
-          Navigate to /dashboard
-        </motion.p>
       </motion.div>
     </section>
   );
 };
 
+/* ─── Footer ───────────────────────────────────────────────── */
 const Footer = () => {
-  const currentYear = new Date().getFullYear();
-
+  const navigate = useNavigate();
+  const year = new Date().getFullYear();
   return (
-    <footer id="about" className="landing-footer">
-      <div className="landing-footer-inner">
-        <div className="footer-brand">
-          <div className="landing-nav-logo">
-            <span className="landing-logo-text">Deploy</span>
-            <span className="landing-logo-accent">X</span>
+    <footer className="dx3-footer">
+      <div className="dx3-footer-inner">
+        <div className="dx3-footer-brand">
+          <div className="dx3-logo">
+            <span className="app-logo">
+              <span className="app-logo-badge">
+                <img src="/logo.png" alt="DeployX" className="app-logo-img" />
+              </span>
+              <span className="app-logo-text">Deploy<span>X</span></span>
+            </span>
           </div>
-          <p className="footer-desc">
-            Modern DevOps Deployment Platform
-          </p>
+          <p>Modern DevOps Deployment Platform</p>
         </div>
 
-        <div className="footer-links">
-          <div className="footer-links-col">
-            <h4>Platform</h4>
-            <a href="#features">Features</a>
-            <a href="#workflow">Workflow</a>
-            <a href="#techstack">Tech Stack</a>
-            <a href="#analytics">Analytics</a>
-          </div>
-          <div className="footer-links-col">
-            <h4>Resources</h4>
-            <a href="https://github.com/tanvishinde017/DeployX" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <a href="#">Documentation</a>
-            <a href="#">Contributors</a>
-            <a href="#">Version 2.0.0</a>
-          </div>
+        <div className="dx3-footer-col">
+          <h4>Platform</h4>
+          <a href="#features">Features</a>
+          <a href="#pipeline">Pipeline</a>
+          <a href="#analytics">Analytics</a>
+          <a href="#stack">Tech Stack</a>
         </div>
 
-        <div className="footer-bottom">
-          <p>&copy; {currentYear} DeployX. All rights reserved.</p>
-          <div className="footer-social">
-            <a href="https://github.com/tanvishinde017/DeployX" target="_blank" rel="noopener noreferrer" className="footer-social-link">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-              </svg>
-            </a>
-          </div>
+        <div className="dx3-footer-col">
+          <h4>Resources</h4>
+          <a href="https://github.com/tanvishinde017/DeployX" target="_blank" rel="noopener noreferrer">GitHub</a>
+          <a href="#">Documentation</a>
+          <a href="#">Contributors</a>
+          <a href="#">Version 2.0.0</a>
         </div>
+
+        <div className="dx3-footer-col">
+          <h4>Get Started</h4>
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>Open Dashboard</a>
+        </div>
+      </div>
+      <div className="dx3-footer-bottom">
+        <p>&copy; {year} DeployX. All rights reserved.</p>
+        <span>Powered by Docker · Jenkins · React</span>
       </div>
     </footer>
   );
 };
-
+/* ─── Page ─────────────────────────────────────────────────── */
 function LandingPage() {
-  const [showScrollTop, setShowScrollTop] = useState(false);
+  const [showTop, setShowTop] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => setShowScrollTop(window.scrollY > 600);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setShowTop(window.scrollY > 700);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
+  const toTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
-    <div className="landing-page">
+    <div className="dx3-page">
       <Background />
       <Navbar />
-      <HeroSection />
-      <FeaturesSection />
-      <SupportedFrameworks />
-      <WorkflowSection />
-      <AnalyticsPreview />
-      <ScreenshotsPreview />
-      <TechStackSection />
-      <CTASection />
+      <Hero />
+      <Features />
+      <Pipeline />
+      <Analytics />
+      <TechStack />
+      <CTA />
       <Footer />
 
       <AnimatePresence>
-        {showScrollTop && (
+        {showTop && (
           <motion.button
-            className="scroll-top-btn"
-            onClick={scrollToTop}
+            className="dx3-top-btn"
+            onClick={toTop}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0 }}
-            whileHover={{ scale: 1.1 }}
+            whileHover={{ scale: 1.12 }}
             whileTap={{ scale: 0.9 }}
           >
-            ↑
+            <ChevronUp size={22} />
           </motion.button>
         )}
       </AnimatePresence>
