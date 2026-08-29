@@ -2,11 +2,11 @@
 
 # DeployX
 
-### Modern Self-Hosted DevOps Deployment Platform
+## Modern Self-Hosted DevOps Deployment Platform
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
-### Modern Self-Hosted DevOps Deployment Platform.
+### Modern Self-Hosted DevOps Deployment Platform  .
 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -26,7 +26,7 @@
 
 ## Overview
 
-DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring.
+DeployX is a production-grade, self-hosted DevOps deployment platform that brings the power of modern cloud deployment infrastructure to your own environment. Inspired by industry-leading platforms like Vercel, Railway, Render, and Kubernetes, DeployX provides developers and teams with a comprehensive solution for automating application deployment, container orchestration, continuous integration, and infrastructure monitoring .
 
 ### The Problem DeployX Solves
 
