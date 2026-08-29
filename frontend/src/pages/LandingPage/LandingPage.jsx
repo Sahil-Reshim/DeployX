@@ -113,15 +113,25 @@ const Navbar = () => {
               {l.label}
             </a>
           ))}
+<<<<<<< HEAD
           <motion.a
             href="/dashboard"
             className="dx3-nav-cta"
             onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
+=======
+          <motion.button
+            className="dx3-nav-cta"
+            onClick={() => navigate("/dashboard")}
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.94 }}
           >
             Launch App
+<<<<<<< HEAD
           </motion.a>
+=======
+          </motion.button>
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
         </div>
 
         <button className={`dx3-hamburger ${open ? "active" : ""}`} onClick={() => setOpen(!open)}>
@@ -250,15 +260,25 @@ const Hero = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.55 }}
           >
+<<<<<<< HEAD
             <motion.a
               href="/dashboard"
               className="dx3-btn dx3-btn-primary"
               onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
+=======
+            <motion.button
+              className="dx3-btn dx3-btn-primary"
+              onClick={() => navigate("/dashboard")}
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
               whileHover={{ scale: 1.05, boxShadow: "0 0 44px rgba(220,38,38,0.6)" }}
               whileTap={{ scale: 0.95 }}
             >
               Get Started <ArrowRight size={18} />
+<<<<<<< HEAD
             </motion.a>
+=======
+            </motion.button>
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
             <motion.a
               href="#pipeline"
               className="dx3-btn dx3-btn-ghost"
@@ -508,15 +528,25 @@ const CTA = () => {
         <p className="dx3-cta-sub">
           Launch your first app in under a minute. No servers to configure, no pipelines to babysit.
         </p>
+<<<<<<< HEAD
         <motion.a
           href="/dashboard"
           className="dx3-btn dx3-btn-primary dx3-btn-lg"
           onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
+=======
+        <motion.button
+          className="dx3-btn dx3-btn-primary dx3-btn-lg"
+          onClick={() => navigate("/dashboard")}
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
           whileHover={{ scale: 1.06, boxShadow: "0 0 60px rgba(220,38,38,0.55)" }}
           whileTap={{ scale: 0.94 }}
         >
           Launch Your First Deploy <Rocket size={20} />
+<<<<<<< HEAD
         </motion.a>
+=======
+        </motion.button>
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
       </motion.div>
     </section>
   );
@@ -559,7 +589,11 @@ const Footer = () => {
 
         <div className="dx3-footer-col">
           <h4>Get Started</h4>
+<<<<<<< HEAD
           <a href="/dashboard" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>Open Dashboard</a>
+=======
+          <a href="#" onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}>Open Dashboard</a>
+>>>>>>> 6524e61 (Add Docker setup for DeployX backend and frontend)
         </div>
       </div>
       <div className="dx3-footer-bottom">
