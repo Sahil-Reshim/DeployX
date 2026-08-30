@@ -122,9 +122,9 @@ function Analytics() {
   const fetchData = useCallback(async () => {
     try {
       const [analyticsRes, dockerRes, metricsRes] = await Promise.allSettled([
-        API.get("/api/analytics"),
-        API.get("/api/docker/stats"),
-        API.get("/api/metrics/all"),
+        API.get("/analytics"),
+        API.get("/docker/stats"),
+        API.get("/metrics/all"),
       ]);
 
       if (analyticsRes.status === "fulfilled" && analyticsRes.value.data?.success) {
