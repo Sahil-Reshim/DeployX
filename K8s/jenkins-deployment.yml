@@ -1,0 +1,103 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: deployx
+  labels:
+    app: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      # Jenkins needs root to access the Docker socket and to write its
+      # home under the PVC (the base image is jenkins/jenkins:lts).
+      securityContext:
+        runAsUser: 0
+        fsGroup: 0
+
+      containers:
+        - name: jenkins
+          # Built from jenkins/Dockerfile which is jenkins/jenkins:lts +
+          # docker.io so the pipeline's `docker build` stage keeps working.
+          # Loaded into Minikube via: minikube image load deployx-jenkins-custom:latest
+          image: deployx-jenkins-custom:latest
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: 8080
+            - name: agent
+              containerPort: 50000
+
+          env:
+            # Start without the interactive setup wizard so Jenkins becomes
+            # available automatically when the cluster starts.
+            - name: JAVA_OPTS
+              value: "-Djenkins.install.runSetupWizard=false"
+            # Used by the init.groovy.d script to provision the admin user.
+            - name: JENKINS_ADMIN_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: jenkins-init
+                  key: admin-user
+            - name: JENKINS_ADMIN_PASSWORD
+              valueFrom:
+                configMapKeyRef:
+                  name: jenkins-init
+                  key: admin-password
+
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 40
+            periodSeconds: 10
+            timeoutSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 90
+            periodSeconds: 20
+            timeoutSeconds: 5
+
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+
+          volumeMounts:
+            - name: jenkins-home
+              mountPath: /var/jenkins_home
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+            - name: jenkins-init
+              mountPath: /usr/share/jenkins/ref/init.groovy.d/zz-deployx-init.groovy
+              subPath: init.groovy
+              readOnly: true
+            - name: jenkins-init
+              mountPath: /run/jenkins-init/Jenkinsfile
+              subPath: Jenkinsfile
+              readOnly: true
+
+      volumes:
+        - name: jenkins-home
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+            type: Socket
+        - name: jenkins-init
+          configMap:
+            name: jenkins-init

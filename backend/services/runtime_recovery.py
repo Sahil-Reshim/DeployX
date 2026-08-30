@@ -49,6 +49,36 @@ def restore_runtime_states():
             if not container_id:
                 continue
 
+            # =========================================
+            # K8S DEPLOYMENTS (subdomain set = created via Kubernetes)
+            # container_id holds the Pod name, not a Docker container.
+            # =========================================
+
+            if deployment.get("subdomain"):
+
+                set_state(
+                    str(deployment_id),
+                    {
+                        "container_id": container_id,
+                        "status": "running",
+                        "internal_port": None,
+                        "public_port": None,
+                        "assigned_port": None,
+                        "subdomain": deployment.get("subdomain"),
+                        "custom_url": deployment.get("custom_url"),
+                        "monitoring_active": False,
+                        "log_streaming": False
+                    }
+                )
+
+                restored += 1
+
+                print(
+                    f"[RESTORED] Deployment {deployment_id} (K8s pod {container_id})"
+                )
+
+                continue
+
             try:
 
                 container = client.containers.get(
