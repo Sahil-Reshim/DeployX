@@ -13,14 +13,15 @@
 #   7. Run the container with correct port mapping
 #   8. Start real-time monitoring & log streaming
 #
-# API endpoints:
-#   POST /deploy              — start a new deployment
-#   GET  /deployments         — list all deployments
-#   GET  /deployments/:id     — get one deployment
-#   DELETE /deployments/:id   — delete a deployment
-#   POST /deployment/:id/stop — stop a running container
-#   POST /deployment/:id/start — start a stopped container
-#   POST /deployment/:id/restart — restart a container
+# API endpoints (all under /api so the Ingress /api -> backend rule
+# reaches Flask without requiring a path rewrite):
+#   POST /api/deploy           — start a new deployment
+#   GET  /api/deployments      — list all deployments
+#   GET  /api/deployments/:id  — get one deployment
+#   DELETE /api/deployments/:id — delete a deployment
+#   POST /api/deployment/:id/stop   — stop a running container
+#   POST /api/deployment/:id/start  — start a stopped container
+#   POST /api/deployment/:id/restart — restart a container
 # =========================================================
 
 import threading
@@ -362,7 +363,7 @@ def run_deployment_job(deployment_id, repo_url):
 # API ENDPOINTS
 # =========================================================
 
-@app.route("/deploy", methods=["POST"])
+@app.route("/api/deploy", methods=["POST"])
 def deploy():
     """Start a new deployment for a GitHub repository."""
     try:
@@ -398,7 +399,7 @@ def deploy():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments", methods=["GET"])
+@app.route("/api/deployments", methods=["GET"])
 def get_deployments():
     """Return all deployments ordered by newest first."""
     try:
@@ -408,7 +409,7 @@ def get_deployments():
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments/<int:deployment_id>", methods=["DELETE"])
+@app.route("/api/deployments/<int:deployment_id>", methods=["DELETE"])
 def delete_deployment(deployment_id):
     """Delete a deployment and its associated resources."""
     try:
@@ -446,7 +447,7 @@ def delete_deployment(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments/<int:deployment_id>/status", methods=["GET"])
+@app.route("/api/deployments/<int:deployment_id>/status", methods=["GET"])
 def get_deployment_status(deployment_id):
     """Return the current status of a single deployment."""
     try:
@@ -459,7 +460,7 @@ def get_deployment_status(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployment/<int:deployment_id>/stop", methods=["POST"])
+@app.route("/api/deployment/<int:deployment_id>/stop", methods=["POST"])
 def stop_deployment_route(deployment_id):
     """Stop a running deployment container."""
     try:
@@ -469,7 +470,7 @@ def stop_deployment_route(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployment/<int:deployment_id>/start", methods=["POST"])
+@app.route("/api/deployment/<int:deployment_id>/start", methods=["POST"])
 def start_deployment_route(deployment_id):
     """Start a stopped deployment container."""
     try:
@@ -479,7 +480,7 @@ def start_deployment_route(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployment/<int:deployment_id>/restart", methods=["POST"])
+@app.route("/api/deployment/<int:deployment_id>/restart", methods=["POST"])
 def restart_deployment_route(deployment_id):
     """Restart a deployment container."""
     try:
@@ -489,7 +490,7 @@ def restart_deployment_route(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments/<int:deployment_id>/metrics", methods=["GET"])
+@app.route("/api/deployments/<int:deployment_id>/metrics", methods=["GET"])
 def get_metrics_history(deployment_id):
     """Return stored monitoring metrics for a deployment."""
     try:
@@ -523,7 +524,7 @@ def get_metrics_history(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments/<int:deployment_id>/logs", methods=["GET"])
+@app.route("/api/deployments/<int:deployment_id>/logs", methods=["GET"])
 def get_logs_route(deployment_id):
     """Return stored deployment logs."""
     try:
@@ -542,7 +543,7 @@ def get_logs_route(deployment_id):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@app.route("/deployments/latest", methods=["GET"])
+@app.route("/api/deployments/latest", methods=["GET"])
 def get_latest_deployment():
     """Return the most recent deployment."""
     try:
