@@ -15,6 +15,7 @@ spec:
         app: deployx-backend
 
     spec:
+      serviceAccountName: deployx-backend
       containers:
         - name: deployx-backend
           image: tanvishinde017/deployx-backend:latest
@@ -26,6 +27,18 @@ spec:
           env:
             - name: FLASK_ENV
               value: "production"
+
+            # Jenkins runs as a Kubernetes ClusterIP service in the
+            # `deployx` namespace. The backend reaches it via the service
+            # DNS name `jenkins:8080` (NOT localhost).
+            - name: JENKINS_URL
+              value: "http://jenkins:8080"
+            - name: JENKINS_USER
+              value: "admin"
+            - name: JENKINS_API_TOKEN
+              value: "admin123"
+            - name: JENKINS_JOB_NAME
+              value: "flask-docker-build"
 
           volumeMounts:
             - name: docker-sock
