@@ -11,6 +11,11 @@
   --dx-width: 1200px;
 }
 
+/* Smooth in-page anchor scrolling (e.g. "See how it works" -> #pipeline) */
+html {
+  scroll-behavior: smooth;
+}
+
 .dx3-page {
   position: relative;
   min-height: 100vh;
@@ -100,7 +105,7 @@
 .dx3-nav-link:hover { color: #fff; }
 .dx3-nav-link:hover::after { width: 100%; }
 
-.dx3-nav-cta { border: none; cursor: pointer; color: #04050c; font-weight: 700; font-size: 14px; padding: 10px 20px; border-radius: 12px; background: linear-gradient(135deg, var(--dx-red), var(--dx-blue)); box-shadow: 0 6px 22px rgba(220,38,38,0.35); transition: box-shadow 0.2s; }
+.dx3-nav-cta { border: none; cursor: pointer; color: #04050c; font-weight: 700; font-size: 14px; padding: 10px 20px; border-radius: 12px; background: linear-gradient(135deg, var(--dx-red), var(--dx-blue)); box-shadow: 0 6px 22px rgba(220,38,38,0.35); transition: box-shadow 0.2s; text-decoration: none; display: inline-block; }
 .dx3-nav-cta:hover { box-shadow: 0 6px 30px rgba(239,68,68,0.5); }
 
 .dx3-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 6px; }

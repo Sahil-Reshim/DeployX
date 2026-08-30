@@ -88,7 +88,7 @@ def validate_jenkins_config():
 # GET CRUMB
 # =========================================================
 
-def get_jenkins_crumb():
+def get_jenkins_crumb(session=None):
 
     validate_jenkins_config()
 
@@ -96,7 +96,13 @@ def get_jenkins_crumb():
     endpoint = f"{cfg.get('url')}/crumbIssuer/api/json"
 
     try:
-        session = _get_session()
+        # Use the caller's session when provided so the crumb is tied to
+        # the SAME authenticated session that will later trigger the build.
+        # Jenkins binds each crumb to the session (JSESSIONID/.crumb cookie)
+        # that requested it, so fetching the crumb and posting the build
+        # with two different sessions causes a 403 "No valid crumb".
+        if session is None:
+            session = _get_session()
         response = session.get(endpoint, timeout=REQUEST_TIMEOUT)
         # Provide detailed debug info on failure
         if response.status_code >= 400:
@@ -160,7 +166,11 @@ def trigger_jenkins_job(repo_url, framework):
     print("Repo URL sent to Jenkins:", repo_url)
 
     try:
-        crumb_data = get_jenkins_crumb()
+        # Use ONE authenticated session for both the crumb request and the
+        # build trigger so the crumb is valid for the same session/cookies.
+        session = _get_session()
+
+        crumb_data = get_jenkins_crumb(session=session)
 
         cfg = _get_config()
         endpoint = f"{cfg.get('url')}/job/{cfg.get('job')}/buildWithParameters"
@@ -172,7 +182,7 @@ def trigger_jenkins_job(repo_url, framework):
 
         headers = {crumb_data["field"]: crumb_data["crumb"]} if crumb_data else {}
 
-        response = _get_session().post(
+        response = session.post(
             endpoint,
             params=params,
             headers=headers,

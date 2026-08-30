@@ -1,0 +1,59 @@
+# =========================================================
+# DEPLOYX BACKEND RBAC
+# ---------------------------------------------------------
+# Namespace-scoped permissions for the backend pod so it can
+# create/manage per-app Deployments, Services, and Ingresses
+# (see backend/services/k8s_manager.py).
+#
+# NO cluster-admin. Nothing outside the `deployx` namespace.
+#
+# Permissions match exactly what k8s_manager.py calls:
+#   apps/v1                : deployments (get/list/watch/create/patch/delete)
+#                            deployments/scale (patch - stop/start)
+#   core v1                : pods (get/list - status, logs, log streaming)
+#                            pods/log (get - pod logs)
+#                            services (get/create/delete)
+#   networking.k8s.io/v1   : ingresses (get/create/delete)
+#
+# NOTE: configmaps and secrets are NOT granted — k8s_manager.py
+# never reads or writes them.
+# =========================================================
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: deployx-backend
+  namespace: deployx
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: deployx-backend-role
+  namespace: deployx
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "deployments/scale", "deployments/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["services"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: deployx-backend-binding
+  namespace: deployx
+subjects:
+  - kind: ServiceAccount
+    name: deployx-backend
+    namespace: deployx
+roleRef:
+  kind: Role
+  name: deployx-backend-role
+  apiGroup: rbac.authorization.k8s.io

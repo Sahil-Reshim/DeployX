@@ -1,0 +1,177 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jenkins-init
+  namespace: deployx
+data:
+  # Credentials must match what the backend uses to call Jenkins
+  # (JENKINS_USER / JENKINS_API_TOKEN in K8s/backend-deployment.yml).
+  admin-user: "admin"
+  admin-password: "admin123"
+
+  # Groovy init hook that runs on every Jenkins start (idempotent):
+  #  1. Creates a security realm + admin user so API auth works (crumb fix).
+  #  2. Creates the `flask-docker-build` Pipeline job from the Jenkinsfile.
+  init.groovy: |
+    import jenkins.model.*
+    import hudson.security.*
+
+    def instance = Jenkins.get()
+
+    // ---- 1) Security realm + admin user ----
+    def userName  = System.getenv('JENKINS_ADMIN_USER')  ?: 'admin'
+    def password  = System.getenv('JENKINS_ADMIN_PASSWORD') ?: 'admin123'
+
+    def realm = new HudsonPrivateSecurityRealm(false)
+    // Only create the account if it does not already exist (idempotent).
+    if (instance.getUser(userName) == null) {
+      realm.createAccount(userName, password)
+    }
+    instance.setSecurityRealm(realm)
+    instance.setAuthorizationStrategy(new FullControlOnceLoggedInAuthorizationStrategy())
+    instance.save()
+
+        // ---- 2) Create the deploy pipeline job ----
+    def jobName = 'flask-docker-build'
+    def job = instance.getJob(jobName)
+    if (job == null) {
+      def src = new File('/run/jenkins-init/Jenkinsfile').getText('UTF-8')
+      job = new org.jenkinsci.plugins.workflow.job.WorkflowJob(instance, jobName)
+      job.setDefinition(new org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition(src, true))
+      instance.add(job, jobName)
+      println "DeployX: created Jenkins job '${jobName}'"
+    } else {
+      println "DeployX: Jenkins job '${jobName}' already exists"
+    }
+
+    // ---- 3) Ensure the job is parameterized (REPO_URL + FRAMEWORK) ----
+    // (The Jenkinsfile declares parameters, but the job object itself must also
+    //  carry a ParametersDefinitionProperty so buildWithParameters is accepted.)
+    def pdp = job.getProperty(hudson.model.ParametersDefinitionProperty)
+    if (pdp == null) {
+      pdp = new hudson.model.ParametersDefinitionProperty(
+        new hudson.model.StringParameterDefinition('REPO_URL', '', 'GitHub Repository URL'),
+        new hudson.model.StringParameterDefinition('FRAMEWORK', 'flask', 'Detected Framework')
+      )
+      job.addProperty(pdp)
+    }
+    job.save()
+
+    // ---- 4) Ensure the admin API token exists (used by the backend creds) ----
+    try {
+      def am = hudson.model.User.get('admin')
+      def prop = am.getProperty(jenkins.security.ApiTokenProperty)
+      if (prop == null || prop.secretApiToken == null) {
+        am.addProperty(new jenkins.security.ApiTokenProperty())
+        println "DeployX: created API token for admin"
+      } else {
+        println "DeployX: admin API token already present"
+      }
+    } catch (Exception e) {
+      println "DeployX: admin API token note: ${e.message}"
+    }
+
+    instance.save()
+
+  # The Declarative Pipeline used by the `flask-docker-build` job.
+  # This is the same CI logic that already existed in jenkins/Jenkinsfile.
+  Jenkinsfile: |
+    pipeline {
+        agent any
+
+        parameters {
+            string(name: 'REPO_URL', defaultValue: '', description: 'GitHub Repository URL')
+            string(name: 'FRAMEWORK', defaultValue: 'flask', description: 'Detected Framework')
+        }
+
+        stages {
+            stage('Clone Repository') {
+                steps {
+                    checkout([
+                        $class: 'GitSCM',
+                        branches: [[name: '*/main']],
+                        userRemoteConfigs: [[url: params.REPO_URL]]
+                    ])
+                }
+            }
+            stage('Verify Files') {
+                steps { sh 'ls -la' }
+            }
+            stage('Generate Dockerfile') {
+                steps {
+                    script {
+                        echo "Detected Framework: ${params.FRAMEWORK}"
+                        if (params.FRAMEWORK == 'flask' || params.FRAMEWORK == 'django' || params.FRAMEWORK == 'fastapi') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM python:3.11-alpine
+        WORKDIR /app
+        COPY . .
+        RUN pip install -r requirements.txt
+        EXPOSE 5000
+        CMD ["python","app.py"]
+        '''
+                        } else if (params.FRAMEWORK == 'node' || params.FRAMEWORK == 'express' || params.FRAMEWORK == 'nestjs') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        EXPOSE 3000
+        CMD ["npm","start"]
+        '''
+                        } else if (params.FRAMEWORK == 'react' || params.FRAMEWORK == 'vite' || params.FRAMEWORK == 'react-vite') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        EXPOSE 5173
+        CMD ["npm","run","dev","--","--host"]
+        '''
+                        } else if (params.FRAMEWORK == 'nextjs') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        RUN npm run build
+        EXPOSE 3000
+        CMD ["npm","start"]
+        '''
+                        } else if (params.FRAMEWORK == 'vue') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        EXPOSE 5173
+        CMD ["npm","run","dev","--","--host"]
+        '''
+                        } else if (params.FRAMEWORK == 'angular') {
+                            writeFile file: 'Dockerfile', text: '''
+        FROM node:20-alpine
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY . .
+        EXPOSE 4200
+        CMD ["npm","start"]
+        '''
+                        } else {
+                            error "Unsupported Framework: ${params.FRAMEWORK}"
+                        }
+                    }
+                }
+            }
+            stage('Build Docker Image') {
+                steps { sh 'docker build -t deployx-test-image .' }
+            }
+            stage('Verify Image') {
+                steps { sh 'docker images | grep deployx-test-image' }
+            }
+        }
+    }
