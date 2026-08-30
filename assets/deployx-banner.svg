@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="240" viewBox="0 0 840 240">
+  <defs>
+    <radialGradient id="dxOrbRed" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#ef4444" stop-opacity="0"/>
+      <animate attributeName="cx" values="15%;85%;15%" dur="10s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="10%;45%;10%" dur="13s" repeatCount="indefinite"/>
+    </radialGradient>
+    <radialGradient id="dxOrbBlue" cx="70%" cy="80%" r="70%">
+      <stop offset="0%" stop-color="#2563eb" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2563eb" stop-opacity="0"/>
+      <animate attributeName="cx" values="90%;10%;90%" dur="11s" repeatCount="indefinite"/>
+    </radialGradient>
+    <radialGradient id="dxOrbViolet" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0"/>
+      <animate attributeName="cx" values="60%;30%;60%" dur="15s" repeatCount="indefinite"/>
+      <animate attributeName="cy" values="50%;80%;50%" dur="15s" repeatCount="indefinite"/>
+    </radialGradient>
+    <linearGradient id="dxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ef4444"/>
+      <stop offset="45%" stop-color="#dc2626"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+      <animate attributeName="x1" values="0%;100%;0%" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="x2" values="100%;0%;100%" dur="6s" repeatCount="indefinite"/>
+    </linearGradient>
+    <pattern id="dxGrid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+    </pattern>
+    <filter id="dxGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- background -->
+  <rect width="840" height="240" fill="#05060f"/>
+  <rect width="840" height="240" fill="url(#dxGrid)"/>
+  <rect width="840" height="240" fill="url(#dxOrbRed)"/>
+  <rect width="840" height="240" fill="url(#dxOrbBlue)"/>
+  <rect width="840" height="240" fill="url(#dxOrbViolet)"/>
+
+  <!-- floating accent cubes (red) -->
+  <g transform="translate(96 58) rotate(45)">
+    <rect x="0" y="0" width="16" height="16" fill="rgba(239,68,68,0.6)" stroke="rgba(239,68,68,0.9)" stroke-width="1.5">
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 -14;0 0" dur="4s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+  <!-- floating accent cube (blue) -->
+  <g transform="translate(724 150) rotate(45)">
+    <rect x="0" y="0" width="13" height="13" fill="rgba(37,99,235,0.6)" stroke="rgba(37,99,235,0.9)" stroke-width="1.5">
+      <animateTransform attributeName="transform" type="translate" values="0 0;0 12;0 0" dur="5s" repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- orbiting data dots -->
+  <circle cx="120" cy="40" r="3.5" fill="#22c55e">
+    <animate attributeName="cy" values="40;190;40" dur="8s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="1;0.2;1" dur="4s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="200" cy="30" r="3" fill="#38bdf8">
+    <animate attributeName="cy" values="30;180;30" dur="7s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.2;1;0.2" dur="5s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="660" cy="45" r="3.5" fill="#ef4444">
+    <animate attributeName="cy" values="45;190;45" dur="9s" repeatCount="indefinite"/>
+  </circle>
+  <circle cx="560" cy="60" r="3" fill="#eab308">
+    <animate attributeName="cy" values="60;185;60" dur="6.5s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- title -->
+  <text x="420" y="112" font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-size="58" font-weight="800" fill="url(#dxGrad)" text-anchor="middle" letter-spacing="3">DeployX</text>
+
+  <!-- platform tagline -->
+  <text x="420" y="152" font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-size="17" font-weight="600" fill="rgba(234,240,255,0.92)" text-anchor="middle" letter-spacing="0.5">Modern Self-Hosted DevOps Deployment Platform</text>
+
+  <!-- subtle subtitle line -->
+  <line x1="300" y1="168" x2="540" y2="168" stroke="url(#dxGrad)" stroke-width="2">
+    <animate attributeName="opacity" values="1;0.3;1" dur="3s" repeatCount="indefinite"/>
+  </line>
+
+  <!-- bottom labels -->
+  <text x="420" y="200" font-family="'Segoe UI', Arial, Helvetica, sans-serif" font-size="12.5" fill="rgba(234,240,255,0.5)" text-anchor="middle" letter-spacing="4">DEPLOY • ORCHESTRATE • MONITOR · SCALE</text>
+
+  <!-- status pill -->
+  <g transform="translate(420 222)">
+    <rect x="-46" y="-10" width="92" height="20" rx="10" fill="rgba(34,197,94,0.12)" stroke="rgba(34,197,94,0.6)" stroke-width="1"/>
+    <circle cx="-32" cy="0" r="3.5" fill="#22c55e">
+      <animate attributeName="opacity" values="1;0.2;1" dur="1.5s" repeatCount="indefinite"/>
+    </circle>
+    <text x="-22" y="4" font-family="'Segoe UI', Arial, sans-serif" font-size="11" fill="#4ade80" text-anchor="start">All Systems Operational</text>
+  </g>
+</svg>

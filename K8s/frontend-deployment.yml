@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: deployx-frontend
+  namespace: deployx
+  labels:
+    app: deployx-frontend
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: deployx-frontend
+
+  template:
+    metadata:
+      labels:
+        app: deployx-frontend
+
+    spec:
+      containers:
+        - name: deployx-frontend
+          image: tanvishinde017/deployx-frontend:latest
+          imagePullPolicy: Always
+
+          ports:
+            - containerPort: 80
+
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 15
+            periodSeconds: 20

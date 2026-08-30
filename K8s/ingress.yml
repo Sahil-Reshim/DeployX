@@ -1,0 +1,35 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: deployx-ingress
+  namespace: deployx
+spec:
+  ingressClassName: nginx
+
+  rules:
+    - host: deployx.local
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: deployx-backend
+                port:
+                  number: 5000
+
+          - path: /socket.io
+            pathType: Prefix
+            backend:
+              service:
+                name: deployx-backend
+                port:
+                  number: 5000
+
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: deployx-frontend
+                port:
+                  number: 80
