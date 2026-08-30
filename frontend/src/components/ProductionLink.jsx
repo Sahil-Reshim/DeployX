@@ -38,15 +38,17 @@ function ProductionLink({
       "offline"
     ).toLowerCase();
 
+  // The backend always provides the final public URL (K8s Ingress URL,
+  // e.g. http://deployx.local/apps/17/). Never fall back to a localhost
+  // local_url — that field is legacy from the old Docker-port model.
   const deploymentUrl =
-    deployment.local_url ||
+    deployment.custom_url ||
     deployment.url ||
     "";
 
   const displayUrl =
     deployment.custom_url ||
     deployment.url ||
-    deployment.local_url ||
     "";
 
   const isRunning =
