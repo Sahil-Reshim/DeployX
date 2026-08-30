@@ -44,11 +44,20 @@ from services.dockerfile_generator import generate_dockerfile
 from services.log_service import save_build_logs, get_build_logs, save_container_logs, get_container_logs, append_build_log
 from services.docker_service import build_docker_image, run_docker_container
 from services.jenkins_service import trigger_jenkins_job, wait_for_pipeline
-from services.monitor_service import stop_monitoring
+from services.monitor_service import start_monitoring, stop_monitoring
 from services.cleanup_service import remove_container, remove_image, remove_repo_folder, cleanup_proxy_route
-from services.port_allocator import allocate_port
+from services.port_allocator import allocate_port, release_port
 from services.domain_service import generate_subdomain, build_custom_url
 from services.proxy_manager import create_route, reload_proxy
+from services.k8s_manager import (
+    create_deployment_and_service,
+    delete_deployment_resources,
+    scale_deployment_k8s,
+    restart_deployment_k8s,
+    get_deployment_status_k8s,
+    get_pod_logs_k8s,
+    stream_pod_logs_k8s,
+)
 
 from services.deployment_service import (
     create_deployment,
@@ -272,44 +281,58 @@ def run_deployment_job(deployment_id, repo_url):
         append_build_log(deployment_id, f"Docker image built: {image_name}")
 
         # =================================================
-        # STEP 6 — ALLOCATE PORT
+        # STEP 6 — CREATE KUBERNETES RESOURCES (Deployment, Service, Ingress)
         # =================================================
-
-        assigned_port = allocate_port()
-        custom_url = f"http://localhost:{assigned_port}"
-        append_build_log(deployment_id, f"Port allocated: {assigned_port}")
-
-        # =================================================
-        # STEP 7 — RUN CONTAINER
-        # =================================================
+        # Instead of running a Docker container with host port mapping
+        # (which only exposes localhost:PORT inside the Minikube VM and is
+        # inaccessible from the Windows browser), we create a Kubernetes
+        # Deployment, Service, and Ingress so the app is reachable via:
+        #   http://app-XXXXX.deployx.local
+        # through the same NGINX Ingress controller that serves deployx.local.
 
         update_deployment_step(deployment_id, "deploying")
-        emit_deployment_update(deployment_id, "deploying", "Starting container...")
-        append_build_log(deployment_id, "Starting container...")
+        emit_deployment_update(deployment_id, "deploying", "Creating Kubernetes resources...")
+        append_build_log(deployment_id, "Creating Kubernetes deployment...")
 
-        container_result = run_docker_container(
-            image_name,
-            deployment_id,
-            assigned_port,
-            repo_path,
-            internal_port=detected_port  # <-- Pass detected port here
+        # Derive a unique K8s resource name from the deployment ID.
+        # DECIMAL (not hex) so the public path /apps/<id> matches the
+        # deployment ID shown in the dashboard.
+        # Format: deployx-app-<id>
+        deployment_name = f"deployx-app-{deployment_id}"
+
+        # Determine the container port (default to 5000 if not detected)
+        container_port = detected_port or 5000
+
+        k8s_result = create_deployment_and_service(
+            image_name=image_name,
+            deployment_name=deployment_name,
+            container_port=container_port,
+            framework=framework_result["framework"],
         )
 
-        if not container_result["success"]:
+        if not k8s_result["success"]:
             mark_deployment_failed(
                 deployment_id,
-                container_result.get("message", "Container failed to start")
+                k8s_result.get("message", "Kubernetes deployment failed")
             )
-            append_build_log(deployment_id, f"ERROR: {container_result.get('message', 'Container failed to start')}")
+            append_build_log(deployment_id, f"ERROR: {k8s_result.get('message', 'Kubernetes deployment failed')}")
+            # Roll back any partially created K8s resources
+            try:
+                delete_deployment_resources(deployment_name)
+            except Exception:
+                pass
             remove_image(image_name)
             remove_repo_folder(repo_path)
             return
 
-        container_id = container_result["container_id"]
-        append_build_log(deployment_id, f"Container started: {container_id}")
+        # No host port allocation needed in K8s model — Ingress handles routing
+        custom_url = k8s_result.get("custom_url", "")
+        container_id = k8s_result.get("pod_name", "")
+
+        append_build_log(deployment_id, f"Kubernetes resources created: Deployment={deployment_name}, Service={deployment_name}, Ingress host={custom_url}")
 
         # =================================================
-        # STEP 8 — MARK AS RUNNING
+        # STEP 7 — MARK AS RUNNING
         # =================================================
 
         update_deployment_step(deployment_id, "running")
@@ -320,12 +343,21 @@ def run_deployment_job(deployment_id, repo_url):
             container_id=container_id
         )
 
-        container_result["assigned_port"] = assigned_port
-        container_result["subdomain"] = None
-        container_result["custom_url"] = custom_url
-        container_result["url"] = custom_url
+        container_result = {
+            "container_id": container_id,
+            "container_port": container_port,
+            "assigned_port": None,
+            "subdomain": k8s_result.get("subdomain"),
+            "custom_url": custom_url,
+            "url": custom_url,
+            "local_url": None,   # K8s model: public Ingress URL only, no localhost
+            "logs": [],
+        }
 
         complete_deployment(deployment_id, framework_result, docker_result, container_result)
+
+        # Start real-time monitoring (CPU/RAM/network) for the running Pod
+        start_monitoring(deployment_id, container_id)
 
         emit_deployment_update(
             deployment_id, "live",
@@ -351,10 +383,16 @@ def run_deployment_job(deployment_id, repo_url):
         mark_deployment_failed(deployment_id, str(e))
         append_build_log(deployment_id, f"ERROR: {str(e)}")
 
-        if container_id:
-            remove_container(container_id)
-        if image_name:
+        if container_id and image_name:
+            # Clean up K8s resources
+            try:
+                deployment_name = f"deployx-app-{deployment_id}"
+                delete_deployment_resources(deployment_name)
+            except Exception:
+                pass
             remove_image(image_name)
+        if repo_path:
+            remove_repo_folder(repo_path)
         if repo_path:
             remove_repo_folder(repo_path)
 

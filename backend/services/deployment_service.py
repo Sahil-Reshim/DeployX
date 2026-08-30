@@ -42,6 +42,14 @@ from services.proxy_manager import (
     reload_proxy
 )
 
+from services.k8s_manager import (
+    scale_deployment_k8s,
+    restart_deployment_k8s,
+    delete_deployment_resources,
+    get_deployment_status_k8s,
+    get_pod_logs_k8s,
+)
+
 from services.port_allocator import (
     release_port
 )
@@ -856,9 +864,16 @@ def stop_deployment(
                 "message": "Deployment not found"
             }
 
-    result = stop_container(
-        state["container_id"]
-    )
+            # Use Kubernetes scaling for modern K8s deployments
+    # (deployments with a subdomain were created via K8s)
+    deployment = get_deployment_by_id(deployment_id)
+    if deployment and deployment.get("subdomain"):
+        k8s_name = f"deployx-app-{deployment_id}"
+        k8s_result = scale_deployment_k8s(k8s_name, 0)
+        result = k8s_result
+    else:
+        # Legacy Docker container deployments
+        result = stop_container(state["container_id"])
 
     if not result["success"]:
         return result
@@ -957,9 +972,16 @@ def start_deployment(
                 "message": "Deployment not found"
             }
 
-    result = start_container(
-        state["container_id"]
-    )
+        # Use Kubernetes scaling for modern K8s deployments
+    # (deployments with a subdomain were created via K8s)
+    deployment = get_deployment_by_id(deployment_id)
+    if deployment and deployment.get("subdomain"):
+        k8s_name = f"deployx-app-{deployment_id}"
+        k8s_result = scale_deployment_k8s(k8s_name, 1)
+        result = k8s_result
+    else:
+        # Legacy Docker container deployments
+        result = start_container(state["container_id"])
 
     if not result["success"]:
         return result
