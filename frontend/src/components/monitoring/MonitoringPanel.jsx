@@ -37,6 +37,8 @@ function MonitoringPanel({
   const [deploymentInfo, setDeploymentInfo] = useState(null);
   const [deploymentCount, setDeploymentCount] = useState(0);
   const [activeServices, setActiveServices] = useState(0);
+  const [restMetrics, setRestMetrics] = useState(null);
+  const [restHistory, setRestHistory] = useState({ cpu: [], ram: [], network: [] });
 
   const isInactive =
     !deploymentStatus ||
@@ -77,14 +79,66 @@ function MonitoringPanel({
     loadCounts();
   }, [deploymentId]);
 
+  // REST polling fallback — keeps monitoring live even if the
+  // socket stream was missed (e.g. page opened after deployment).
+  useEffect(() => {
+    if (!deploymentId) return undefined;
+    let cancelled = false;
+
+    async function pollMetrics() {
+      try {
+        const res = await API.get(`/deployments/${deploymentId}/metrics`);
+        const list = res.data?.metrics || [];
+        if (cancelled || !list.length) return;
+        const latest = list[list.length - 1];
+        setRestMetrics({
+          cpu: Number(latest.cpu) || 0,
+          ram: Number(latest.ram) || 0,
+          network_rx: Number(latest.network_rx) || 0,
+          network_tx: Number(latest.network_tx) || 0,
+          health: metrics?.health || "healthy",
+        });
+        setRestHistory({
+          cpu: list.map((m) => ({ time: m.timestamp, value: Number(m.cpu) || 0 })),
+          ram: list.map((m) => ({ time: m.timestamp, value: Number(m.ram) || 0 })),
+          network: list.map((m) => ({
+            time: m.timestamp,
+            rx: Number(m.network_rx) || 0,
+            tx: Number(m.network_tx) || 0,
+          })),
+        });
+      } catch (e) {
+        // ignore — endpoint may be unavailable
+      }
+    }
+
+    pollMetrics();
+    const interval = setInterval(pollMetrics, 5000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [deploymentId]);
+
   if (isInactive) {
     return <EmptyMonitoringState />;
   }
 
-  const cpuVal = metrics?.cpu ?? 0;
-  const ramVal = metrics?.ram ?? 0;
-  const rxVal = metrics?.network_rx ?? 0;
-  const txVal = metrics?.network_tx ?? 0;
+  // Prefer live socket metrics; fall back to REST-polled metrics
+  const hasSocketData =
+    (metrics?.cpu || 0) > 0 ||
+    (metrics?.ram || 0) > 0 ||
+    (metrics?.network_rx || 0) > 0 ||
+    (metrics?.network_tx || 0) > 0;
+  const effMetrics = hasSocketData ? metrics : restMetrics || metrics;
+  const effCpuHistory = cpuHistory.length ? cpuHistory : restHistory.cpu;
+  const effRamHistory = ramHistory.length ? ramHistory : restHistory.ram;
+  const effNetworkHistory = networkHistory.length ? networkHistory : restHistory.network;
+
+  const cpuVal = effMetrics?.cpu ?? 0;
+  const ramVal = effMetrics?.ram ?? 0;
+  const rxVal = effMetrics?.network_rx ?? 0;
+  const txVal = effMetrics?.network_tx ?? 0;
 
   return (
     <motion.div
@@ -99,7 +153,7 @@ function MonitoringPanel({
           <h1>Realtime Metrics Dashboard</h1>
         </div>
 
-        <HealthIndicator health={metrics?.health || "healthy"} />
+        <HealthIndicator health={effMetrics?.health || metrics?.health || "healthy"} />
       </div>
 
       {/* Mini Progress Bars */}
@@ -124,13 +178,13 @@ function MonitoringPanel({
       </motion.div>
 
       <MonitoringGrid
-        metrics={metrics}
+        metrics={effMetrics}
         deploymentInfo={deploymentInfo}
         deploymentCount={deploymentCount}
         activeServices={activeServices}
       />
 
-      <MonitoringCharts cpuHistory={cpuHistory} ramHistory={ramHistory} networkHistory={networkHistory} />
+      <MonitoringCharts cpuHistory={effCpuHistory} ramHistory={effRamHistory} networkHistory={effNetworkHistory} />
     </motion.div>
   );
 }

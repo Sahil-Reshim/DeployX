@@ -30,9 +30,19 @@ def get_db_connection():
     columns by name (e.g. row["status"]).
     """
 
-    conn = sqlite3.connect(DATABASE_NAME, check_same_thread=False)
+    # timeout: wait up to 30s for a lock instead of failing instantly
+    # (monitoring threads + Flask workers write concurrently).
+    conn = sqlite3.connect(
+        DATABASE_NAME,
+        check_same_thread=False,
+        timeout=30,
+    )
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL allows concurrent readers during a write — prevents
+    # "database is locked" errors from the monitor thread.
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA busy_timeout = 30000")
     return conn
 
 

@@ -212,7 +212,24 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
         try:
             core_api.create_namespaced_service(namespace=NAMESPACE, body=service_manifest)
         except Exception as e:
-            if "already exists" not in str(e):
+            if "already exists" in str(e):
+                # Service from a previous deploy of this app: patch it so
+                # targetPort always matches the current container port
+                # (e.g. app rebuilt on a different framework/port -> 502 otherwise).
+                core_api.patch_namespaced_service(
+                    name=deployment_name,
+                    namespace=NAMESPACE,
+                    body={"spec": {
+                        "selector": {"app": deployment_name},
+                        "ports": [{
+                            "port": 80,
+                            "targetPort": container_port,
+                            "protocol": "TCP",
+                            "name": "http",
+                        }],
+                    }},
+                )
+            else:
                 raise
 
         # ---- 3. Ingress (path-based on the existing deployx.local host) ----

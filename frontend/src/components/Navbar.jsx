@@ -1,17 +1,16 @@
 import { useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { LayoutDashboard, Rocket, ScrollText, Activity, BarChart3, Settings as SettingsIcon } from "lucide-react";
 
 function Navbar({ activePage, setActivePage }) {
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { label: "Dashboard", key: "dashboard" },
-    { label: "Deployments", key: "deployments" },
-    { label: "Logs", key: "logs" },
-    { label: "Monitoring", key: "monitoring" },
-    { label: "Analytics", key: "analytics" },
-    { label: "Settings", key: "settings" },
+    { label: "Dashboard", key: "dashboard", icon: <LayoutDashboard size={15} /> },
+    { label: "Deployments", key: "deployments", icon: <Rocket size={15} /> },
+    { label: "Logs", key: "logs", icon: <ScrollText size={15} /> },
+    { label: "Monitoring", key: "monitoring", icon: <Activity size={15} /> },
+    { label: "Analytics", key: "analytics", icon: <BarChart3 size={15} /> },
+    { label: "Settings", key: "settings", icon: <SettingsIcon size={15} /> },
   ];
 
   const handleNavigation = useCallback(
@@ -51,6 +50,7 @@ function Navbar({ activePage, setActivePage }) {
                 className={`nav-item ${isActive ? "active" : ""}`}
                 onClick={() => handleNavigation(item.key)}
               >
+                <span className="nav-icon">{item.icon}</span>
                 <span className="nav-label">{item.label}</span>
                 {isActive && <div className="nav-active-indicator"></div>}
               </li>

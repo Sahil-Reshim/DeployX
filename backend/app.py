@@ -44,7 +44,7 @@ from services.dockerfile_generator import generate_dockerfile
 from services.log_service import save_build_logs, get_build_logs, save_container_logs, get_container_logs, append_build_log
 from services.docker_service import build_docker_image, run_docker_container
 from services.jenkins_service import trigger_jenkins_job, wait_for_pipeline
-from services.monitor_service import start_monitoring, stop_monitoring
+from services.monitor_service import start_monitoring, stop_monitoring, resume_monitoring
 from services.cleanup_service import remove_container, remove_image, remove_repo_folder, cleanup_proxy_route
 from services.port_allocator import allocate_port, release_port
 from services.domain_service import generate_subdomain, build_custom_url
@@ -532,6 +532,10 @@ def restart_deployment_route(deployment_id):
 def get_metrics_history(deployment_id):
     """Return stored monitoring metrics for a deployment."""
     try:
+        # If the backend restarted, monitor threads died — lazily resume
+        # them so the monitoring tab goes live again without a redeploy.
+        resume_monitoring()
+
         conn = get_db_connection()
 
         rows = conn.execute(
@@ -635,4 +639,18 @@ def all_metrics_endpoint():
 # =========================================================
 
 if __name__ == "__main__":
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True, allow_unsafe_werkzeug=True)
+    # Resume monitoring threads for deployments that were running
+    # before this backend process started (survives pod restarts).
+    resume_monitoring()
+    # debug=False / use_reloader=False: the werkzeug reloader forks a
+    # parent process that also runs this module (including monitor
+    # threads) and holds eternal SQLite locks that block all writes.
+    # In Kubernetes the reloader must never be enabled.
+    socketio.run(
+        app,
+        host="0.0.0.0",
+        port=5000,
+        debug=False,
+        use_reloader=False,
+        allow_unsafe_werkzeug=True,
+    )
