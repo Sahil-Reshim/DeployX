@@ -88,11 +88,6 @@ def emit_deployment_update(
     if metrics is not None:
         payload["metrics"] = metrics
 
-    # Temporary debug: print the payload being emitted so backend logs
-    # show exactly what the frontend will receive.
-    print("emit_deployment_update payload:", payload)
-
-
     socketio.emit(
         "deployment_update",
         payload,
