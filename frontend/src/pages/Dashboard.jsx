@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
 
 import useDeployments from "../hooks/useDeployments";
 import useMonitoring from "../hooks/useMonitoring";
@@ -316,8 +315,6 @@ function DashboardContent({
 }
 
 function Dashboard() {
-  const navigate = useNavigate();
-  const location = useLocation();
   const [activePage, setActivePage] = useState("dashboard");
   const [activeDeployment, setActiveDeployment] = useState(null);
 
