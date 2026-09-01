@@ -2,10 +2,11 @@ import docker
 import threading
 import time
 import logging
+import traceback
 from database import get_db_connection
 
 try:
-    from kubernetes import client as k8s_client, config as k8s_config
+    from kubernetes import client as k8s_client, config as k8s_config, stream as k8s_stream
     from kubernetes.client import ApiException
     HAS_K8S = True
 except ImportError:
@@ -121,6 +122,118 @@ def get_health(cpu):
         return "warning"
 
     return "healthy"
+
+
+def _read_pod_network_kb(pod_name, namespace="deployx"):
+    """
+    Read cumulative network counters from the pod's network namespace
+    via `cat /proc/net/dev` (docker stats reports none for K8s pods).
+
+    Returns (rx_kb, tx_kb) or (None, None) if exec is unavailable.
+    """
+    if not HAS_K8S:
+        return (None, None)
+
+    try:
+        core_api = k8s_client.CoreV1Api()
+        resp = k8s_stream.stream(
+            core_api.connect_get_namespaced_pod_exec,
+            pod_name,
+            namespace,
+            command=["cat", "/proc/net/dev"],
+            stderr=True,
+            stdin=False,
+            stdout=True,
+            tty=False,
+            _preload_content=True,
+        )
+
+        rx = tx = 0
+        for line in resp.splitlines():
+            if ":" not in line:
+                continue
+            iface, rest = line.split(":", 1)
+            iface = iface.strip()
+            if iface in ("lo",):
+                continue
+            fields = rest.split()
+            if len(fields) >= 9:
+                rx += int(fields[0])    # rx bytes
+                tx += int(fields[8])    # tx bytes
+
+        return (round(rx / 1024, 2), round(tx / 1024, 2))
+
+    except Exception as e:
+        print(f"pod network exec unavailable for {pod_name}: {e}")
+        return (None, None)
+
+
+def resume_monitoring():
+    """
+    Restart monitor threads for every DeployX app that is actually
+    running in Kubernetes (source of truth = the cluster, not the DB,
+    which can go stale after failed/retried deploys). Also marks the
+    matching DB rows back to 'running'. Called at backend startup and
+    lazily from the metrics endpoint, so monitoring survives restarts.
+    """
+    if not (_K8S_CONFIG_LOADED and HAS_K8S):
+        return
+
+    try:
+        apps_api = k8s_client.AppsV1Api()
+        deps = apps_api.list_namespaced_deployment(
+            namespace="deployx",
+            label_selector="deployx-app=true",
+        )
+
+        for dep in deps.items:
+            # Resource name format: deployx-app-<deployment_id>
+            app_id = dep.metadata.name.rsplit("-", 1)[-1]
+            if not app_id.isdigit():
+                continue
+
+            deployment_id = int(app_id)
+            if deployment_id in monitor_threads:
+                continue
+
+            # Confirm a pod is actually running before starting a thread
+            try:
+                core_api = k8s_client.CoreV1Api()
+                pods = core_api.list_namespaced_pod(
+                    namespace="deployx",
+                    label_selector=f"app={dep.metadata.name}",
+                )
+                if not any(p.status.phase == "Running" for p in pods.items):
+                    continue
+            except Exception:
+                continue
+
+            start_monitoring(deployment_id, dep.metadata.name)
+            logger.info(f"monitor: resumed monitoring for deployment {deployment_id}")
+
+            # Sync DB status back to 'running' (may have gone stale),
+            # and self-heal rows that vanished (DB/cluster drift).
+            try:
+                conn = get_db_connection()
+                conn.execute(
+                    """
+                    INSERT OR IGNORE INTO deployments (id, status, subdomain)
+                    VALUES (?, 'running', ?)
+                    """,
+                    (deployment_id, f"apps/{deployment_id}"),
+                )
+                conn.execute(
+                    "UPDATE deployments SET status='running' WHERE id=?",
+                    (deployment_id,),
+                )
+                conn.commit()
+                conn.close()
+            except Exception:
+                pass
+
+    except Exception as e:
+        logger.warning(f"monitor: resume_monitoring failed: {e}")
+
 
 def save_metrics(
     deployment_id,
@@ -309,9 +422,14 @@ def _monitor_k8s_deployment(deployment_id, k8s_name):
                     stats = pod_containers[0].stats(stream=False)
                     cpu = calculate_cpu_percent(stats)
                     ram = calculate_memory_mb(stats)
-                    network_rx, network_tx = calculate_network_kb(stats)
+                    # Docker stats report no network counters for K8s
+                    # containers (pod netns is owned by the pause container),
+                    # so read them from inside the pod instead.
+                    net_rx, net_tx = _read_pod_network_kb(pod_name)
+                    if net_rx is not None:
+                        network_rx, network_tx = net_rx, net_tx
             except Exception as stats_err:
-                logger.debug(f"K8s monitor stats unavailable for {pod_name}: {stats_err}")
+                print(f"K8s monitor stats unavailable for {pod_name}: {stats_err}")
 
             if ready:
                 health = get_health(cpu) if cpu > 0 else "healthy"
@@ -328,7 +446,8 @@ def _monitor_k8s_deployment(deployment_id, k8s_name):
             emit_monitoring_update(deployment_id, metrics)
 
         except Exception as e:
-            logger.warning(f"K8s monitor error for {k8s_name}: {e}")
+            print(f"K8s monitor error for {k8s_name}: {e}")
+            traceback.print_exc()
 
         time.sleep(5)
 

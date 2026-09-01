@@ -68,11 +68,13 @@ TOP SECTION
   color:
     rgba(255,255,255,.45);
 
-  font-size: 12px;
+  font-size: 11px;
+
+  font-weight: 600;
 
   text-transform: uppercase;
 
-  letter-spacing: .16em;
+  letter-spacing: .18em;
 
   margin-bottom: 14px;
 
@@ -83,9 +85,17 @@ TOP SECTION
 
 .monitoring-top h1 {
 
-  font-size: 36px;
+  font-family:
+    "Inter",
+    sans-serif;
+
+  font-size: 34px;
 
   font-weight: 800;
+
+  letter-spacing: -0.03em;
+
+  line-height: 1.15;
 
   color: white;
 }
@@ -113,7 +123,15 @@ EMPTY STATE
 
 .empty-monitoring h2 {
 
-  font-size: 34px;
+  font-family:
+    "Inter",
+    sans-serif;
+
+  font-size: 30px;
+
+  font-weight: 800;
+
+  letter-spacing: -0.02em;
 
   margin-bottom: 18px;
 
@@ -121,6 +139,8 @@ EMPTY STATE
 }
 
 .empty-monitoring p {
+
+  font-size: 15px;
 
   color:
     rgba(255,255,255,.55);
@@ -181,17 +201,30 @@ RESPONSIVE
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
-  padding: 16px;
+  padding: 16px 18px;
+  transition: border-color .25s ease, background .25s ease;
+}
+
+.runtime-item:hover {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(239,68,68,.25);
 }
 
 .runtime-item span {
   display: block;
-  font-size: 12px;
-  opacity: 0.7;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: rgba(255,255,255,.5);
   margin-bottom: 8px;
 }
 
 .runtime-item strong {
+  font-family: "Inter", sans-serif;
   font-size: 15px;
   font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
 }

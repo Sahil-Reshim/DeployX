@@ -1,17 +1,26 @@
-"""Regenerates the animated, on-theme header block of the DeployX README."""
-import urllib.parse
+"""Regenerates the animated, on-theme header block of the DeployX README.
+
+The banner is hosted as a real .svg file inside the repo and referenced by URL.
+GitHub renders repo-hosted .svg images through its camo proxy, which serves them
+as image/svg+xml — so the SMIL animations actually play (unlike a giant data URI,
+which GitHub often fails to render/cache).
+"""
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 README = ROOT / "README.md"
 BANNER = ROOT / "assets" / "deployx-banner.svg"
+BANNER_URL = (
+    "https://raw.githubusercontent.com/tanvishinde017/DeployX/"
+    "main/assets/deployx-banner.svg"
+)
 
-svg = BANNER.read_text(encoding="utf-8")
-data_uri = "data:image/svg+xml," + urllib.parse.quote(svg, safe="")
+# Sanity check the source banner is still valid/generatable.
+assert BANNER.exists(), "assets/deployx-banner.svg is missing"
 
 header = f"""<div align="center">
 
-![DeployX - Animated Banner]({data_uri})
+<img src="{BANNER_URL}" alt="DeployX - Animated Banner" width="100%"/>
 
 <br/>
 
@@ -54,7 +63,6 @@ header = f"""<div align="center">
 
 </div>
 
----
 """
 
 text = README.read_text(encoding="utf-8")
@@ -64,4 +72,4 @@ if idx == -1:
     raise SystemExit("Could not locate the '---\\n\\n## Overview' marker in README.")
 new_text = header + text[idx:]
 README.write_text(new_text, encoding="utf-8")
-print("README header regenerated successfully. Banner data URI length:", len(data_uri))
+print("README header regenerated with hosted banner URL.")

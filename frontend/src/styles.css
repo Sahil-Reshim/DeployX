@@ -3724,6 +3724,69 @@ input, select, textarea { outline: none; }
   backdrop-filter: blur(12px);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SETTINGS — Theme Switcher & Manage Hints
+   ═══════════════════════════════════════════════════════════════ */
+.theme-switch-group {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: var(--radius-sm, 10px);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-primary, rgba(255,255,255,0.08));
+}
+
+.theme-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted, rgba(255,255,255,0.5));
+  font-family: var(--font-sans, "Inter", sans-serif);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.theme-option:hover {
+  color: var(--text-primary, #fff);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.theme-option-active {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.15));
+  border-color: rgba(239, 68, 68, 0.35);
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.12);
+}
+
+.settings-manage-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-primary, rgba(255,255,255,0.08));
+  color: var(--text-muted, rgba(255,255,255,0.5));
+  font-family: var(--font-mono, "JetBrains Mono", monospace);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .theme-switch-group { width: 100%; }
+  .theme-option { flex: 1; justify-content: center; }
+}
+
 .settings-title {
   font-family: var(--font-display);
   font-size: clamp(28px, 3.5vw, 38px);

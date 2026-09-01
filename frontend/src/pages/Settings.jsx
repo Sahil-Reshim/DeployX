@@ -1,6 +1,16 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
-import { Save, Bell, Shield, User, Code2, Server, Terminal, Key, Sliders, Palette, AlertTriangle, Eye, EyeOff, RefreshCw, XCircle, Monitor, CheckCircle, Container as DockerIcon, GitBranch, Settings as SettingsIcon } from "lucide-react";
+import {
+  Save,
+  Moon,
+  Sun,
+  Container,
+  AlertTriangle,
+  CheckCircle,
+  Trash2,
+  RotateCcw,
+  Settings as SettingsIcon,
+} from "lucide-react";
 import API from "../services/api";
 
 const fadeUp = {
@@ -9,56 +19,11 @@ const fadeUp = {
   transition: { duration: 0.35 },
 };
 
-// localStorage keys  
+// localStorage keys
 const STORAGE_PREFIX = "deployx_settings_";
 
 const DEFAULT_SETTINGS = {
-  // General
   darkTheme: true,
-  compactMode: false,
-  animations: true,
-
-  // Notifications
-  notifications: true,
-  emailAlerts: false,
-  slackAlerts: false,
-  soundNotifications: false,
-  showDeploymentNotifications: true,
-
-  // Realtime
-  realtimeUpdates: true,
-  autoRefresh: true,
-  autoScrollLogs: true,
-  refreshInterval: "10",
-
-  // Deployment
-  autoOpenProductionUrl: true,
-  rememberLastRepository: true,
-  defaultBranch: "main",
-
-  // Docker
-  defaultContainerName: "deployx-app",
-  defaultPort: "3000",
-
-  // Jenkins
-  defaultJob: "DeployX-Pipeline",
-  autoRetry: true,
-
-  // GitHub
-  defaultRepository: "",
-
-  // Monitoring
-  monitorRefreshInterval: "5",
-
-  // Logs
-  maxLogLines: "1000",
-  logAutoScroll: true,
-
-  // Security
-  confirmBeforeDelete: true,
-
-  // Appearance
-  theme: "dark",
 };
 
 function loadSettings() {
@@ -103,15 +68,6 @@ function SettingsRow({ label, description, children }) {
       </div>
       <div className="settings-row-control">{children}</div>
     </div>
-  );
-}
-
-function ToggleSwitch({ checked, onChange, id }) {
-  return (
-    <label className="toggle-switch" htmlFor={id}>
-      <input type="checkbox" id={id} checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span className="toggle-slider"></span>
-    </label>
   );
 }
 
@@ -238,7 +194,7 @@ function Settings() {
         <div>
           <div className="settings-eyebrow">CONFIGURATION</div>
           <h1 className="settings-title">Project Settings</h1>
-          <p className="settings-subtitle">Manage your DeployX platform configuration and preferences</p>
+          <p className="settings-subtitle">Appearance &amp; deployment management</p>
         </div>
         <button className="settings-save-btn" onClick={handleSave}>
           {saved ? (
@@ -256,133 +212,52 @@ function Settings() {
       </div>
 
       <div className="settings-grid">
-        {/* General */}
-        <SettingsSection title="General" icon={<Sliders size={18} />} delay={0}>
-          <SettingsRow label="Dark Theme" description="Toggle between dark and light theme">
-            <ToggleSwitch checked={settings.darkTheme} onChange={(v) => update("darkTheme", v)} id="gen-theme" />
-          </SettingsRow>
-          <SettingsRow label="Compact Mode" description="Reduce spacing for a denser layout">
-            <ToggleSwitch checked={settings.compactMode} onChange={(v) => update("compactMode", v)} id="gen-compact" />
-          </SettingsRow>
-          <SettingsRow label="Animations" description="Enable smooth UI animations">
-            <ToggleSwitch checked={settings.animations} onChange={(v) => update("animations", v)} id="gen-animations" />
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Notifications */}
-        <SettingsSection title="Notifications" icon={<Bell size={18} />} delay={0.05}>
-          <SettingsRow label="Push Notifications" description="Receive deployment notifications">
-            <ToggleSwitch checked={settings.notifications} onChange={(v) => update("notifications", v)} id="notif-push" />
-          </SettingsRow>
-          <SettingsRow label="Sound Notifications" description="Play sound on deployment events">
-            <ToggleSwitch checked={settings.soundNotifications} onChange={(v) => update("soundNotifications", v)} id="notif-sound" />
-          </SettingsRow>
-          <SettingsRow label="Show Deployment Notifications" description="Show toast notifications for deployments">
-            <ToggleSwitch checked={settings.showDeploymentNotifications} onChange={(v) => update("showDeploymentNotifications", v)} id="notif-deploy" />
+        {/* Appearance */}
+        <SettingsSection title="Appearance" icon={settings.darkTheme ? <Moon size={18} /> : <Sun size={18} />} delay={0}>
+          <SettingsRow label="Theme" description="Switch between dark and light theme">
+            <div className="theme-switch-group">
+              <button
+                className={`theme-option ${settings.darkTheme ? "theme-option-active" : ""}`}
+                onClick={() => update("darkTheme", true)}
+              >
+                <Moon size={15} />
+                Dark
+              </button>
+              <button
+                className={`theme-option ${!settings.darkTheme ? "theme-option-active" : ""}`}
+                onClick={() => update("darkTheme", false)}
+              >
+                <Sun size={15} />
+                Light
+              </button>
+            </div>
           </SettingsRow>
         </SettingsSection>
 
-        {/* Realtime */}
-        <SettingsSection title="Realtime Updates" icon={<RefreshCw size={18} />} delay={0.1}>
-          <SettingsRow label="Realtime Updates" description="Enable realtime socket updates">
-            <ToggleSwitch checked={settings.realtimeUpdates} onChange={(v) => update("realtimeUpdates", v)} id="realtime-enable" />
+        {/* Manage Deployments */}
+        <SettingsSection title="Manage Deployments" icon={<Container size={18} />} delay={0.1}>
+          <SettingsRow
+            label="Start / Stop / Restart"
+            description="Manage individual deployments from the Deployments tab"
+          >
+            <span className="settings-manage-hint">
+              <SettingsIcon size={14} />
+              Deployments tab
+            </span>
           </SettingsRow>
-          <SettingsRow label="Auto Refresh" description="Automatically refresh data">
-            <ToggleSwitch checked={settings.autoRefresh} onChange={(v) => update("autoRefresh", v)} id="realtime-refresh" />
-          </SettingsRow>
-          <SettingsRow label="Auto Scroll Logs" description="Auto-scroll to latest log entries">
-            <ToggleSwitch checked={settings.autoScrollLogs} onChange={(v) => update("autoScrollLogs", v)} id="realtime-scroll" />
-          </SettingsRow>
-          <SettingsRow label="Refresh Interval" description="How often to refresh data (seconds)">
-            <select className="settings-select" value={settings.refreshInterval} onChange={(e) => update("refreshInterval", e.target.value)}>
-              <option value="5">5 seconds</option>
-              <option value="10">10 seconds</option>
-              <option value="30">30 seconds</option>
-              <option value="60">60 seconds</option>
-            </select>
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Deployment Preferences */}
-        <SettingsSection title="Deployment Preferences" icon={<Server size={18} />} delay={0.15}>
-          <SettingsRow label="Auto Open Production URL" description="Automatically open URL when deployment completes">
-            <ToggleSwitch checked={settings.autoOpenProductionUrl} onChange={(v) => update("autoOpenProductionUrl", v)} id="deploy-auto-url" />
-          </SettingsRow>
-          <SettingsRow label="Remember Last Repository" description="Remember the last deployed repository">
-            <ToggleSwitch checked={settings.rememberLastRepository} onChange={(v) => update("rememberLastRepository", v)} id="deploy-remember" />
-          </SettingsRow>
-          <SettingsRow label="Default Branch" description="Default branch to deploy from">
-            <select className="settings-select" value={settings.defaultBranch} onChange={(e) => update("defaultBranch", e.target.value)}>
-              <option value="main">main</option>
-              <option value="master">master</option>
-              <option value="develop">develop</option>
-            </select>
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Docker Settings */}
-        <SettingsSection title="Docker" icon={<DockerIcon size={18} />} delay={0.2}>
-          <SettingsRow label="Default Container Name" description="Default name for new containers">
-            <input type="text" className="settings-input" value={settings.defaultContainerName} onChange={(e) => update("defaultContainerName", e.target.value)} />
-          </SettingsRow>
-          <SettingsRow label="Default Port" description="Default internal port for applications">
-            <input type="number" className="settings-input settings-input-short" value={settings.defaultPort} onChange={(e) => update("defaultPort", e.target.value)} min="1" max="65535" />
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Jenkins Settings */}
-        <SettingsSection title="Jenkins" icon={<Terminal size={18} />} delay={0.25}>
-          <SettingsRow label="Default Job" description="Default Jenkins job name">
-            <input type="text" className="settings-input" value={settings.defaultJob} onChange={(e) => update("defaultJob", e.target.value)} />
-          </SettingsRow>
-          <SettingsRow label="Auto Retry" description="Automatically retry failed Jenkins jobs">
-            <ToggleSwitch checked={settings.autoRetry} onChange={(v) => update("autoRetry", v)} id="jenkins-retry" />
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* GitHub */}
-        <SettingsSection title="GitHub" icon={<GitBranch size={18} />} delay={0.3}>
-          <SettingsRow label="Default Repository" description="Default GitHub repository URL">
-            <input type="text" className="settings-input" placeholder="https://github.com/user/repo" value={settings.defaultRepository} onChange={(e) => update("defaultRepository", e.target.value)} />
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Monitoring */}
-        <SettingsSection title="Monitoring" icon={<Monitor size={18} />} delay={0.35}>
-          <SettingsRow label="Refresh Interval" description="How often to poll monitoring metrics (seconds)">
-            <select className="settings-select" value={settings.monitorRefreshInterval} onChange={(e) => update("monitorRefreshInterval", e.target.value)}>
-              <option value="2">2 seconds</option>
-              <option value="5">5 seconds</option>
-              <option value="10">10 seconds</option>
-              <option value="30">30 seconds</option>
-            </select>
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Logs */}
-        <SettingsSection title="Logs" icon={<Terminal size={18} />} delay={0.4}>
-          <SettingsRow label="Maximum Log Lines" description="Maximum log lines to display">
-            <select className="settings-select" value={settings.maxLogLines} onChange={(e) => update("maxLogLines", e.target.value)}>
-              <option value="100">100</option>
-              <option value="500">500</option>
-              <option value="1000">1000</option>
-              <option value="5000">5000</option>
-            </select>
-          </SettingsRow>
-          <SettingsRow label="Auto Scroll" description="Auto-scroll to new log entries">
-            <ToggleSwitch checked={settings.logAutoScroll} onChange={(v) => update("logAutoScroll", v)} id="logs-scroll" />
-          </SettingsRow>
-        </SettingsSection>
-
-        {/* Security */}
-        <SettingsSection title="Security" icon={<Shield size={18} />} delay={0.45}>
-          <SettingsRow label="Confirm Before Delete" description="Show confirmation dialog before deleting">
-            <ToggleSwitch checked={settings.confirmBeforeDelete} onChange={(v) => update("confirmBeforeDelete", v)} id="sec-confirm" />
+          <SettingsRow
+            label="Delete Single Deployment"
+            description="Remove an individual deployment from the Deployments tab"
+          >
+            <span className="settings-manage-hint">
+              <Trash2 size={14} />
+              Deployments tab
+            </span>
           </SettingsRow>
         </SettingsSection>
 
         {/* Danger Zone */}
-        <SettingsSection title="Danger Zone" icon={<AlertTriangle size={18} />} delay={0.5}>
+        <SettingsSection title="Danger Zone" icon={<AlertTriangle size={18} />} delay={0.2}>
           <div className="danger-zone">
             <div className="danger-item">
               <div className="danger-info">
@@ -408,6 +283,7 @@ function Settings() {
                 <span className="danger-desc">Restore all settings to their default values</span>
               </div>
               <button className="danger-btn danger-btn-critical" onClick={handleResetPreferences}>
+                <RotateCcw size={12} style={{ marginRight: 6 }} />
                 Reset
               </button>
             </div>
