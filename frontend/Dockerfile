@@ -18,6 +18,7 @@ FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 
+
 # Replace the stock config with the SPA-fallback config so
 # react-router client-side routes (/dashboard, etc.) work on
 # refresh / direct access instead of returning 404.
