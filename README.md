@@ -1,16 +1,32 @@
 <div align="center">
 
+
 <img src="https://raw.githubusercontent.com/tanvishinde017/DeployX/main/assets/deployx-banner.svg" alt="DeployX - Animated Banner" width="100%"/>
 
+# DeployX
+
+
+![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
+
+### Modern Self-Hosted DevOps Deployment Platform  .
+
+
+
+### Modern Self-Hosted DevOps Deployment Platform
+
+![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
 ### Modern Self-Hosted DevOps Deployment Platform .
 
 
 # <span style="color:#ef4444">Deploy</span><span style="color:#2563eb">X</span>
 
-
 ### 🚀 Modern Self-Hosted DevOps Deployment Platform
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 10206ed (Update README.md)
 > Deploy, orchestrate, monitor & scale production applications from your own infrastructure —
 > <b>inspired by Vercel · Railway · Render · Kubernetes</b>
 
