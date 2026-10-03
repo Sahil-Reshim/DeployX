@@ -1,4 +1,4 @@
-<div align="center">
+﻿<div align="center">
 
 
 <img src="https://raw.githubusercontent.com/tanvishinde017/DeployX/main/assets/deployx-banner.svg" alt="DeployX - Animated Banner" width="100%"/>
@@ -8,13 +8,11 @@
 
 ![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
 
-### Modern Self-Hosted DevOps Deployment Platform  .
+### Modern Self-Hosted DevOps Deployment Platform .
 
 
 
-### Modern Self-Hosted DevOps Deployment Platform
-
-![DeployX Logo](https://via.placeholder.com/150x150/0f172a/ffffff?text=DeployX)
+### Modern Self-Hosted DevOps Deployment Platform .
 
 ### Modern Self-Hosted DevOps Deployment Platform .
 
@@ -32,33 +30,16 @@
 
 <br/>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-2563EB.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/Version-1.0.0-ef4444.svg)](https://github.com/tanvishinde017/DeployX)
-[![Python](https://img.shields.io/badge/Backend-Python%203.8%2B-2563EB.svg)](https://www.python.org/)
-[![React](https://img.shields.io/badge/Frontend-React%2019-2563EB.svg)](https://react.dev/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensourceorg/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](https://github.com/tanvishinde017/DeployX)
+[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/)
+[![React](https://img.shields.io/badge/React-18%2B-61DAFB.svg)](https://reactjs.org/)
 [![Docker](https://img.shields.io/badge/Docker-Supported-2496ED.svg)](https://www.docker.com/)
-[![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-ef4444.svg)](https://www.jenkins.io/)
-[![Kubernetes](https://img.shields.io/badge/Kubernetes-Orchestrated-2563EB.svg)](https://kubernetes.io/)
-[![Prometheus](https://img.shields.io/badge/Prometheus-Monitoring-22c55e.svg)](https://prometheus.io/)
-[![Grafana](https://img.shields.io/badge/Grafana-Dashboards-22c55e.svg)](https://grafana.com/)
+[![Jenkins](https://img.shields.io/badge/Jenkins-Integrated-red.svg)](https://www.jenkins.io/)
 
-<br/>
-
-<img src="https://img.shields.io/badge/STATUS-LIVE-brightgreen?style=for-the-badge&color=22c55e" alt="LIVE" />
-
-<br/>
-
-**🧱 Quickly Get Started**
+**DeployX is a modern self-hosted DevOps deployment platform inspired by Railway, Render, Vercel and Kubernetes.**
 
 [Documentation](#features) • [Quick Start](#installation-guide) • [Features](#key-features) • [Contributing](#contributing)
-
-<br/>
-
-<p>
-  <img src="https://img.shields.io/github/stars/tanvishinde017/DeployX?style=social" alt="GitHub Stars" />
-  <img src="https://img.shields.io/github/forks/tanvishinde017/DeployX?style=social" alt="GitHub Forks" />
-  <img src="https://img.shields.io/github/watchers/tanvishinde017/DeployX?style=social" alt="GitHub Watchers" />
-</p>
 
 </div>
 

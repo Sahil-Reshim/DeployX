@@ -122,6 +122,28 @@ def mark_deployment_failed(deployment_id, message):
     append_build_log(deployment_id, f"ERROR: {message}")
 
 
+def discard_parallel_build(build_thread, build_state):
+    """Join the optimistically-started image build and remove its image.
+
+    The deployable image build is started in parallel with the CI
+    pipeline. If CI fails we still wait for that build to finish (so we
+    don't leave a rogue thread) and delete the image it produced so we
+    don't leak images for failed deployments.
+    """
+    try:
+        if build_thread is not None:
+            build_thread.join()
+    except Exception:
+        pass
+
+    result = (build_state or {}).get("result")
+    if result and result.get("success") and result.get("image_name"):
+        try:
+            remove_image(result["image_name"])
+        except Exception:
+            pass
+
+
 # =========================================================
 # HOME
 # =========================================================
@@ -145,6 +167,8 @@ def run_deployment_job(deployment_id, repo_url):
     repo_path = None
     image_name = None
     container_id = None
+    build_state = None
+    build_thread = None
 
     try:
         # =================================================
@@ -217,6 +241,30 @@ def run_deployment_job(deployment_id, repo_url):
         append_build_log(deployment_id, "Dockerfile generated successfully")
 
         # =================================================
+        # PARALLEL START — DOCKER IMAGE BUILD
+        # =================================================
+        # The Jenkins CI pipeline and the deployable image build both
+        # only need the freshly cloned repo + Dockerfile. Running them
+        # back-to-back meant paying for two full dependency installs in
+        # series. Starting the image build now and waiting for it after
+        # the CI step makes the deployment cost roughly
+        # max(CI, build) instead of CI + build.
+        build_state = {"result": None}
+
+        def _build_image_worker():
+            try:
+                build_state["result"] = build_docker_image(repo_path, deployment_id)
+            except Exception as exc:
+                build_state["result"] = {
+                    "success": False,
+                    "message": str(exc),
+                    "logs": [],
+                }
+
+        build_thread = threading.Thread(target=_build_image_worker, daemon=True)
+        build_thread.start()
+
+        # =================================================
         # STEP 4 — JENKINS CI PIPELINE
         # =================================================
 
@@ -237,6 +285,7 @@ def run_deployment_job(deployment_id, repo_url):
                 jenkins_result.get("message", "Jenkins pipeline trigger failed")
             )
             append_build_log(deployment_id, f"ERROR: {jenkins_result.get('message', 'Jenkins pipeline trigger failed')}")
+            discard_parallel_build(build_thread, build_state)
             remove_repo_folder(repo_path)
             return
 
@@ -252,6 +301,7 @@ def run_deployment_job(deployment_id, repo_url):
                 pipeline_result.get("message", "Jenkins pipeline failed")
             )
             append_build_log(deployment_id, f"ERROR: {pipeline_result.get('message', 'Jenkins pipeline failed')}")
+            discard_parallel_build(build_thread, build_state)
             remove_repo_folder(repo_path)
             return
 
@@ -259,21 +309,20 @@ def run_deployment_job(deployment_id, repo_url):
         append_build_log(deployment_id, "Jenkins pipeline completed successfully")
 
         # =================================================
-        # STEP 5 — BUILD DOCKER IMAGE
+        # STEP 5 — COLLECT DOCKER IMAGE BUILD (started in parallel)
         # =================================================
 
         update_deployment_step(deployment_id, "docker_build")
-        emit_deployment_update(deployment_id, "docker_build", "Building Docker image...")
-        append_build_log(deployment_id, "Building Docker image...")
+        emit_deployment_update(deployment_id, "docker_build", "Finalizing Docker image...")
+        append_build_log(deployment_id, "Waiting for Docker image build to finish...")
 
-        docker_result = build_docker_image(repo_path, deployment_id)
+        build_thread.join()
+        docker_result = build_state["result"]
 
-        if not docker_result["success"]:
-            mark_deployment_failed(
-                deployment_id,
-                docker_result.get("message", "Docker image build failed")
-            )
-            append_build_log(deployment_id, f"ERROR: {docker_result.get('message', 'Docker image build failed')}")
+        if not docker_result or not docker_result["success"]:
+            message = (docker_result or {}).get("message", "Docker image build failed")
+            mark_deployment_failed(deployment_id, message)
+            append_build_log(deployment_id, f"ERROR: {message}")
             remove_repo_folder(repo_path)
             return
 
@@ -382,6 +431,10 @@ def run_deployment_job(deployment_id, repo_url):
 
         mark_deployment_failed(deployment_id, str(e))
         append_build_log(deployment_id, f"ERROR: {str(e)}")
+
+        # If we failed before the parallel image build was collected,
+        # wait for it and clean up any image it produced.
+        discard_parallel_build(build_thread, build_state)
 
         if container_id and image_name:
             # Clean up K8s resources
