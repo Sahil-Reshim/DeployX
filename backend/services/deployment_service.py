@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 
 from database import get_db_connection
@@ -55,6 +56,32 @@ from services.port_allocator import (
 )
 
 
+# Public base domain used by the NGINX Ingress (keep in sync with k8s_manager).
+BASE_DOMAIN = os.getenv("DEPLOYX_BASE_DOMAIN", "deployx.local")
+
+
+def canonical_public_url(deployment_id, raw_url):
+    """
+    Return the browser-reachable public URL for a deployment.
+
+    The current deployment model exposes apps through the NGINX Ingress as
+    ``http://<domain>/apps/<id>/``. Legacy rows created by the old Docker
+    host-port model still store ``http://localhost:<port>`` URLs. Those are
+    dead under the K8s model and, when opened, make the browser navigate to an
+    unreachable localhost address — which surfaces as
+    ``chrome-error://chromewebdata/`` and
+    "Unsafe attempt to load URL http://localhost:...". Rewrite them to the
+    canonical Ingress URL so the dashboard always links somewhere sensible.
+    """
+    if not raw_url:
+        return raw_url
+
+    if "localhost" in raw_url or "127.0.0.1" in raw_url:
+        return f"http://{BASE_DOMAIN}/apps/{deployment_id}/"
+
+    return raw_url
+
+
 def serialize_deployment(row):
     """
     Normalize a deployment row dict for API responses and sockets.
@@ -84,6 +111,14 @@ def serialize_deployment(row):
     d.setdefault("status", "queued")
     d.setdefault("url", None)
     d.setdefault("container_id", None)
+
+    # Rewrite legacy "http://localhost:<port>" URLs (old Docker host-port
+    # model) to the canonical Ingress URL so the dashboard never opens a
+    # dead localhost address ("Unsafe attempt to load URL http://localhost:...").
+    d["url"] = canonical_public_url(
+        d.get("id"), d.get("custom_url") or d.get("url")
+    )
+    d["custom_url"] = d["url"]
 
     if d["progress"] is None:
         state_payload = get_state_payload(

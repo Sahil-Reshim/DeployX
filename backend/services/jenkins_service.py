@@ -29,7 +29,10 @@ def _get_config():
 REQUEST_TIMEOUT = 15
 QUEUE_WAIT_TIMEOUT = 600
 BUILD_WAIT_TIMEOUT = 3600
-POLL_INTERVAL = 3
+# Poll fast so stage/status transitions surface to the UI almost
+# immediately instead of waiting up to 3s per poll. The Jenkins API is
+# local/cheap, so a 1s cadence is safe.
+POLL_INTERVAL = 1
 
 
 
@@ -242,14 +245,19 @@ def trigger_jenkins_job(repo_url, framework):
 # GET BUILD NUMBER
 # =========================================================
 
-def get_build_number(queue_id):
+def get_build_number(queue_id, session=None):
 
     try:
 
         cfg = _get_config()
-        endpoint = f"{cfg.get('url')}/queue/item/{queue_id}/api/json"
+        # tree=executable[number] trims the response to just what we need
+        # instead of the full queue-item JSON.
+        endpoint = f"{cfg.get('url')}/queue/item/{queue_id}/api/json?tree=executable[number]"
 
-        response = _get_session().get(endpoint, timeout=REQUEST_TIMEOUT)
+        if session is None:
+            session = _get_session()
+
+        response = session.get(endpoint, timeout=REQUEST_TIMEOUT)
         if response.status_code >= 400:
             return {"success": False, "message": f"Queue request failed: {response.status_code} - {response.text[:500]}"}
 
@@ -280,14 +288,18 @@ def get_build_number(queue_id):
 # BUILD STATUS
 # =========================================================
 
-def get_build_status(build_number):
+def get_build_status(build_number, session=None):
 
     try:
 
         cfg = _get_config()
-        endpoint = f"{cfg.get('url')}/job/{cfg.get('job')}/{build_number}/api/json"
+        # tree=... returns only the two fields we actually read.
+        endpoint = f"{cfg.get('url')}/job/{cfg.get('job')}/{build_number}/api/json?tree=building,result"
 
-        response = _get_session().get(endpoint, timeout=REQUEST_TIMEOUT)
+        if session is None:
+            session = _get_session()
+
+        response = session.get(endpoint, timeout=REQUEST_TIMEOUT)
         if response.status_code >= 400:
             return {"status": "UNKNOWN"}
 
@@ -334,14 +346,17 @@ def get_build_status(build_number):
 # PIPELINE STAGES
 # =========================================================
 
-def get_pipeline_stages(build_number):
+def get_pipeline_stages(build_number, session=None):
 
     try:
 
         cfg = _get_config()
         endpoint = f"{cfg.get('url')}/job/{cfg.get('job')}/{build_number}/wfapi/describe"
 
-        response = _get_session().get(endpoint, timeout=REQUEST_TIMEOUT)
+        if session is None:
+            session = _get_session()
+
+        response = session.get(endpoint, timeout=REQUEST_TIMEOUT)
         if response.status_code != 200:
             return []
 
@@ -423,6 +438,11 @@ def wait_for_pipeline(
 
     print("Queue:", queue_id)
 
+    # Reuse ONE HTTP session (connection pool + auth + retries) for the
+    # whole wait. Previously _get_session() built a fresh requests.Session
+    # (and re-mounted retry adapters) on every single poll call.
+    poll_session = _get_session()
+
     # Let the frontend light up the CI step and show "queued"
     # immediately, instead of sitting on "Waiting" with no
     # jenkins_status at all until the first build-number poll
@@ -472,7 +492,8 @@ def wait_for_pipeline(
             }
 
         result = get_build_number(
-            queue_id
+            queue_id,
+            session=poll_session
         )
 
         if result["success"]:
@@ -536,7 +557,8 @@ def wait_for_pipeline(
             }
 
         status_result = get_build_status(
-            build_number
+            build_number,
+            session=poll_session
         )
 
         update_jenkins_status(
@@ -545,7 +567,8 @@ def wait_for_pipeline(
         )
 
         raw_stages = get_pipeline_stages(
-            build_number
+            build_number,
+            session=poll_session
         )
 
         stages = normalize_stages(
@@ -625,7 +648,7 @@ def wait_for_pipeline(
     # frontend gets a last update with the terminal jenkins_status
     # (SUCCESS/FAILED/ABORTED) and the final stage list.
 
-    final_raw_stages = get_pipeline_stages(build_number)
+    final_raw_stages = get_pipeline_stages(build_number, session=poll_session)
     final_stages = normalize_stages(final_raw_stages)
 
     save_jenkins_stages(
