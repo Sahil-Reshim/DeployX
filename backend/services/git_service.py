@@ -22,10 +22,24 @@ def clone_repository(repo_url):
             unique_name
         )
 
-        Repo.clone_from(
-            repo_url,
-            repo_path
-        )
+        try:
+            # Shallow, single-branch clone (depth=1). The pipeline only
+            # ever builds the latest revision, so downloading the entire
+            # commit history + all tags is wasted time on large repos.
+            Repo.clone_from(
+                repo_url,
+                repo_path,
+                depth=1,
+                single_branch=True,
+                no_tags=True
+            )
+        except Exception:
+            # A few servers refuse shallow/`single_branch` clones; fall
+            # back to a normal full clone so deployment still works.
+            Repo.clone_from(
+                repo_url,
+                repo_path
+            )
 
         return {
             "success": True,
