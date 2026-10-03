@@ -111,10 +111,10 @@ const Navbar = () => {
               {l.label}
             </a>
           ))}
-<motion.a
+          <motion.a
             href="/dashboard"
             className="dx3-nav-cta"
-            onClick={(e) => { e.preventDefault(); navigate("/dashboard"); }}
+            onClick={(e) => { e.preventDefault(); setOpen(false); navigate("/dashboard"); }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.94 }}
           >
@@ -146,13 +146,14 @@ const Hero = () => {
   const yTitle = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -140]);
   const fade = useTransform(scrollYProgress, [0, 0.75], [1, 0]);
   const zoom = useTransform(scrollYProgress, [0, 1], [1, reduce ? 1 : 0.9]);
+  const yBg = useTransform(scrollYProgress, [0, 1], [0, reduce ? 0 : -70]);
 
   const scrollToHow = () => {
     document.getElementById("code")?.scrollIntoView({ behavior: reduce ? "auto" : "smooth" });
   };
 
   return (
-<section className="dx3-hero">
+<section className="dx3-hero" ref={ref}>
       <motion.div className="dx3-hero-glow-bg" style={{ y: yBg }} />
 
       <div className="dx3-hero-grid">
@@ -731,7 +732,7 @@ const CTA = () => {
         viewport={{ once: true, margin: "-80px" }}
         transition={{ duration: 0.7 }}
       >
-<div className="dx3-cta-glow" />
+<div className="dx3-cta-glow" aria-hidden="true" />
         <h2 className="dx3-cta-title">Ready to go live?</h2>
         <p className="dx3-cta-sub">
           Launch your first app in under a minute. No servers to configure, no pipelines to babysit.

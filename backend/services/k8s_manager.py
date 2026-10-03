@@ -23,9 +23,6 @@ try:
 except ImportError:
     HAS_K8S = False
 
-# Cached result of _load_config() so kubeconfig is only parsed once.
-_CONFIG_LOADED = False
-
 logger = logging.getLogger(__name__)
 
 NAMESPACE = os.getenv("DEPLOYX_NAMESPACE", "deployx")
@@ -35,22 +32,13 @@ INGRESS_CLASS = os.getenv("DEPLOYX_INGRESS_CLASS", "nginx")
 def _load_config():
     """Load Kubernetes configuration.
     Tries in-cluster config first (inside a K8s pod), falls back to kubeconfig.
-
-    The result is cached: kubeconfig parsing is relatively expensive and this
-    helper is called by nearly every K8s operation during a deployment.
     """
-    global _CONFIG_LOADED
-
-    if _CONFIG_LOADED:
-        return True
-
     if not HAS_K8S:
         raise ImportError("kubernetes package not installed")
 
     try:
         config.load_incluster_config()
         logger.info("K8s: using in-cluster config")
-        _CONFIG_LOADED = True
         return True
     except Exception:
         pass
@@ -58,7 +46,6 @@ def _load_config():
     try:
         config.load_kube_config()
         logger.info("K8s: using kubeconfig")
-        _CONFIG_LOADED = True
         return True
     except Exception as e:
         logger.error(f"K8s: failed to load config: {e}")
@@ -77,7 +64,7 @@ def _get_networking_api():
         return client.NetworkingV1Api()
 
 
-def get_pod_name(deployment_name, max_retries=30, retry_interval=1):
+def get_pod_name(deployment_name, max_retries=30, retry_interval=2):
     """Wait for and return the name of the first Pod for a Deployment."""
     core = _get_core_api()
     for _ in range(max_retries):
@@ -91,10 +78,10 @@ def get_pod_name(deployment_name, max_retries=30, retry_interval=1):
         except Exception:
             pass
         time.sleep(retry_interval)
-    return None
+        return None
 
 
-def wait_for_deployment_ready(deployment_name, timeout_seconds=180, interval=1):
+def wait_for_deployment_ready(deployment_name, timeout_seconds=180, interval=3):
     """
     Poll until the Deployment has at least one READY replica.
     Returns (ready: bool, message: str).
@@ -171,13 +158,11 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
                             "env": [{"name": "PORT", "value": str(container_port)}],
                             # TCP readiness gate: the app must actually accept
                             # connections on its port before it is "Ready".
-                            # Probe quickly (every 2s) so a Pod that boots in a
-                            # few seconds is marked Ready almost immediately.
                             "readinessProbe": {
                                 "tcpSocket": {"port": container_port},
-                                "initialDelaySeconds": 3,
-                                "periodSeconds": 2,
-                                "failureThreshold": 15,
+                                "initialDelaySeconds": 5,
+                                "periodSeconds": 5,
+                                "failureThreshold": 12,
                             },
                             "resources": {
                                 "requests": {"memory": "64Mi", "cpu": "50m"},
@@ -193,35 +178,12 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
         try:
             apps_api.create_namespaced_deployment(namespace=NAMESPACE, body=deployment_manifest)
         except Exception as e:
-            if "already exists" not in str(e):
-                raise
-            # Full replace (not a strategic-merge patch). A patch APPENDS to
-            # the container `ports` list, so an app rebuilt on a different
-            # port would advertise BOTH the old and new ports forever.
-            try:
-                apps_api.replace_namespaced_deployment(
+            if "already exists" in str(e):
+                apps_api.patch_namespaced_deployment(
                     name=deployment_name, namespace=NAMESPACE, body=deployment_manifest
                 )
-            except Exception:
-                # Fallback for API servers that reject an unconditional PUT:
-                # recreate the Deployment so its spec is exactly this manifest.
-                try:
-                    apps_api.delete_namespaced_deployment(
-                        name=deployment_name, namespace=NAMESPACE
-                    )
-                except Exception:
-                    pass
-                for _ in range(40):
-                    try:
-                        apps_api.read_namespaced_deployment(
-                            name=deployment_name, namespace=NAMESPACE
-                        )
-                        time.sleep(0.5)
-                    except Exception:
-                        break
-                apps_api.create_namespaced_deployment(
-                    namespace=NAMESPACE, body=deployment_manifest
-                )
+            else:
+                raise
 
         # ---- 2. Service ----
         # External users never see the internal container port:
@@ -247,49 +209,28 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
         }
 
         core_api = _get_core_api()
-
-        def _existing_service_target_port():
-            """Return the Service's current port-80 targetPort, or None when
-            the Service does not exist."""
-            try:
-                svc = core_api.read_namespaced_service(
-                    name=deployment_name, namespace=NAMESPACE
+        try:
+            core_api.create_namespaced_service(namespace=NAMESPACE, body=service_manifest)
+        except Exception as e:
+            if "already exists" in str(e):
+                # Service from a previous deploy of this app: patch it so
+                # targetPort always matches the current container port
+                # (e.g. app rebuilt on a different framework/port -> 502 otherwise).
+                core_api.patch_namespaced_service(
+                    name=deployment_name,
+                    namespace=NAMESPACE,
+                    body={"spec": {
+                        "selector": {"app": deployment_name},
+                        "ports": [{
+                            "port": 80,
+                            "targetPort": container_port,
+                            "protocol": "TCP",
+                            "name": "http",
+                        }],
+                    }},
                 )
-            except Exception:
-                return None
-            for port in (svc.spec.ports or []):
-                if port.port == 80:
-                    return port.target_port
-            return None
-
-        existing_target = _existing_service_target_port()
-
-        # A Service whose targetPort no longer matches the container's real
-        # port is THE number-one cause of "502 Bad Gateway": the Ingress
-        # reaches the Pod on a port nothing is listening on. A strategic-merge
-        # patch does not reliably rewrite targetPort, so when it is wrong we
-        # delete and recreate the Service (the Ingress references it by name,
-        # so routing recovers automatically).
-        if str(existing_target) != str(container_port):
-            if existing_target is not None:
-                try:
-                    core_api.delete_namespaced_service(
-                        name=deployment_name, namespace=NAMESPACE
-                    )
-                except Exception:
-                    pass
-                for _ in range(40):
-                    if _existing_service_target_port() is None:
-                        break
-                    time.sleep(0.25)
-
-            try:
-                core_api.create_namespaced_service(
-                    namespace=NAMESPACE, body=service_manifest
-                )
-            except Exception as e:
-                if "already exists" not in str(e):
-                    raise
+            else:
+                raise
 
         # ---- 3. Ingress (path-based on the existing deployx.local host) ----
         # Adds:  deployx.local/apps/<id> -> Service deployx-app-<id>:80
@@ -342,7 +283,7 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
                 raise
 
         # ---- 4. Wait for Pod readiness (health gate) ----
-        pod_name = get_pod_name(deployment_name, max_retries=30, retry_interval=1)
+        pod_name = get_pod_name(deployment_name, max_retries=30, retry_interval=2)
         ready, ready_message = wait_for_deployment_ready(deployment_name)
 
         if not ready:
