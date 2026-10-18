@@ -20,8 +20,13 @@ function DeploymentItem({
   ─────────────────────────────────────────────
   */
 
+  // Never open a dead localhost URL. Legacy Docker-port rows store
+  // local_url/url like http://localhost:5002 which is unreachable
+  // under the K8s Ingress model (canonical: /apps/<id>/).
+  // Only custom_url/url (Ingress URL) are browser-reachable.
+  const rawUrl = deployment?.custom_url || deployment?.url || "";
   const deployUrl =
-    deployment?.url || "";
+    rawUrl && !/localhost|127\.0\.0\.1/.test(rawUrl) ? rawUrl : "";
 
   const deploymentStatus =
     (
@@ -211,8 +216,13 @@ function DeploymentItem({
   const openDeployment =
     () => {
 
-      if (!deployUrl)
+      // Never open a missing/stale URL (e.g. legacy http://localhost:5002
+      // rows or stopped/failed deploys). That is what produced
+      // "Unsafe attempt to load URL http://localhost:5002/ from frame
+      // with URL chrome-error://chromewebdata/".
+      if (!deployUrl || !isLive) {
         return;
+      }
 
       window.open(
         deployUrl,
@@ -492,7 +502,8 @@ function DeploymentItem({
             onClick={
               openDeployment
             }
-            disabled={!deployUrl}
+            disabled={!deployUrl || !isLive}
+            title={!deployUrl ? "No live URL for this deployment" : !isLive ? `Deployment is ${deploymentStatus} — open is only available when Live` : "Open live app"}
           >
 
             Open Deployment

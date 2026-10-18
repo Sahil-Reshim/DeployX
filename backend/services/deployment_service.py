@@ -72,9 +72,11 @@ def canonical_public_url(deployment_id, raw_url):
     ``chrome-error://chromewebdata/`` and
     "Unsafe attempt to load URL http://localhost:...". Rewrite them to the
     canonical Ingress URL so the dashboard always links somewhere sensible.
+    Returns "" (never a localhost URL) when no usable URL exists, so the
+    frontend can disable "Open App" instead of opening a dead address.
     """
     if not raw_url:
-        return raw_url
+        return ""
 
     if "localhost" in raw_url or "127.0.0.1" in raw_url:
         return f"http://{BASE_DOMAIN}/apps/{deployment_id}/"
@@ -115,6 +117,8 @@ def serialize_deployment(row):
     # Rewrite legacy "http://localhost:<port>" URLs (old Docker host-port
     # model) to the canonical Ingress URL so the dashboard never opens a
     # dead localhost address ("Unsafe attempt to load URL http://localhost:...").
+    # custom_url is the browser-reachable URL; fall back to url (legacy rows
+    # may only have one of them set).
     d["url"] = canonical_public_url(
         d.get("id"), d.get("custom_url") or d.get("url")
     )
@@ -1021,6 +1025,29 @@ def start_deployment(
     if not result["success"]:
         return result
 
+    # Readiness gate: never mark Live unless the app is actually reachable.
+    # For K8s deployments, wait for a Ready replica first.
+    if deployment and deployment.get("subdomain"):
+        try:
+            from services.k8s_manager import wait_for_deployment_ready
+            ready, ready_msg = wait_for_deployment_ready(
+                f"deployx-app-{deployment_id}",
+                timeout_seconds=120,
+                interval=3,
+            )
+            if not ready:
+                return {
+                    "success": False,
+                    "message": f"App did not become ready: {ready_msg}. Check Live Deployment Logs.",
+                }
+        except ImportError:
+            pass
+        except Exception as ready_err:
+            return {
+                "success": False,
+                "message": f"Readiness check failed: {ready_err}",
+            }
+
     update_deployment_step(
         deployment_id,
         "running"
@@ -1161,10 +1188,20 @@ def delete_deployment_lifecycle(
             )
 
         # =====================================
-        # REMOVE PROXY ROUTE
+        # REMOVE K8s RESOURCES (modern deployments)
         # =====================================
 
         if subdomain:
+
+            try:
+
+                delete_deployment_resources(
+                    f"deployx-app-{deployment_id}"
+                )
+
+            except Exception:
+
+                pass
 
             delete_route(
                 subdomain

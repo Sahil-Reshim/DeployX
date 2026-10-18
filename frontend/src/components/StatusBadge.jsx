@@ -23,21 +23,33 @@ function StatusBadge({ status }) {
     },
 
     cloning: {
-      label: "Cloning",
+      label: "Building",
       icon: "📂",
       pulse: true,
     },
 
     detecting: {
-      label: "Detecting",
+      label: "Building",
       icon: "🧠",
       pulse: true,
     },
 
     dockerfile_generating: {
       label:
-        "Generating",
+        "Building",
       icon: "📝",
+      pulse: true,
+    },
+
+    ci_pipeline: {
+      label: "Building",
+      icon: "🐳",
+      pulse: true,
+    },
+
+    docker_build: {
+      label: "Building",
+      icon: "🐳",
       pulse: true,
     },
 

@@ -368,6 +368,15 @@ def _monitor_k8s_deployment(deployment_id, k8s_name):
         logger.warning("K8s APIs not available for monitoring")
         return
 
+    # Bounded retry with exponential backoff for transient K8s API failures
+    # (504 timeouts, connection refusals, 403 on RBAC resources). The backend
+    # must keep the dashboard responsive and never crash when monitoring
+    # fails, so a persistent API outage is surfaced as a final "offline"
+    # status rather than an endless poll loop.
+    retry_count = 0
+    max_retries = 6
+    retry_delay = 2  # seconds
+
     while deployment_id in monitor_threads:
         try:
             dep = apps_api.read_namespaced_deployment(
@@ -445,11 +454,31 @@ def _monitor_k8s_deployment(deployment_id, k8s_name):
             save_metrics(deployment_id, metrics)
             emit_monitoring_update(deployment_id, metrics)
 
+            # Success: reset the transient-failure counter.
+            retry_count = 0
+            retry_delay = 2
+
         except Exception as e:
             print(f"K8s monitor error for {k8s_name}: {e}")
             traceback.print_exc()
+            retry_count += 1
+            if retry_count >= max_retries:
+                # Persistent API outage: stop monitoring rather than spamming
+                # the cluster API. Surface the state so the dashboard can
+                # show "unavailable" instead of blocking.
+                monitor_threads.pop(deployment_id, None)
+                emit_monitoring_update(deployment_id, {
+                    "cpu": 0, "ram": 0, "network_rx": 0,
+                    "network_tx": 0, "health": "unavailable"
+                })
+                break
 
-        time.sleep(5)
+            print(
+                f"K8s monitor retry {retry_count}/{max_retries} for "
+                f"{k8s_name} in {retry_delay}s"
+            )
+            time.sleep(retry_delay)
+            retry_delay = min(retry_delay * 2, 30)
 
 
 def start_monitoring(

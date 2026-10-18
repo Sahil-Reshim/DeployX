@@ -78,7 +78,7 @@ def get_pod_name(deployment_name, max_retries=30, retry_interval=2):
         except Exception:
             pass
         time.sleep(retry_interval)
-        return None
+    return None
 
 
 def wait_for_deployment_ready(deployment_name, timeout_seconds=180, interval=3):
@@ -284,6 +284,31 @@ def create_deployment_and_service(image_name, deployment_name, container_port, f
 
         # ---- 4. Wait for Pod readiness (health gate) ----
         pod_name = get_pod_name(deployment_name, max_retries=30, retry_interval=2)
+
+        # Fast-fail image-pull problems: if a pod is pending because the image
+        # is not present on the K8s node, waiting 180s produces a misleading
+        # "not ready" error. Report the actionable fix instead.
+        if pod_name:
+            core = _get_core_api()
+            try:
+                pod = core.read_namespaced_pod(namespace=NAMESPACE, name=pod_name)
+                if pod.status.phase == "Pending":
+                    return {
+                        "success": False,
+                        "message": (
+                            f"Image not available on K8s node ({deployment_name}): "
+                            f"local image was built with a different Docker daemon (e.g. the "
+                            f"host) and was not loaded into the Minikube node. To make the image "
+                            f"available to the node, run:\n"
+                            f"  minikube image load {deployment_name}   # from the host\n"
+                            f"then re-create the Deployment with: create_deployment_and_service(...)."
+                        ),
+                        "deployment_name": deployment_name,
+                        "pod_name": pod_name,
+                    }
+            except Exception:
+                pass
+
         ready, ready_message = wait_for_deployment_ready(deployment_name)
 
         if not ready:
