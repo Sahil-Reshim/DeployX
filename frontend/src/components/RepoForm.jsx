@@ -22,7 +22,12 @@ function RepoForm({ refreshDeployments, setActiveDeployment, upsertLatestDeploym
 
   const pollDeploymentStatus = (deploymentId) => {
     stopPolling();
+    let attempts = 0;
+    // Rely on Socket.IO for live updates; this poll is only a fallback.
+    // Slower cadence (5s) + attempt cap avoids hammering /status +
+    // /deployments on every deploy.
     pollingRef.current = setInterval(async () => {
+      attempts += 1;
       try {
         const response = await API.get(`/deployments/${deploymentId}/status`);
         const deployment = response.data?.deployment || response.data;
@@ -37,15 +42,24 @@ function RepoForm({ refreshDeployments, setActiveDeployment, upsertLatestDeploym
         const status = (normalizedDeployment.status || "").toLowerCase();
         setActiveDeployment(normalizedDeployment);
         upsertLatestDeployment?.(normalizedDeployment);
-        await refreshDeployments();
 
         if (status === "running" || status === "live") {
-          setMessage({ text: `Deployment Live 🚀 ${normalizedDeployment.url || ""}`, type: "success" });
+          setMessage({ text: "Deployment is Live — opening the production URL is enabled.", type: "success" });
           stopPolling();
           setLoading(false);
         }
-        if (status === "failed") {
-          setMessage({ text: normalizedDeployment.error || "Deployment failed", type: "error" });
+        if (status === "failed" || status === "stopped") {
+          const msg = status === "failed"
+            ? (normalizedDeployment.error || normalizedDeployment.jenkins_status
+              ? `Deployment failed${normalizedDeployment.jenkins_status ? ` (Jenkins: ${normalizedDeployment.jenkins_status})` : ""}. Check Live Deployment Logs.`
+              : "Deployment failed. Check Live Deployment Logs for details.")
+            : "Deployment stopped. Start it again from Deployment History.";
+          setMessage({ text: msg, type: status === "failed" ? "error" : "info" });
+          stopPolling();
+          setLoading(false);
+        }
+        // Safety stop: don't poll forever if the socket dies.
+        if (attempts >= 60) {
           stopPolling();
           setLoading(false);
         }
@@ -53,9 +67,9 @@ function RepoForm({ refreshDeployments, setActiveDeployment, upsertLatestDeploym
         console.error("Polling error:", error);
         stopPolling();
         setLoading(false);
-        setMessage({ text: "Failed to fetch deployment status", type: "error" });
+        setMessage({ text: "Lost connection to the backend. Check the backend is running on :5000, then refresh.", type: "error" });
       }
-    }, 2000);
+    }, 5000);
   };
 
   const handleDeploy = async (e) => {

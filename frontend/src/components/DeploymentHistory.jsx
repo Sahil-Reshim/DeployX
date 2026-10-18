@@ -96,66 +96,6 @@ function DeploymentHistory({
 
   /*
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  DELETE DEPLOYMENT
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  */
-
-  const handleDelete = async (
-    deploymentId
-  ) => {
-
-    /*
-      CHECK ID
-    */
-
-    if (!deploymentId) {
-
-      alert(
-        "Deployment ID missing"
-      );
-
-      return;
-
-    }
-
-    /*
-      CONFIRM DELETE
-    */
-
-    const confirmed =
-      window.confirm(
-        "Delete this deployment permanently?"
-      );
-
-    if (!confirmed) return;
-
-    /*
-      CALL PARENT DELETE FUNCTION
-    */
-
-    try {
-
-      if (onDeleteDeployment) {
-
-        await onDeleteDeployment(
-          deploymentId
-        );
-
-      }
-
-    } catch (error) {
-
-      console.error(
-        "Delete Error:",
-        error
-      );
-
-    }
-
-  };
-
-  /*
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   LOADING UI
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   */
@@ -386,24 +326,6 @@ function DeploymentHistory({
                 ">
 
                   {/* DELETE BUTTON */}
-
-                  <button
-                    className="
-                      deployment-delete-btn
-                    "
-                    onClick={() =>
-                      handleDelete(
-                        deployment.id
-                      )
-                    }
-                    title="
-                      Delete Deployment
-                    "
-                  >
-
-                    ✕
-
-                  </button>
 
                   {/* FAILED BADGE */}
 
