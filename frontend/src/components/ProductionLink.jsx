@@ -40,11 +40,17 @@ function ProductionLink({
 
   // The backend always provides the final public URL (K8s Ingress URL,
   // e.g. http://deployx.local/apps/17/). Never fall back to a localhost
-  // local_url — that field is legacy from the old Docker-port model.
-  const deploymentUrl =
+  // local_url — that field is legacy from the old Docker-port model and
+  // opening it (e.g. http://localhost:5002) produces
+  // "Unsafe attempt to load URL ... from chrome-error://chromewebdata/".
+  const rawUrl =
     deployment.custom_url ||
     deployment.url ||
     "";
+  const deploymentUrl =
+    rawUrl && !/localhost|127\.0\.0\.1/.test(rawUrl)
+      ? rawUrl
+      : "";
 
   const displayUrl =
     deployment.custom_url ||
@@ -109,7 +115,8 @@ function ProductionLink({
   const openDeployment =
     () => {
 
-      if (!deploymentUrl)
+      // Only open when the app is actually Live with a valid URL.
+      if (!deploymentUrl || !isRunning)
         return;
 
       window.open(
@@ -244,7 +251,8 @@ function ProductionLink({
         <button
           className="btn btn-primary"
           onClick={openDeployment}
-          disabled={!deploymentUrl}
+          disabled={!deploymentUrl || !isRunning}
+          title={!deploymentUrl ? "No live URL yet — wait for the deployment to go Live" : !isRunning ? `Deployment is ${deploymentStatus} — Open App is only available when Live` : "Open live app"}
         >
 
           Open App

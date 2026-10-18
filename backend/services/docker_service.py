@@ -72,15 +72,23 @@ def build_docker_image(repo_path, deployment_id):
             "message": "Dockerfile not found in repository."
         }
 
-    # Unique image name per deployment
-    image_name = f"deployx-app-{uuid.uuid4().hex[:8]}"
+    # Stable image name per deployment so the K8s Deployment and the
+    # local Docker image stay traceable to one another
+    # (deployx-app-<id>). The image is built in the Docker daemon that the
+    # backend can reach (the node's daemon for in-cluster backend pods, the
+    # host daemon for local dev). With imagePullPolicy: IfNotPresent the K8s
+    # node uses this image if it is already present locally, otherwise it
+    # tries to pull it and fails (ImagePullBackOff).
+    image_name = f"deployx-app-{deployment_id}"
 
     try:
         build_logs = client.api.build(
             path=repo_path,
             tag=image_name,
             rm=True,          # Remove intermediate containers
-            decode=True       # Stream JSON-encoded logs
+            decode=True,      # Stream JSON-encoded logs
+            pull=False,       # Reuse cached base layers; do not re-pull every build
+            nocache=False     # Reuse Docker layer cache for unchanged deps
         )
 
         logs = []
@@ -90,15 +98,28 @@ def build_docker_image(repo_path, deployment_id):
                 line = log["stream"].strip()
                 if line:
                     logs.append(line)
-                    emit_log(deployment_id, line)
+                    # Throttle socket spam on big builds: emit every 20th line.
+                    if len(logs) % 20 == 0:
+                        emit_log(deployment_id, line)
 
             elif "error" in log:
                 error_line = f"ERROR: {log['error']}"
                 logs.append(error_line)
                 emit_log(deployment_id, error_line)
 
+        # Emit tail so UI gets final lines even when throttled.
+        if logs:
+            emit_log(deployment_id, logs[-1][:500])
+
         # Verify the image was created
         image = client.images.get(image_name)
+
+        # Also tag it with a stable "latest" reference so the image can be
+        # referenced by a predictable tag (e.g. "minikube image load").
+        try:
+            image.tag(repository=image_name, tag="latest", force=True)
+        except Exception:
+            pass
 
         return {
             "success": True,

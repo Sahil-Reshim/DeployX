@@ -526,6 +526,7 @@ def wait_for_pipeline(
     )
 
     last_stage = None
+    last_signature = None
     build_started = time.time()
 
     # -----------------------------------------
@@ -561,11 +562,6 @@ def wait_for_pipeline(
             session=poll_session
         )
 
-        update_jenkins_status(
-            deployment_id,
-            status_result["status"]
-        )
-
         raw_stages = get_pipeline_stages(
             build_number,
             session=poll_session
@@ -594,16 +590,23 @@ def wait_for_pipeline(
             active_stage.lower().replace(" ", "_")
             if active_stage else None
         )
-        # the DB (and therefore REST GET /deployments) always
-        # reflects what Jenkins is doing right now, not just the
-        # last stage transition.
-
-        save_jenkins_stages(
-            deployment_id,
-            stages,
-            current_stage=current_step_slug,
-            jenkins_status=status_result["status"]
+        # Persist to the DB only when something actually changed — the old
+        # code wrote jenkins_stages + jenkins_status on every 1s poll, which
+        # hammered SQLite (WAL lock contention with monitor threads) for no
+        # UI benefit. Socket emits below already keep the UI live.
+        stages_signature = (
+            status_result["status"],
+            current_step_slug,
+            str([(s.get("name"), s.get("status")) for s in stages]),
         )
+        if stages_signature != last_signature:
+            last_signature = stages_signature
+            save_jenkins_stages(
+                deployment_id,
+                stages,
+                current_stage=current_step_slug,
+                jenkins_status=status_result["status"]
+            )
 
         # Emit a full CI payload on every poll (not just on stage
         # change) so jenkins_status / build number / stage list
