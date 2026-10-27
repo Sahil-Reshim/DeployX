@@ -119,9 +119,13 @@ def serialize_deployment(row):
     # dead localhost address ("Unsafe attempt to load URL http://localhost:...").
     # custom_url is the browser-reachable URL; fall back to url (legacy rows
     # may only have one of them set).
-    d["url"] = canonical_public_url(
-        d.get("id"), d.get("custom_url") or d.get("url")
-    )
+    # If neither custom_url nor url is set, still generate the canonical
+    # Ingress URL so the dashboard always has a reachable address.
+    raw_url = d.get("custom_url") or d.get("url")
+    if not raw_url:
+        # No legacy URL stored; generate canonical Ingress URL from deployment id
+        raw_url = f"http://{BASE_DOMAIN}/apps/{d.get(\"id\")}/"
+    d["url"] = canonical_public_url(d.get("id"), raw_url)
     d["custom_url"] = d["url"]
 
     if d["progress"] is None:
