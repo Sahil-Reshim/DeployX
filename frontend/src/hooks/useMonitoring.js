@@ -25,8 +25,18 @@ function useMonitoring(statusData) {
     const liveMetrics =
       statusData?.metrics;
 
-    if (!liveMetrics)
+    // If metrics are "unavailable", still update state so frontend can show
+    // the "unavailable" indicator instead of silently hiding everything.
+    if (!liveMetrics) {
+      setMetrics({
+        cpu: 0,
+        ram: 0,
+        network_rx: 0,
+        network_tx: 0,
+        health: "unavailable",
+      });
       return;
+    }
 
     const cpu =
       Number(liveMetrics.cpu || 0);
