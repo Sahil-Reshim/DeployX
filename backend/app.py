@@ -329,6 +329,21 @@ def run_deployment_job(deployment_id, repo_url):
         image_name = docker_result["image_name"]
         append_build_log(deployment_id, f"Docker image built: {image_name}")
 
+        # Store image_name in database immediately so it's persisted even if
+        # the subsequent K8s deployment fails. complete_deployment() below will
+        # also set it, but this ensures coverage for failure paths.
+        conn = get_db_connection()
+        try:
+            conn.execute(
+                "UPDATE deployments SET image_name=? WHERE id=?",
+                (image_name, deployment_id),
+            )
+            conn.commit()
+        except Exception:
+            pass
+        finally:
+            conn.close()
+
         # =================================================
         # STEP 6 — CREATE KUBERNETES RESOURCES (Deployment, Service, Ingress)
         # =================================================
@@ -640,13 +655,19 @@ def get_logs_route(deployment_id):
 
 @app.route("/api/deployments/latest", methods=["GET"])
 def get_latest_deployment():
-    """Return the most recent deployment."""
+    """Return the most recent deployment with URL normalization.
+    
+    Uses serialize_deployment to rewrite legacy localhost URLs
+    to the canonical K8s Ingress URL, so the frontend never receives
+    http://localhost:<port> addresses.
+    """
     try:
         deployments = get_all_deployments()
         if deployments:
             return jsonify({"success": True, "deployment": deployments[0]})
         return jsonify({"success": False, "message": "No deployments found"}), 404
     except Exception as e:
+        print("Latest deployment error:", str(e))
         return jsonify({"success": False, "error": str(e)}), 500
 
 

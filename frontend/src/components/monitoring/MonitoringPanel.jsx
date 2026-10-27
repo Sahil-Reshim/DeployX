@@ -40,18 +40,12 @@ function MonitoringPanel({
   const [restMetrics, setRestMetrics] = useState(null);
   const [restHistory, setRestHistory] = useState({ cpu: [], ram: [], network: [] });
 
-  const isInactive =
-    !deploymentStatus ||
-    [
-      "queued",
-      "cloning",
-      "detecting",
-      "dockerfile_generating",
-      "ci_pipeline",
-      "docker_build",
-      "deploying",
-      "failed",
-    ].includes(deploymentStatus?.toLowerCase?.());
+const isInactive =
+    !deploymentStatus &&
+    !metrics?.cpu &&
+    !metrics?.ram &&
+    !metrics?.network_rx &&
+    !metrics?.network_tx;
 
   useEffect(() => {
     async function loadDeployment() {
@@ -129,8 +123,11 @@ function MonitoringPanel({
     (metrics?.cpu || 0) > 0 ||
     (metrics?.ram || 0) > 0 ||
     (metrics?.network_rx || 0) > 0 ||
-    (metrics?.network_tx || 0) > 0;
-  const effMetrics = hasSocketData ? metrics : restMetrics || metrics;
+    (metrics?.network_tx || 0) > 0 ||
+    (metrics?.health === "unavailable" && !restMetrics);
+  const effMetrics = hasSocketData || metrics?.health === "unavailable"
+      ? metrics
+      : restMetrics || metrics;
   const effCpuHistory = cpuHistory.length ? cpuHistory : restHistory.cpu;
   const effRamHistory = ramHistory.length ? ramHistory : restHistory.ram;
   const effNetworkHistory = networkHistory.length ? networkHistory : restHistory.network;
